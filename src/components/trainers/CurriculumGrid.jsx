@@ -45,7 +45,7 @@ export default function CurriculumGrid({ courses = [] }) {
             transition={{ duration: 0.4, delay: 0.3 + i * 0.1 }}
             whileHover={{ y: -4 }}
             whileFocus={{ y: -4 }}
-            onClick={() => navigate(`/dashboard/player/${c.id}`)}
+            onClick={() => navigate(`/dashboard/courses/${c.id}`)}
             className="group text-left bg-surface-container-low rounded-xl overflow-hidden shadow-md flex flex-col justify-between hover:bg-surface-container transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container"
             aria-label={tl('Open course {0}', { 0: c.title })}
           >

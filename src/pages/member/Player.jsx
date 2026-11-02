@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { Navigate, useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
@@ -31,7 +31,8 @@ export default function Player() {
   const activeEnrollment = useMemo(() => {
     if (allEnrollments.length === 0) return null;
     if (courseId) {
-      return allEnrollments.find((e) => e.course?.id === parseInt(courseId, 10)) || allEnrollments[0];
+      // Not enrolled in that course: no other course is opened in its place (see the redirect below).
+      return allEnrollments.find((e) => e.course?.id === parseInt(courseId, 10)) || null;
     }
     return allEnrollments.find((e) => e.status === 'active') || allEnrollments[0];
   }, [allEnrollments, courseId]);
@@ -120,6 +121,11 @@ export default function Player() {
   };
 
   const handleBrowseCourses = () => navigate('/dashboard/courses');
+
+  // A course the member hasn't joined: show its page (details, syllabus, enrol) instead.
+  if (courseId && !enrollmentsLoading && Array.isArray(enrollments) && !activeEnrollment) {
+    return <Navigate to={`/dashboard/courses/${courseId}`} replace />;
+  }
 
   // ============================================
   // EMPTY STATE
