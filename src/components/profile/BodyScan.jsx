@@ -17,10 +17,10 @@ export default function BodyScan({ dexa }) {
         <div className="flex items-center justify-between mb-space-md flex-wrap gap-2">
           <div className="flex flex-col">
             <span className="font-label-md text-label-md text-primary uppercase tracking-widest font-bold">
-              {tl("Biometric Optical Density")}
+              {tl("Body Composition / Biometrics")}
             </span>
             <h2 className="font-headline-md text-headline-md text-on-surface uppercase tracking-wide">
-              {tl("3D Scan Composition")}
+              {tl("DEXA body scan")}
             </h2>
           </div>
 

@@ -5,6 +5,9 @@ export const LEVELS = [['beginner', tl("Beginner")], ['intermediate', tl("Interm
 // Same fixed list as the backend (apps/admin_api/catalog_ops.py COURSE_CATEGORIES).
 export const COURSE_CATEGORIES = ['Training', 'Strength', 'Hypertrophy', 'Fat Loss', 'Endurance', 'Mobility',
   'Combat', 'Recovery', 'Nutrition', 'Biometrics'];
+// "Biometrics" courses are about measuring the body (DEXA scans, body fat, lean mass) — say so.
+const CATEGORY_LABELS = { Biometrics: 'Body Composition / Biometrics' };
+export const categoryLabel = (c) => tl(CATEGORY_LABELS[c] || c);
 export const STATUS_TONE = {
   published: 'bg-emerald-500/15 text-emerald-400', draft: 'bg-neutral-500/20 text-on-surface-variant',
   pending: 'bg-amber-500/15 text-amber-400', archived: 'bg-rose-500/15 text-rose-400',

@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { categoryLabel } from './courseOptions';
 import CountUp from '../CountUp';
 import { tl, locale } from '../../i18n';
 
@@ -98,7 +99,7 @@ export default function FeaturedCourse({ course, enrolled, onEnroll }) {
               </span>
             </div>
             <span className="font-label-md text-label-md text-primary uppercase bg-surface-container px-space-xs py-space-2xs rounded-sm">
-              {course.category}
+              {categoryLabel(course.category)}
             </span>
           </div>
 

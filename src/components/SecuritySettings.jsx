@@ -51,6 +51,10 @@ export default function SecuritySettings() {
             <dd className="text-on-surface">{status.confirmed_at ? new Date(status.confirmed_at).toLocaleDateString(locale) : '—'}</dd></div>
         </dl>
       )}
+      {!status.gym_enabled && (
+        <p className="text-[12px] text-amber-400">{tl('An admin has switched 2-step verification off for the whole gym, so right now you sign in with your password only. Your setup is kept for when it’s switched back on.')}</p>
+      )}
+      {status.enabled && !mode && <TrustedDevices devices={status.trusted_devices || []} onChange={load} />}
       {status.required && !status.enabled && (
         <p className="text-[12px] text-amber-400">{tl('Your role needs 2-step verification — you’ll be asked to set it up at your next sign-in.')}</p>
       )}
@@ -69,6 +73,40 @@ export default function SecuritySettings() {
       {mode === 'codes' && <CodeConfirm status={status} action="codes" onClose={close} />}
       {mode === 'off' && <CodeConfirm status={status} action="off" onClose={close} />}
     </section>
+  );
+}
+
+/** Browsers that skip the code for 30 days; each can be forgotten (it asks for a code again). */
+function TrustedDevices({ devices, onChange }) {
+  const forget = async (id) => {
+    try {
+      await authService.forgetDevices(id);
+      toast.success(id ? tl('That device will ask for a code next time') : tl('All devices will ask for a code next time'));
+      onChange();
+    } catch (err) { toast.error(errorMessage(err)); }
+  };
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-on-surface-variant text-[11px] uppercase tracking-wider">{tl('Trusted devices (no code for 30 days)')}</span>
+        {devices.length > 1 && <button type="button" className="text-primary text-[12px] font-bold hover:underline" onClick={() => forget()}>{tl('Forget all')}</button>}
+      </div>
+      {devices.length === 0 ? (
+        <p className="text-[12px] text-on-surface-variant">{tl('None — every sign-in asks for a code.')}</p>
+      ) : (
+        <ul className="flex flex-col gap-1">
+          {devices.map((d) => (
+            <li key={d.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-surface-container-low px-3 py-2 text-[13px]">
+              <span className="text-on-surface">{d.label}</span>
+              <span className="text-[11px] text-on-surface-variant">
+                {tl('Trusted until {0}', { 0: new Date(d.expires_at).toLocaleDateString(locale) })}
+              </span>
+              <button type="button" className="text-error text-[12px] font-bold hover:underline" onClick={() => forget(d.id)}>{tl('Forget')}</button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

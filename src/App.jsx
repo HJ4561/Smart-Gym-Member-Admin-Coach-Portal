@@ -17,6 +17,7 @@ import Trainers from './pages/member/Trainers';
 import TrainerProfile from './pages/member/TrainerProfile';
 import NutritionistProfile from './pages/member/NutritionistProfile';
 import NutritionPlan from './pages/member/NutritionPlan';
+import MySessions from './pages/member/MySessions';
 import { ForgotPassword, ResetPassword } from './pages/PasswordReset';
 import { MobileNavProvider } from './layouts/MobileNav';
 import Nutritionists from './pages/member/Nutritionists';
@@ -285,6 +286,7 @@ function App() {
                 <Route path="nutritionists" element={<Nutritionists />} />
                 <Route path="nutritionists/:id" element={<NutritionistProfile />} />
                 <Route path="nutrition-plan" element={<NutritionPlan />} />
+                <Route path="my-sessions" element={<MySessions />} />
                 <Route path="shop" element={<Shop />} />
                 <Route path="attendance" element={<Attendance />} />
                 <Route path="classes" element={<Classes />} />

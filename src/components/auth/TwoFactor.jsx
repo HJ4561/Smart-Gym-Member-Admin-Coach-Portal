@@ -206,8 +206,21 @@ function ResendButton({ onResend, onError }) {
  * @param {function} onDone  ({access, refresh, user})
  * @param {function} onRestart (message) — the ticket expired: back to email + password
  */
+/** "Trust this device for 30 days" — after the code passes, this browser isn't asked again for 30 days. */
+function TrustDevice({ checked, onChange }) {
+  return (
+    <label className="flex items-start gap-2 text-[13px] text-on-surface">
+      <input type="checkbox" className="mt-1" checked={checked} onChange={(e) => onChange(e.target.checked)} />
+      <span>{tl('Trust this device for 30 days')}
+        <span className="block text-[11px] text-on-surface-variant">{tl('Don’t tick this on a shared or public computer.')}</span>
+      </span>
+    </label>
+  );
+}
+
 export function TwoFactorStep({ step, onDone, onRestart }) {
   const [code, setCode] = useState('');
+  const [remember, setRemember] = useState(true);
   const [backup, setBackup] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -221,10 +234,11 @@ export function TwoFactorStep({ step, onDone, onRestart }) {
         <MethodSetup
           emailAvailable={step.email_available} emailHint={step.email_hint}
           start={(m) => authService.setupMethod(step.ticket, m)}
-          confirm={(c) => authService.setupConfirm(step.ticket, c)}
+          confirm={(c) => authService.setupConfirm(step.ticket, c, remember)}
           resend={() => authService.resendCode(step.ticket)}
           onDone={onDone} onExpired={expired}
         />
+        <TrustDevice checked={remember} onChange={setRemember} />
         <button type="button" className={`${link} self-start`} onClick={() => onRestart?.('')}>{tl('← Back to sign in')}</button>
       </div>
     );
@@ -240,7 +254,7 @@ export function TwoFactorStep({ step, onDone, onRestart }) {
     setBusy(true);
     setError('');
     try {
-      onDone(await authService.verifyCode(step.ticket, code));
+      onDone(await authService.verifyCode(step.ticket, code, remember));
     } catch (err) {
       if (err?.response?.status === 401) expired(errorMessage(err));
       else setError(fieldErrors(err).code || errorMessage(err));
@@ -256,6 +270,7 @@ export function TwoFactorStep({ step, onDone, onRestart }) {
           : step.method === 'email' ? tl('We emailed a 6-digit code to {0}.', { 0: step.email_hint })
             : tl('Enter the 6-digit code from your authenticator app.')} />
       <CodeInput value={code} onChange={setCode} error={error} backup={backup} />
+      <TrustDevice checked={remember} onChange={setRemember} />
       <button type="submit" className={primary} disabled={busy}>{busy ? tl('Checking…') : tl('Verify and sign in')}</button>
       <div className="flex flex-wrap justify-between gap-2">
         <button type="button" className={link} onClick={() => { setBackup((b) => !b); setCode(''); setError(''); }}>

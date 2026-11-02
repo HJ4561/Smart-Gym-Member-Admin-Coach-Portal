@@ -735,7 +735,7 @@ function MacroSyncPanel({
           <div className="bg-surface-container-lowest rounded-lg p-3">
             <div className="flex items-center justify-between mb-2">
               <span className="font-label-md text-[10px] text-outline uppercase tracking-wider">
-                {tl("DEXA Scan")}
+                {tl("Body Composition / Biometrics (DEXA)")}
               </span>
               <span className="font-label-md text-[10px] text-primary font-bold uppercase">
                 {latestDexa?.scan_date || tl("No data")}

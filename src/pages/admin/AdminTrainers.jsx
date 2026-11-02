@@ -9,7 +9,7 @@ import { adminService } from '../../services/adminService';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls } from '../../components/site/siteStyles';
 import CourseEditor from '../../components/courses/CourseEditor';
-import { NEW_COURSE, STATUS_TONE } from '../../components/courses/courseOptions';
+import { NEW_COURSE, STATUS_TONE, categoryLabel } from '../../components/courses/courseOptions';
 import { formatSAR } from '../../utils/money';
 import PersonEditor from '../../components/admin/PersonEditor';
 
@@ -231,7 +231,7 @@ function CoursesTab({ onChanged, initialStatus = '', pending = 0 }) {
               </div>
               <div className="p-4 flex flex-col gap-1 flex-1">
                 <div className="text-on-surface font-bold">{c.title}</div>
-                <div className="text-[11px] text-on-surface-variant">{c.category} · {c.level_label} · {c.trainer_name}</div>
+                <div className="text-[11px] text-on-surface-variant">{categoryLabel(c.category)} · {c.level_label} · {c.trainer_name}</div>
                 {c.status === 'pending' && c.submitted_at && (
                   <div className="text-[11px] text-amber-300">{tl("Sent for review {0}", { 0: new Date(c.submitted_at).toLocaleDateString() })}</div>
                 )}

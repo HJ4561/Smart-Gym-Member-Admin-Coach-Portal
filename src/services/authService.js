@@ -1,12 +1,24 @@
 import api from './api';
 
+// "Trust this device for 30 days": the token from a passed 2-step code, kept per account on this browser.
+const DEVICE_KEY = 'sg.trusted-devices';
+const devices = () => { try { return JSON.parse(localStorage.getItem(DEVICE_KEY) || '{}'); } catch { return {}; } };
+const deviceToken = (email) => devices()[String(email || '').trim().toLowerCase()];
+function keepDeviceToken(data) {
+  if (!data?.device_token || !data.user?.email) return;
+  try {
+    localStorage.setItem(DEVICE_KEY, JSON.stringify({ ...devices(), [data.user.email.toLowerCase()]: data.device_token }));
+  } catch { /* storage blocked: the code is simply asked again */ }
+}
+
 export const authService = {
   /**
    * Password step. Returns {access, refresh, user} — or, when 2-step verification applies,
    * {two_factor: 'verify'|'setup', ticket, …} and nothing is stored until the code passes.
    */
   async login(email, password) {
-    const { data } = await api.post('/auth/login/', { email, password });
+    const token = deviceToken(email);
+    const { data } = await api.post('/auth/login/', { email, password, ...(token ? { device_token: token } : {}) });
     if (!data.two_factor) this.storeSession(data);
     return data;
   },
@@ -18,8 +30,9 @@ export const authService = {
   },
 
   // ---- 2-step verification at sign-in (ticket from login) ----
-  async verifyCode(ticket, code) {
-    const { data } = await api.post('/auth/2fa/verify/', { ticket, code });
+  async verifyCode(ticket, code, rememberDevice = false) {
+    const { data } = await api.post('/auth/2fa/verify/', { ticket, code, remember_device: rememberDevice });
+    keepDeviceToken(data);
     this.storeSession(data);
     return data;
   },
@@ -32,8 +45,9 @@ export const authService = {
     return data;
   },
   /** Turns 2FA on and signs in; the response carries backup codes (shown once). */
-  async setupConfirm(ticket, code) {
-    const { data } = await api.post('/auth/2fa/setup/confirm/', { ticket, code });
+  async setupConfirm(ticket, code, rememberDevice = false) {
+    const { data } = await api.post('/auth/2fa/setup/confirm/', { ticket, code, remember_device: rememberDevice });
+    keepDeviceToken(data);
     return data;
   },
 
@@ -56,6 +70,11 @@ export const authService = {
   },
   async disableTwoFactor(password, code) {
     const { data } = await api.post('/auth/2fa/disable/', { password, code });
+    return data;
+  },
+  /** Forget one trusted browser (id) or all of them. */
+  async forgetDevices(id) {
+    const { data } = await api.post('/auth/2fa/devices/forget/', id ? { id } : {});
     return data;
   },
   async newBackupCodes(code) {

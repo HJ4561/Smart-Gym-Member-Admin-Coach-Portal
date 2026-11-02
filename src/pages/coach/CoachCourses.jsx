@@ -8,7 +8,7 @@ import { coachService } from '../../services/coachService';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn } from '../../components/site/siteStyles';
 import CourseEditor from '../../components/courses/CourseEditor';
-import { NEW_COURSE, STATUS_TONE } from '../../components/courses/courseOptions';
+import { NEW_COURSE, STATUS_TONE, categoryLabel } from '../../components/courses/courseOptions';
 import { formatSAR } from '../../utils/money';
 import { errorMessage } from '../../utils/apiError';
 import { tl } from '../../i18n';
@@ -62,7 +62,7 @@ export default function CoachCourses() {
               </div>
               <div className="p-4 flex flex-col gap-1 flex-1 min-w-0">
                 <div className="text-on-surface font-bold break-words">{c.title}</div>
-                <div className="text-[11px] text-on-surface-variant">{tl(c.category)} · {c.level_label}</div>
+                <div className="text-[11px] text-on-surface-variant">{categoryLabel(c.category)} · {c.level_label}</div>
                 {c.status === 'draft' && c.review_note && (
                   <div className="text-[12px] text-amber-300 line-clamp-2">{tl('Gym asked for changes:')} {c.review_note}</div>
                 )}

@@ -174,6 +174,11 @@ export const adminService = {
     return data;
   },
 
+  /** Gym-wide 2-step verification switches (admins, with their password). */
+  async saveSecurity(body) {
+    const { data } = await api.patch('/admin/settings/security/', body);
+    return data;
+  },
   async trainerPortalAccess(id, body = {}) {
     const { data } = await api.post(`/admin/trainers/${id}/portal-access/`, body);
     return data;

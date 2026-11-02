@@ -1,11 +1,16 @@
 // src/pages/admin/AdminSettings.jsx
 // What this deployment is actually configured to do (payments, email, uploads, gym), who can do
-// what, and your own account. Values come from the server's environment variables.
+// what, and your own account. Values come from the server's environment variables — except the
+// 2-step verification switches, which admins change here.
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { useAuth } from '../../context/AuthContext';
 import { useApi } from '../../hooks/useApi';
 import { adminService } from '../../services/adminService';
 import { PageHeader } from '../../components/site/SiteUi';
-import { btn } from '../../components/site/siteStyles';
+import { btn, inputCls } from '../../components/site/siteStyles';
+import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { tl } from '../../i18n';
 
 function Card({ title, icon, children }) {
@@ -30,7 +35,8 @@ function Row({ label, value, tone }) {
 }
 
 export default function AdminSettings() {
-  const { data: s, loading } = useApi(() => adminService.settings(), []);
+  const { user } = useAuth();
+  const { data: s, loading, refetch } = useApi(() => adminService.settings(), []);
 
   if (loading || !s) {
     return <div className="p-6 md:p-8"><div className="h-96 bg-[#0e0e0f] rounded-lg animate-pulse" /></div>;
@@ -69,12 +75,15 @@ export default function AdminSettings() {
           {server.debug && <Row label={tl("Debug mode")} value="On — never use on the live site" tone="bad" />}
         </Card>
 
+        <SecurityCard security={s.security} isAdmin={user?.role === 'admin'} onSaved={refetch} />
+
         <Card title={tl("Your account")} icon="account_circle">
           <Row label={tl("Name")} value={me.name || '—'} />
           <Row label={tl("Email")} value={me.email} />
           <Row label={tl("Role")} value={me.role} />
           <div className="flex gap-2 pt-2">
-            <Link to="/dashboard/change-password" className={btn.ghost}>{tl("Change password")}</Link>
+            <Link to="/admin/change-password" className={btn.ghost}>{tl("Change password")}</Link>
+            <Link to="/admin/security" className={btn.ghost}>{tl("My 2-step verification")}</Link>
             <Link to="/admin/staff" className={btn.ghost}>{tl("Manage staff")}</Link>
           </div>
         </Card>
@@ -102,5 +111,82 @@ export default function AdminSettings() {
         </div>
       </section>
     </div>
+  );
+}
+
+
+/** The gym-wide 2-step verification switches (admins only, confirmed with their password). */
+function SecurityCard({ security, isAdmin, onSaved }) {
+  const [pending, setPending] = useState(null);      // {key, value} waiting for the password
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const rows = [
+    ['two_factor_enabled', 'enabled', tl("2-step verification"),
+      tl("Off = everyone signs in with email and password only. People keep their setup for when it’s back on.")],
+    ['two_factor_required_for_staff', 'required_for_staff', tl("Required for staff and coaches"),
+      tl("On = admins, managers and coaches must set it up at sign-in. Off = optional for everyone.")],
+  ];
+  const save = async (e) => {
+    e.preventDefault();
+    setBusy(true);
+    setError('');
+    try {
+      await adminService.saveSecurity({ [pending.key]: pending.value, password });
+      toast.success(tl("Sign-in security updated"));
+      setPending(null);
+      setPassword('');
+      onSaved();
+    } catch (err) {
+      setError(fieldErrors(err).password || errorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <section className="bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg p-5 flex flex-col gap-3">
+      <h2 className="flex items-center gap-2 text-on-surface font-bold uppercase tracking-wider text-[13px]">
+        <span className="material-symbols-outlined text-primary text-[18px]">shield_lock</span>{tl("Sign-in security")}
+      </h2>
+      {rows.map(([key, field, label, hint]) => {
+        const on = !!security[field];
+        const disabled = !isAdmin || (key === 'two_factor_required_for_staff' && !security.enabled);
+        return (
+          <div key={key} className="flex items-start justify-between gap-4 border-b border-[#1a1a1e] pb-3">
+            <div className="min-w-0">
+              <div className="text-on-surface text-[13px] font-bold">{label}</div>
+              <div className="text-[12px] text-on-surface-variant">{hint}</div>
+            </div>
+            <button type="button" role="switch" aria-checked={on} aria-label={label} disabled={disabled}
+              onClick={() => { setPending({ key, value: !on }); setError(''); }}
+              className={`shrink-0 px-3 py-1.5 rounded text-[11px] font-bold uppercase tracking-wider disabled:opacity-40 ${
+                on ? 'bg-emerald-500/15 text-emerald-400' : 'bg-[#1a1a1e] text-on-surface-variant'}`}>
+              {on ? tl("On") : tl("Off")}
+            </button>
+          </div>
+        );
+      })}
+      <dl className="flex flex-col gap-2 text-[13px]">
+        <Row label={tl("Code by email")} value={security.email_codes ? tl("Available (SMTP is set up)") : tl("Not available — set up SMTP email; the authenticator app still works")}
+          tone={security.email_codes ? 'ok' : 'warn'} />
+        <Row label={tl("Trusted devices")} value={tl("Asked once per device, then every {0} days", { 0: security.trust_days })} />
+      </dl>
+      {!isAdmin && <p className="text-[12px] text-on-surface-variant">{tl("Only an admin can change these.")}</p>}
+      {pending && (
+        <form onSubmit={save} className="flex flex-col gap-2 rounded-lg border border-[#26262b] p-3">
+          <span className="text-[12px] text-on-surface">
+            {tl("Turn “{0}” {1}? Confirm with your password. Every admin is notified.",
+              { 0: rows.find((r) => r[0] === pending.key)[2], 1: pending.value ? tl("on") : tl("off") })}
+          </span>
+          <input type="password" autoComplete="current-password" className={inputCls} value={password}
+            onChange={(e) => setPassword(e.target.value)} aria-label={tl("Your password")} autoFocus />
+          {error && <span role="alert" className="text-[12px] text-rose-400">{error}</span>}
+          <div className="flex gap-2 justify-end">
+            <button type="button" className={btn.ghost} onClick={() => setPending(null)}>{tl("Cancel")}</button>
+            <button type="submit" className={btn.primary} disabled={busy || !password}>{busy ? tl("Saving…") : tl("Confirm")}</button>
+          </div>
+        </form>
+      )}
+    </section>
   );
 }

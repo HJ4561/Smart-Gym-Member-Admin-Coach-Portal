@@ -269,7 +269,7 @@ function PlanEditor({ plan, onClose, onSaved }) {
       <MealLogPanel memberId={plan.member_id} targets={f} />
 
       <form onSubmit={addScan} className="flex flex-col gap-3 border-t border-[#1a1a1e] pt-4">
-        <span className={labelCls}>{tl("Body scans")}</span>
+        <span className={labelCls}>{tl("Body Composition / Biometrics (DEXA scans)")}</span>
         {(scans || []).length > 0 && (
           <div className="flex flex-col gap-1 text-[12px] text-on-surface-variant">
             {scans.map((s) => <div key={s.id}>{s.scan_date}: {s.weight_kg}{' '}{tl("kg ·")}{' '}{s.body_fat_percent}{tl("% fat ·")}{' '}{s.lean_mass_kg}{' '}{tl("kg lean")}</div>)}

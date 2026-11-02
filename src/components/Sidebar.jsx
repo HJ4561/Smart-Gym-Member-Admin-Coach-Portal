@@ -14,6 +14,7 @@ const navItems = [
   { path: '/dashboard/courses', label: tl("Courses"), icon: 'sports_gymnastics' },
   { path: '/dashboard/player', label: tl("Player"), icon: 'play_circle' },
   { path: '/dashboard/trainers', label: tl("Trainers"), icon: 'group' },
+  { path: '/dashboard/my-sessions', label: tl("My Sessions"), icon: 'event_available' },
   { path: '/dashboard/nutrition-plan', label: tl("My Nutrition"), icon: 'nutrition' },
   { path: '/dashboard/nutritionists', label: tl("Nutritionists"), icon: 'restaurant' },
   { path: '/dashboard/shop', label: tl("Shop"), icon: 'shopping_bag' },

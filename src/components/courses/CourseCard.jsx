@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion';
+import { categoryLabel } from './courseOptions';
 import CountUp from '../CountUp';
 import { tl } from '../../i18n';
 
@@ -55,7 +56,7 @@ export default function CourseCard({ course, index = 0, enrolled, onEnroll }) {
             transition={{ delay: 0.2 + index * 0.05, duration: 0.4, ease: EASE }}
           >
             <span className="bg-surface-container-lowest/80 backdrop-blur-md font-label-md text-label-md uppercase tracking-wider px-space-xs py-space-2xs rounded-sm text-primary">
-              {course.category}
+              {categoryLabel(course.category)}
             </span>
           </motion.div>
 

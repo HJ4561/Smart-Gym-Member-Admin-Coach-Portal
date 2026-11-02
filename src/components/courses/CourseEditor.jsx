@@ -8,7 +8,7 @@ import { Drawer, ImageUploader } from '../site/SiteUi';
 import { btn, inputCls, labelCls } from '../site/siteStyles';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { tl } from '../../i18n';
-import { COURSE_CATEGORIES, LEVELS } from './courseOptions';
+import { COURSE_CATEGORIES, LEVELS, categoryLabel } from './courseOptions';
 
 export function Field({ label, error, children, className = '' }) {
   return (
@@ -185,7 +185,7 @@ export default function CourseEditor({ course, mode = 'admin', api, trainers = [
         <Field label={tl("Category")} error={errors.category}>
           <select className={inputCls} value={f.category} onChange={set('category')}>
             <option value="">{tl("Choose a category")}</option>
-            {categories.map((c) => <option key={c} value={c}>{tl(c)}</option>)}
+            {categories.map((c) => <option key={c} value={c}>{categoryLabel(c)}</option>)}
           </select>
         </Field>
         <Field label={tl("Level")} error={errors.level}>
