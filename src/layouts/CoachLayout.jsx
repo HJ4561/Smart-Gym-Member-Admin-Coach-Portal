@@ -14,6 +14,7 @@ const POLL_MS = 30_000;
 
 const COACH_NAV = [
   { path: '/coach', label: tl('Dashboard'), icon: 'dashboard', end: true },
+  { path: '/coach/notifications', label: tl('Notifications'), icon: 'notifications' },
   { path: '/coach/sessions', label: tl('1-on-1 sessions'), icon: 'event_available' },
   { path: '/coach/hours', label: tl('My hours'), icon: 'schedule' },
   { path: '/coach/courses', label: tl('My courses'), icon: 'school' },
@@ -22,7 +23,6 @@ const COACH_NAV = [
   { path: '/coach/videos', label: tl('Machine videos'), icon: 'smart_display' },
   { path: '/coach/reviews', label: tl('Reviews'), icon: 'reviews' },
   { path: '/coach/earnings', label: tl('Earnings'), icon: 'payments' },
-  { path: '/coach/notifications', label: tl('Notifications'), icon: 'notifications' },
   { path: '/coach/profile', label: tl('Profile & security'), icon: 'manage_accounts' },
 ];
 
