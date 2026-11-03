@@ -5,12 +5,12 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useAuth } from '../../context/AuthContext';
 import api from '../../services/api';
 import { dashboardService } from '../../services/dashboardService';
-import { notificationsService } from '../../services/notificationsService';
+import { NOTIFICATIONS_CHANGED, notificationsService } from '../../services/notificationsService';
 import { tl } from '../../i18n';
 import LangToggle from '../../i18n/LangToggle';
 import { MenuButton } from '../../layouts/MobileNav';
 
-const POLL_MS = 60_000;
+const POLL_MS = 10_000;   // new notifications show within seconds; changes made here show at once
 const SEARCH_GROUPS = [
   ['members', tl('Members'), 'person'],
   ['registrations', tl('Registrations'), 'how_to_reg'],
@@ -64,10 +64,14 @@ export default function AdminHeader() {
       if (n.status === 'fulfilled') setNews(Array.isArray(n.value) ? n.value.slice(0, 10) : []);
     };
     load();
-    const id = setInterval(load, POLL_MS);
+    const id = setInterval(() => document.visibilityState === 'visible' && load(), POLL_MS);
+    window.addEventListener(NOTIFICATIONS_CHANGED, load);
+    window.addEventListener('focus', load);
     return () => {
       alive = false;
       clearInterval(id);
+      window.removeEventListener(NOTIFICATIONS_CHANGED, load);
+      window.removeEventListener('focus', load);
     };
   }, []);
 

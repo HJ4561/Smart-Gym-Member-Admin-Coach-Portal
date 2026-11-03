@@ -2217,5 +2217,9 @@
  "Week {0}": "الأسبوع {0}",
  "What members learn": "ما يتعلمه الأعضاء",
  "{0} weeks": "{0} أسابيع",
- "← Back": "→ رجوع"
+ "← Back": "→ رجوع",
+ "Session booked — see you there!": "تم حجز الجلسة — نراك هناك!",
+ "Your nutritionists ({0})": "أخصائيو التغذية لديك ({0})",
+ "Your nutritionists": "أخصائيو التغذية لديك",
+ "Requesting here adds a plan with {0}. Your other plans stay as they are.": "الطلب هنا يضيف خطة مع {0}. تبقى خططك الأخرى كما هي."
 }

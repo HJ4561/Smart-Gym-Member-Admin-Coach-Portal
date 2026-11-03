@@ -5,12 +5,12 @@ import { coachService } from '../../services/coachService';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
 import { inputCls } from '../../components/site/siteStyles';
 import { tl, locale } from '../../i18n';
-import { card, Page, Skeleton, Tabs } from './ui';
+import { card, Page, Skeleton, Tabs, LIVE_MS } from './ui';
 
 export default function CoachStudents() {
   const [tab, setTab] = useState('courses');
   const [q, setQ] = useState('');
-  const { data, loading } = useApi(() => coachService.students(), [], { poll: 60_000 });
+  const { data, loading } = useApi(() => coachService.students(), [], { poll: LIVE_MS });
   const match = (r) => !q || `${r.name} ${r.email} ${r.course || ''}`.toLowerCase().includes(q.toLowerCase());
   const enrolments = (data?.enrolments || []).filter(match);
   const clients = (data?.clients || []).filter(match);

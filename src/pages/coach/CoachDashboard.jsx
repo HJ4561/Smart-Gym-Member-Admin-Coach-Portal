@@ -6,11 +6,11 @@ import { PageHeader } from '../../components/site/SiteUi';
 import { formatGymDateTime } from '../../utils/gymTime';
 import { formatSAR } from '../../utils/money';
 import { tl, locale } from '../../i18n';
-import { Chip, Page, Section, Skeleton, Tile } from './ui';
+import { Chip, Page, Section, Skeleton, Tile, LIVE_MS } from './ui';
 import { SESSION_LABEL, SESSION_TONE } from './sessionStatus';
 
 export default function CoachDashboard() {
-  const { data, loading } = useApi(() => coachService.dashboard(), [], { poll: 60_000 });
+  const { data, loading } = useApi(() => coachService.dashboard(), [], { poll: LIVE_MS });
   if (loading && !data) return <Page><Skeleton rows={4} h="h-24" /></Page>;
   if (!data) return <Page><PageHeader title={tl('Dashboard')} /></Page>;
   const p = data.profile;

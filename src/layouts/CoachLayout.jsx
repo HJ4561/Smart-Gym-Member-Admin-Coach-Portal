@@ -4,13 +4,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { notificationsService } from '../services/notificationsService';
+import { NOTIFICATIONS_CHANGED, notificationsService } from '../services/notificationsService';
 import { DrawerBackdrop, MenuButton, MobileNavProvider } from './MobileNav';
 import { drawerClasses, useMobileNav } from './mobileNavContext';
 import LangToggle from '../i18n/LangToggle';
 import { tl, locale } from '../i18n';
 
-const POLL_MS = 30_000;
+const POLL_MS = 10_000;
 
 const COACH_NAV = [
   { path: '/coach', label: tl('Dashboard'), icon: 'dashboard', end: true },
@@ -36,11 +36,11 @@ function useUnread() {
     load();
     const id = setInterval(load, POLL_MS);
     window.addEventListener('focus', load);
-    window.addEventListener('notifications:changed', load);
+    window.addEventListener(NOTIFICATIONS_CHANGED, load);
     return () => {
       clearInterval(id);
       window.removeEventListener('focus', load);
-      window.removeEventListener('notifications:changed', load);
+      window.removeEventListener(NOTIFICATIONS_CHANGED, load);
     };
   }, [load]);
   return [unread, load];

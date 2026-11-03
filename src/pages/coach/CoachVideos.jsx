@@ -11,7 +11,7 @@ import { Field } from '../../components/courses/CourseEditor';
 import { formatSAR } from '../../utils/money';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { tl } from '../../i18n';
-import { card, Chip, Page, Skeleton, Tabs, Tile } from './ui';
+import { card, Chip, Page, Skeleton, Tabs, Tile, LIVE_MS } from './ui';
 
 const TIERS = [
   ['basic', tl('Basic'), tl('Free for every member.'), 'bg-emerald-500/15 text-emerald-400'],
@@ -25,8 +25,8 @@ const NEW = { exercise_id: '', tier: 'basic', title: '', video_url: '', duration
 export default function CoachVideos() {
   const [tier, setTier] = useState('');
   const [editing, setEditing] = useState(null);
-  const { data, loading, refetch } = useApi(() => coachService.videos(), []);
-  const { data: machines } = useApi(() => coachService.machines(), []);
+  const { data, loading, refetch } = useApi(() => coachService.videos(), [], { poll: LIVE_MS });
+  const { data: machines } = useApi(() => coachService.machines(), [], { poll: LIVE_MS });
   const all = useMemo(() => (Array.isArray(data) ? data : []), [data]);
   const list = all.filter((v) => !tier || v.tier === tier);
   const totals = useMemo(() => ({

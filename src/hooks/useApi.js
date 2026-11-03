@@ -25,7 +25,9 @@ export function useApi(fetcher, deps = [], options = {}) {
     initialData = null,
     poll = 0,
     refreshOnFocus = true,
+    refreshOn = [],          // window events that mean "this data changed" (e.g. NOTIFICATIONS_CHANGED)
   } = options;
+  const refreshEvents = refreshOn.join('|');
 
   const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(immediate);
@@ -83,12 +85,16 @@ export function useApi(fetcher, deps = [], options = {}) {
       document.addEventListener('visibilitychange', refresh);
     }
     const id = poll > 0 ? setInterval(refresh, poll) : null;
+    const now = () => run(true);
+    const events = refreshEvents ? refreshEvents.split('|') : [];
+    events.forEach((e) => window.addEventListener(e, now));
     return () => {
       window.removeEventListener('focus', refresh);
       document.removeEventListener('visibilitychange', refresh);
+      events.forEach((e) => window.removeEventListener(e, now));
       if (id) clearInterval(id);
     };
-  }, [run, immediate, poll, refreshOnFocus]);
+  }, [run, immediate, poll, refreshOnFocus, refreshEvents]);
 
   /** Reload now; shows the loading state only when there's nothing on screen yet. */
   const refetch = useCallback(() => run(hasData.current), [run]);

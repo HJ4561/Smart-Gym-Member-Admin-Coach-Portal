@@ -6,12 +6,12 @@ import { coachService } from '../../services/coachService';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
 import { formatSAR } from '../../utils/money';
 import { tl, locale } from '../../i18n';
-import { card, Chip, Page, Skeleton } from './ui';
+import { card, Chip, Page, Skeleton, LIVE_MS } from './ui';
 
 const DAYS = [tl('Monday'), tl('Tuesday'), tl('Wednesday'), tl('Thursday'), tl('Friday'), tl('Saturday'), tl('Sunday')];
 
 export default function CoachClasses() {
-  const { data, loading } = useApi(() => coachService.classes(), [], { poll: 60_000 });
+  const { data, loading } = useApi(() => coachService.classes(), [], { poll: LIVE_MS });
   const [open, setOpen] = useState(null);
   const list = Array.isArray(data) ? data : [];
 

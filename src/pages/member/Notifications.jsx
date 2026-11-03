@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-import { notificationsService } from '../../services/notificationsService';
+import { NOTIFICATIONS_CHANGED, notificationsService } from '../../services/notificationsService';
 import { useApi } from '../../hooks/useApi';
 import { tl, locale } from '../../i18n';
 
@@ -41,14 +41,18 @@ export default function Notifications() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('all');
 
+  // New notifications arrive on their own; reads in the bell (or another tab) show here at once.
+  const live = { poll: 10_000, refreshOn: [NOTIFICATIONS_CHANGED] };
   const { data: notifications, loading, refetch } = useApi(
     () => notificationsService.list(),
-    []
+    [],
+    live
   );
 
   const { data: unreadData, refetch: refetchUnread } = useApi(
     () => notificationsService.unreadCount(),
-    []
+    [],
+    live
   );
 
   const list = notifications || [];

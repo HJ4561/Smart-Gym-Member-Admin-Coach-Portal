@@ -26,7 +26,7 @@ export default function NutritionistProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data: n, loading, error } = useApi(() => nutritionService.nutritionist(id), [id], { showError: false });
-  const { data: plan, refetch: refetchPlan } = useApi(() => nutritionService.myPlan(), [], { showError: false });
+  const { data: plans, refetch: refetchPlan } = useApi(() => nutritionService.myPlans(), [], { showError: false });
   const [goal, setGoal] = useState('hypertrophy');
   const [sending, setSending] = useState(false);
   const [payPlan, setPayPlan] = useState(null);     // requested plan waiting for the consultation fee
@@ -57,8 +57,10 @@ export default function NutritionistProfile() {
   const name = n.user?.full_name || tl('Nutritionist');
   const photo = n.photo_url || n.user?.avatar;
   const rated = n.total_reviews > 0;
-  const activePlan = plan && plan.status === 'active' ? plan : null;
-  const isMine = activePlan && Number(activePlan.nutritionist_id) === Number(n.id);
+  // A member can have a plan with several nutritionists; this page is about the one with this person.
+  const myPlans = Array.isArray(plans) ? plans : [];
+  const activePlan = myPlans.find((x) => Number(x.nutritionist_id) === Number(n.id)) || null;
+  const isMine = !!activePlan;
   const chosen = GOALS.find((g) => g.id === goal);
 
   const request = async () => {
@@ -172,8 +174,8 @@ export default function NutritionistProfile() {
             <p className="text-on-surface-variant text-[13px] mt-1">
               {isMine
                 ? tl('Your current plan: {0}. Picking a new goal replaces it.', { 0: activePlan.name || tl(GOALS.find((g) => g.id === activePlan.goal)?.label || activePlan.goal) })
-                : activePlan
-                  ? tl('You already have a plan with {0}. Requesting here replaces it.', { 0: activePlan.nutritionist_name })
+                : myPlans.length > 0
+                  ? tl('Requesting here adds a plan with {0}. Your other plans stay as they are.', { 0: name })
                   : tl('Choose what you’re working towards.')}
             </p>
           </div>

@@ -12,7 +12,7 @@ import { NEW_COURSE, STATUS_TONE, categoryLabel } from '../../components/courses
 import { formatSAR } from '../../utils/money';
 import { errorMessage } from '../../utils/apiError';
 import { tl } from '../../i18n';
-import { card, Chip, Page, Skeleton, Tabs } from './ui';
+import { card, Chip, Page, Skeleton, Tabs, LIVE_MS } from './ui';
 
 const API = {
   create: (b) => coachService.createCourse(b),
@@ -28,7 +28,7 @@ export default function CoachCourses() {
   const navigate = useNavigate();
   const [status, setStatus] = useState('');
   const [editing, setEditing] = useState(null);
-  const { data, loading, refetch } = useApi(() => coachService.courses(), []);
+  const { data, loading, refetch } = useApi(() => coachService.courses(), [], { poll: LIVE_MS });
   const list = (data?.courses || []).filter((c) => !status || c.status === status);
 
   // /coach/courses/:id (from a notification) opens that course until it's closed.

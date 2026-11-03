@@ -1,5 +1,8 @@
 // src/pages/coach/ui.jsx — small building blocks shared by the coach portal pages.
 
+// How often coach pages re-check the server, so changes made in the admin console (publishing a
+// course, verifying, roster changes, new bookings) show up without reloading the page.
+export const LIVE_MS = 15_000;
 export const card = 'bg-[#0e0e0f] border border-[#1a1a1e] rounded-xl';
 
 export function Page({ children }) {

@@ -16,6 +16,12 @@ export const nutritionService = {
     return data;
   },
 
+  /** Every active plan — one per nutritionist the member has paid — newest first. */
+  async myPlans() {
+    const { data } = await api.get('/nutrition/plans/');
+    return data;
+  },
+
   async requestPlan(nutritionistId, goal) {
     const { data } = await api.post('/nutrition/plan/request/', {
       nutritionist_id: nutritionistId,

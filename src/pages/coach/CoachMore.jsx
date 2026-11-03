@@ -4,7 +4,7 @@ import { useNavigate, useOutletContext } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 import { coachService } from '../../services/coachService';
-import { notificationsService } from '../../services/notificationsService';
+import { NOTIFICATIONS_CHANGED, notificationsService } from '../../services/notificationsService';
 import { Empty, ImageUploader, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls } from '../../components/site/siteStyles';
 import { Field } from '../../components/courses/CourseEditor';
@@ -13,11 +13,11 @@ import SecuritySettings from '../../components/SecuritySettings';
 import { formatSAR } from '../../utils/money';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { tl, locale } from '../../i18n';
-import { card, Page, Section, Skeleton, Tile } from './ui';
+import { card, Page, Section, Skeleton, Tile, LIVE_MS } from './ui';
 
 // ------------------------------------------------------------------ reviews
 export function CoachReviews() {
-  const { data, loading } = useApi(() => coachService.reviews(), []);
+  const { data, loading } = useApi(() => coachService.reviews(), [], { poll: LIVE_MS });
   return (
     <Page>
       <PageHeader title={tl('Reviews')} subtitle={tl('What members say after training with you.')} />
@@ -48,7 +48,7 @@ export function CoachReviews() {
 
 // ------------------------------------------------------------------ earnings
 export function CoachEarnings() {
-  const { data, loading } = useApi(() => coachService.earnings(), []);
+  const { data, loading } = useApi(() => coachService.earnings(), [], { poll: LIVE_MS });
   const parts = [['sessions', tl('1-on-1 sessions'), 'event_available'], ['courses', tl('Courses'), 'school'],
     ['classes', tl('Classes'), 'event'], ['videos', tl('Machine videos'), 'smart_display']];
   const max = Math.max(1, ...(data?.by_month || []).map((m) => m.total));
@@ -99,7 +99,8 @@ export function CoachEarnings() {
 export function CoachNotifications() {
   const navigate = useNavigate();
   const { reloadUnread } = useOutletContext() || {};
-  const { data, loading, refetch } = useApi(() => notificationsService.list(), [], { poll: 30_000 });
+  const { data, loading, refetch } = useApi(() => notificationsService.list(), [],
+    { poll: 10_000, refreshOn: [NOTIFICATIONS_CHANGED] });
   const list = Array.isArray(data) ? data : [];
   const changed = () => { refetch(); reloadUnread?.(); };
   const open = async (n) => {
@@ -138,7 +139,7 @@ export function CoachNotifications() {
 
 // ------------------------------------------------------------------ profile + security
 export function CoachProfile() {
-  const { data, refetch } = useApi(() => coachService.me(), []);
+  const { data, refetch } = useApi(() => coachService.me(), [], { poll: LIVE_MS });
   return (
     <Page>
       <PageHeader title={tl('Profile & security')} subtitle={tl('What members see when they choose a coach, and how you sign in.')} />

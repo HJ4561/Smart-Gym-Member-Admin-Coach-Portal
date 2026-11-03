@@ -122,7 +122,15 @@ export default function BookingPanel({ trainer }) {
         focus_area: focus,
         notes,
       });
-      setPaySession(session);
+      if (session.status === 'scheduled') {          // free session: confirmed straight away
+        toast.success(tl('Session booked — see you there!'));
+        setNotes('');
+        setFocus('');
+        refetchSessions();
+        reloadSlots();
+      } else {
+        setPaySession(session);
+      }
     } catch (e) {
       toast.error(errorMessage(e, tl('Could not book that slot')));
       reloadSlots();
@@ -146,6 +154,7 @@ export default function BookingPanel({ trainer }) {
   const specialties = Array.isArray(trainer?.specialties) ? trainer.specialties : [];
   const accepting = meta ? meta.accepting : trainer?.is_accepting_clients;
   const price = meta?.price ?? trainer?.hourly_rate ?? 0;
+  const priceLabel = Number(price) > 0 ? formatSAR(price) : tl('Free');
 
   return (
     <div className="flex flex-col lg:sticky lg:top-20 self-start">
@@ -160,7 +169,7 @@ export default function BookingPanel({ trainer }) {
             </h2>
           </div>
           <span className="font-title-md text-title-md text-on-surface whitespace-nowrap tabular-nums">
-            {formatSAR(price)}
+            {priceLabel}
             <span className="text-on-surface-variant text-[11px]"> / 60 min</span>
           </span>
         </div>
@@ -299,7 +308,7 @@ export default function BookingPanel({ trainer }) {
               {booking
                 ? tl('Reserving…')
                 : slot
-                ? tl('Book {0} · {1}', { 0: slot.label, 1: formatSAR(price) })
+                ? tl('Book {0} · {1}', { 0: slot.label, 1: priceLabel })
                 : tl('Pick a time')}
             </button>
             <p className="text-on-surface-variant text-[11px]">

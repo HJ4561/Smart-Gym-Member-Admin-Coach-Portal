@@ -2,14 +2,14 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { notificationsService } from '../services/notificationsService';
+import { NOTIFICATIONS_CHANGED, notificationsService } from '../services/notificationsService';
 import { dashboardService } from '../services/dashboardService';
 import { membersService } from '../services/membersService';
 import { tl, locale } from '../i18n';
 import LangToggle from '../i18n/LangToggle';
 import { MenuButton } from '../layouts/MobileNav';
 
-const POLL_MS = 60_000;
+const POLL_MS = 10_000;   // new notifications show within seconds; changes made here show at once
 const PUBLIC_SITE = import.meta.env.VITE_PUBLIC_SITE_URL || 'https://smart-gym-three.vercel.app';
 
 function timeAgo(iso) {
@@ -57,7 +57,8 @@ export default function Header() {
   const initials = displayName.split(' ').map((w) => w[0]).join('').slice(0, 2).toUpperCase();
   const avatar = user?.avatar_url || user?.avatar || null;
 
-  // Notifications + live occupancy, refreshed every minute.
+  // Notifications + live occupancy: every 10 s, when the tab comes back, and at once when
+  // notifications are read or deleted anywhere (notifications page, another tab).
   const loadLive = useCallback(async () => {
     const [list, count, occ] = await Promise.allSettled([
       notificationsService.list(),
@@ -72,11 +73,18 @@ export default function Header() {
   useEffect(() => {
     let alive = true;
     (async () => { if (alive) await loadLive(); })();
-    const id = setInterval(loadLive, POLL_MS);
+    const id = setInterval(() => document.visibilityState === 'visible' && loadLive(), POLL_MS);
+    window.addEventListener(NOTIFICATIONS_CHANGED, loadLive);
+    window.addEventListener('focus', loadLive);
     membersService.myMembership()
       .then((m) => { if (alive) setTier(m?.plan?.display_name || ''); })
       .catch(() => {});
-    return () => { alive = false; clearInterval(id); };
+    return () => {
+      alive = false;
+      clearInterval(id);
+      window.removeEventListener(NOTIFICATIONS_CHANGED, loadLive);
+      window.removeEventListener('focus', loadLive);
+    };
   }, [loadLive]);
   // Close dropdowns on outside click
   useClickOutside(notificationsRef, () =>

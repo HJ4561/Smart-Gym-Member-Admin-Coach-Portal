@@ -1,5 +1,7 @@
 // src/pages/member/NutritionPlan.jsx
-// The member's active nutrition plan: daily targets, today's progress and the nutritionist's message.
+// The member's active nutrition plans (one per nutritionist they've paid): daily targets, today's
+// progress and each nutritionist's message.
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useApi } from '../../hooks/useApi';
@@ -13,8 +15,11 @@ const GOAL_LABEL = {
 const initials = (name = '') => name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase() || '?';
 
 export default function NutritionPlan() {
-  const { data: plan, loading, error } = useApi(() => nutritionService.myPlan(), [], { showError: false });
+  const { data: plans, loading, error } = useApi(() => nutritionService.myPlans(), [], { showError: false });
   const { data: summary } = useApi(() => nutritionService.dailySummary(), [], { showError: false });
+  const [pickedId, setPickedId] = useState(null);
+  const list = Array.isArray(plans) ? plans : [];
+  const plan = list.find((p) => p.id === pickedId) || list[0];
 
   if (loading) {
     return (
@@ -61,6 +66,32 @@ export default function NutritionPlan() {
           {plan.cycle_weeks ? ` · ${tl('{0}-week cycle', { 0: plan.cycle_weeks })}` : ''}
         </p>
       </motion.header>
+
+      {list.length > 1 && (
+        <div className="flex flex-col gap-2">
+          <span className="text-[11px] uppercase tracking-widest text-on-surface-variant">
+            {tl('Your nutritionists ({0})', { 0: list.length })}
+          </span>
+          <div className="flex flex-wrap gap-2" role="group" aria-label={tl('Your nutritionists')}>
+            {list.map((p) => {
+              const on = p.id === plan.id;
+              const who = p.nutritionist_name || tl('Your nutritionist');
+              return (
+                <button key={p.id} type="button" aria-pressed={on} onClick={() => setPickedId(p.id)}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-[13px] ${on
+                    ? 'border-primary-container bg-primary-container/15 text-on-surface'
+                    : 'border-surface-container-high bg-surface-container text-on-surface-variant hover:text-on-surface'}`}>
+                  {p.nutritionist_avatar
+                    ? <img src={p.nutritionist_avatar} alt="" className="w-6 h-6 rounded-full object-cover" />
+                    : <span className="w-6 h-6 rounded-full bg-primary-container/20 text-primary grid place-items-center text-[10px] font-bold">{initials(who)}</span>}
+                  <span className="font-bold">{who}</span>
+                  <span className="text-[11px]">· {tl(GOAL_LABEL[p.goal] || p.goal)}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {plan.reviewed_at ? (
         <div className="flex items-start gap-3 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4 text-emerald-200">

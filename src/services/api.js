@@ -8,6 +8,12 @@ const api = axios.create({
   },
 });
 
+// Ends the sign-in only. Everything else this browser keeps — trusted-device tokens ("don't ask
+// for a code on this device for 30 days"), language, filters — must survive an expired session.
+function clearSession() {
+  ['access_token', 'refresh_token', 'user'].forEach((k) => localStorage.removeItem(k));
+}
+
 // Request interceptor — attach JWT token
 api.interceptors.request.use(
   (config) => {
@@ -53,7 +59,7 @@ api.interceptors.response.use(
       const refreshToken = localStorage.getItem('refresh_token');
       if (!refreshToken) {
         // No refresh token — logout
-        localStorage.clear();
+        clearSession();
         window.location.href = '/login';
         return Promise.reject(error);
       }
@@ -69,7 +75,7 @@ api.interceptors.response.use(
         originalRequest.headers.Authorization = `Bearer ${data.access}`;
         return api(originalRequest);
       } catch (refreshError) {
-        localStorage.clear();
+        clearSession();
         window.location.href = '/login';
         return Promise.reject(refreshError);
       }

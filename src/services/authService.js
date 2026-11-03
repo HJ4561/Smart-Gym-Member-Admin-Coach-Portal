@@ -103,10 +103,13 @@ export const authService = {
 
   /** POST /auth/change-password/ — 400 carries field errors (old_password, new_password, …). */
   async changePassword(oldPassword, newPassword, newPasswordConfirm) {
+    // This browser stays trusted (other devices ask for a code again).
+    const token = deviceToken(this.getCurrentUser()?.email);
     const { data } = await api.post('/auth/change-password/', {
       old_password: oldPassword,
       new_password: newPassword,
       new_password_confirm: newPasswordConfirm,
+      ...(token ? { device_token: token } : {}),
     });
     return data;
   },

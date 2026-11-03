@@ -9,12 +9,12 @@ import { formatGymDateTime } from '../../utils/gymTime';
 import { formatSAR } from '../../utils/money';
 import { errorMessage } from '../../utils/apiError';
 import { tl } from '../../i18n';
-import { card, Chip, Page, Skeleton, Tabs } from './ui';
+import { card, Chip, Page, Skeleton, Tabs, LIVE_MS } from './ui';
 import { SESSION_LABEL, SESSION_TONE } from './sessionStatus';
 
 export default function CoachSessions() {
   const [scope, setScope] = useState('upcoming');
-  const { data, loading, refetch } = useApi(() => coachService.sessions(scope), [scope], { poll: 30_000 });
+  const { data, loading, refetch } = useApi(() => coachService.sessions(scope), [scope], { poll: LIVE_MS });
   const list = Array.isArray(data) ? data : [];
   const started = (s) => new Date(s.scheduled_at) <= new Date();
 

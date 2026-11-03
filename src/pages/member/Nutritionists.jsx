@@ -56,6 +56,9 @@ export default function Nutritionists() {
     [],
     { showError: false }
   );
+  // Every nutritionist the member has a plan with (one plan per paid nutritionist).
+  const { data: myPlans } = useApi(() => nutritionService.myPlans(), [], { showError: false });
+  const myNutritionistIds = new Set((Array.isArray(myPlans) ? myPlans : []).map((p) => Number(p.nutritionist_id)));
 
   const { data: latestDexa } = useApi(
     () => nutritionService.latestDexa(),
@@ -115,10 +118,7 @@ export default function Nutritionists() {
   const others = list.filter((n) => n.id !== featured?.id);
 
   const assignedNutritionistName = plan?.nutritionist_name || null;
-  const isFeaturedAssigned =
-    assignedNutritionistName &&
-    featured &&
-    (plan?.nutritionist_id ? plan.nutritionist_id === featured.id : assignedNutritionistName === featured.user?.full_name);
+  const isFeaturedAssigned = !!featured && myNutritionistIds.has(Number(featured.id));
 
   // ---- Handlers ----
   const handleLogMeal = async () => {
