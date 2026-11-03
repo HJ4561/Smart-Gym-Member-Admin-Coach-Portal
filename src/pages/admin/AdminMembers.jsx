@@ -11,6 +11,8 @@ import { formatSAR } from '../../utils/money';
 import { Drawer, Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import { tl, locale } from '../../i18n';
+import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
+import HighlightBar from '../../components/admin/HighlightBar';
 
 const FILTERS = [
   ['', tl("All"), 'total'], ['active', tl("Active"), 'active'], ['expiring', tl("Expiring (14 days)"), 'expiring'],
@@ -24,6 +26,7 @@ const BADGE = {
 
 export default function AdminMembers() {
   const [params] = useSearchParams();   // ?status= from alerts and insights
+  const highlight = useHighlight();     // ?highlight= ids: the list shows just those members
   const [status, setStatus] = useState(() => (FILTERS.some(([id]) => id && id === params.get('status')) ? params.get('status') : ''));
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -42,14 +45,15 @@ export default function AdminMembers() {
     const id = setTimeout(async () => {
       setLoading(true);
       try {
-        const [list, st] = await Promise.all([api.members({ status, search: search.trim(), page }), api.memberStats()]);
+        const [list, st] = await Promise.all([
+          api.members({ status, search: search.trim(), page, ids: highlight.raw || undefined }), api.memberStats()]);
         if (!alive) return;
         setData(list);
         setStats(st);
       } catch (err) { toast.error(errorMessage(err)); } finally { if (alive) setLoading(false); }
     }, 250);
     return () => { alive = false; clearTimeout(id); };
-  }, [status, search, page, version]);
+  }, [status, search, page, version, highlight.raw]);
 
   const openFile = async (id) => {
     try { setFile(await api.member(id)); } catch (err) { toast.error(errorMessage(err)); }
@@ -115,6 +119,8 @@ export default function AdminMembers() {
         )}
       </div>
 
+      <div className="mb-4 empty:hidden"><HighlightBar highlight={highlight} noun={[tl('member'), tl('members')]} ready={!loading} /></div>
+
       {loading && !data.results.length ? <Empty>{tl("Loading…")}</Empty> : !data.results.length ? <Empty>{tl("No members here.")}</Empty> : (
         <div className="bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg overflow-x-auto">
           <table className="w-full text-left text-[13px]">
@@ -131,7 +137,8 @@ export default function AdminMembers() {
             </thead>
             <tbody>
               {data.results.map((m) => (
-                <tr key={m.id} className={`border-b border-[#1a1a1e] last:border-0 hover:bg-[#131316] cursor-pointer ${m.is_active ? '' : 'opacity-60'}`}
+                <tr key={m.id} data-highlight={highlight.has(m.id)}
+                  className={`border-b border-[#1a1a1e] last:border-0 hover:bg-[#131316] cursor-pointer ${m.is_active ? '' : 'opacity-60'} ${highlight.has(m.id) ? HIGHLIGHT_ROW : ''}`}
                   onClick={() => openFile(m.id)}>
                   <td className="p-3" onClick={(e) => e.stopPropagation()}>
                     <input type="checkbox" aria-label={tl("Select {0}", { 0: m.full_name })} checked={selected.includes(m.id)} onChange={() => toggle(m.id)} />

@@ -10,6 +10,8 @@ import { Drawer, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { tl, locale } from '../../i18n';
+import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
+import HighlightBar from '../../components/admin/HighlightBar';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const CATEGORIES = [['strength', tl("Strength")], ['hiit', tl("HIIT")], ['combat', tl("Combat")], ['mobility', tl("Mobility")],
@@ -22,6 +24,7 @@ const NEW = { name: '', category: 'strength', level: 'all_levels', description: 
 export default function AdminClasses() {
   const [showPaused, setShowPaused] = useState(false);
   const [editing, setEditing] = useState(null);
+  const highlight = useHighlight();
   const { data, loading, refetch } = useApi(() => classesService.adminList(showPaused ? { include_paused: 1 } : {}), [showPaused], { poll: 60_000 });
   const { data: stats, refetch: refetchStats } = useApi(() => classesService.stats(), []);
   const { data: trainers } = useApi(() => adminService.trainersAdmin(), []);
@@ -55,6 +58,8 @@ export default function AdminClasses() {
         ))}
       </div>
 
+      <HighlightBar highlight={highlight} noun={[tl('class'), tl('classes')]} ready={!loading} />
+
       {loading ? (
         <div className="h-96 bg-[#0e0e0f] rounded-lg animate-pulse" />
       ) : list.length === 0 ? (
@@ -79,9 +84,10 @@ export default function AdminClasses() {
                     <td key={d} className="px-1 py-2">
                       <div className="flex flex-col gap-1">
                         {at(d, t).map((c) => (
-                          <button key={c.id} type="button" onClick={() => setEditing(c)}
+                          <button key={c.id} type="button" onClick={() => setEditing(c)} data-highlight={highlight.has(c.id)}
                             className={`text-left p-2 rounded border-l-2 bg-[#131316] hover:bg-[#1a1a1e] ${
-                              !c.is_active ? 'border-neutral-600 opacity-50' : c.status === 'full' ? 'border-rose-500' : 'border-emerald-500'}`}>
+                              !c.is_active ? 'border-neutral-600 opacity-50' : c.status === 'full' ? 'border-rose-500' : 'border-emerald-500'} ${
+                              highlight.has(c.id) ? HIGHLIGHT_ROW : ''}`}>
                             <span className="block text-[12px] text-on-surface font-bold leading-tight">{c.name}</span>
                             <span className="block text-[10px] text-on-surface-variant truncate">{c.trainer || tl("No trainer")}{c.location && ` · ${c.location}`}</span>
                             <span className="block text-[10px] text-on-surface-variant mt-0.5">

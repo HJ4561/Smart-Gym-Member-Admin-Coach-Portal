@@ -10,6 +10,8 @@ import { errorMessage } from '../../utils/apiError';
 import { Drawer, Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls } from '../../components/site/siteStyles';
 import { tl, locale } from '../../i18n';
+import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
+import HighlightBar from '../../components/admin/HighlightBar';
 
 const TABS = [
   { id: '', label: tl("All") },
@@ -40,8 +42,9 @@ const OPEN = ['paid', 'preparing', 'ready', 'dispatched'];
 const sar = (v) => `SAR ${Number(v || 0).toFixed(2)}`;
 
 export default function ShopOrders() {
-  const [params] = useSearchParams();             // ?q=ORD-… from the header search
-  const [tab, setTab] = useState('');
+  const [params] = useSearchParams();             // ?q=ORD-… from the header search, ?tab=review from alerts
+  const highlight = useHighlight();
+  const [tab, setTab] = useState(TABS.some((t) => t.id && t.id === params.get('tab')) ? params.get('tab') : '');
   const [q, setQ] = useState(params.get('q') || '');
   const [data, setData] = useState({ counts: {}, results: [] });
   const [review, setReview] = useState([]);
@@ -140,11 +143,16 @@ export default function ShopOrders() {
           onChange={(e) => setQ(e.target.value)} aria-label={tl("Search orders")} />
       )}
 
+      {tab === 'review' && (
+        <div className="mb-4 empty:hidden"><HighlightBar highlight={highlight} noun={[tl('payment'), tl('payments')]} ready={!loading} /></div>
+      )}
+
       {loading ? <Empty>{tl("Loading…")}</Empty> : tab === 'review' ? (
         !review.length ? <Empty>{tl("Nothing to review — every payment was delivered.")}</Empty> : (
           <div className="flex flex-col gap-2">
             {review.map((i) => (
-              <div key={i.id} className="bg-[#0e0e0f] border border-amber-500/30 rounded-lg p-4 flex flex-col md:flex-row md:items-center gap-3 justify-between">
+              <div key={i.id} data-highlight={highlight.has(i.id)}
+                className={`bg-[#0e0e0f] border border-amber-500/30 rounded-lg p-4 flex flex-col md:flex-row md:items-center gap-3 justify-between ${highlight.has(i.id) ? HIGHLIGHT_ROW : ''}`}>
                 <div className="min-w-0">
                   <div className="text-on-surface font-bold">{i.description}</div>
                   <div className="text-[12px] text-on-surface-variant">{i.member.name} · {i.member.email} · {new Date(i.created_at).toLocaleString(locale)}</div>

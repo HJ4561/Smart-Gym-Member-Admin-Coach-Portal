@@ -11,6 +11,8 @@ import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { machineQrLink } from '../../utils/machineQr';
 import { tl } from '../../i18n';
+import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
+import HighlightBar from '../../components/admin/HighlightBar';
 import { VideoEditor } from '../coach/CoachVideos';
 
 const STATUS = [['', tl("All")], ['active', tl("Active")], ['offline', tl("Offline")], ['untagged', tl("No QR")]];
@@ -26,6 +28,7 @@ export default function AdminMachines() {
   const [status, setStatus] = useState('');
   const [editing, setEditing] = useState(null);
   const [qrFor, setQrFor] = useState(null);
+  const highlight = useHighlight();
 
   const { data, loading, refetch } = useApi(
     () => adminService.machines({ q: q || undefined, category: category || undefined, status: status || undefined }),
@@ -87,6 +90,8 @@ export default function AdminMachines() {
           placeholder={tl("Search name, QR code, equipment…")} aria-label={tl("Search machines")} />
       </div>
 
+      <HighlightBar highlight={highlight} noun={[tl('machine'), tl('machines')]} ready={!loading} />
+
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-48 bg-[#0e0e0f] rounded-lg animate-pulse" />)}
@@ -96,7 +101,8 @@ export default function AdminMachines() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {list.map((m) => (
-            <div key={m.id} className={`bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg p-4 flex flex-col gap-3 ${m.is_active ? '' : 'opacity-60'}`}>
+            <div key={m.id} data-highlight={highlight.has(m.id)}
+              className={`bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg p-4 flex flex-col gap-3 ${m.is_active ? '' : 'opacity-60'} ${highlight.has(m.id) ? HIGHLIGHT_ROW : ''}`}>
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="text-[10px] uppercase tracking-widest text-primary font-bold">{tl(m.category_label)} · {m.muscle_label}</div>

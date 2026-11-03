@@ -22,6 +22,8 @@ const TRAINER_API = {
 };
 import { errorMessage } from '../../utils/apiError';
 import { tl } from '../../i18n';
+import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
+import HighlightBar from '../../components/admin/HighlightBar';
 
 const TRAINER_FILTERS = [['', tl("All")], ['verified', tl("Verified")], ['unverified', tl("Not verified")], ['hidden', tl("Hidden")]];
 const COURSE_FILTERS = [['', tl("All")], ['published', tl("Published")], ['draft', tl("Drafts")], ['pending', tl("In review")], ['archived', tl("Archived")]];
@@ -105,6 +107,7 @@ function TrainersTab({ onChanged }) {
   const [search, setSearch] = useState('');
   const [status, setStatus] = useState('');
   const [editing, setEditing] = useState(null);   // trainer row, or NEW_TRAINER
+  const highlight = useHighlight();
   const { data, loading, refetch } = useApi(
     () => adminService.trainersAdmin({ search: search || undefined, status: status || undefined }), [search, status]);
   const list = Array.isArray(data) ? data : [];
@@ -121,6 +124,8 @@ function TrainersTab({ onChanged }) {
         <button type="button" className={btn.primary} onClick={() => setEditing(NEW_TRAINER)}>{tl("+ Add trainer")}</button>
       </div>
 
+      <HighlightBar highlight={highlight} noun={[tl('trainer'), tl('trainers')]} ready={!loading} />
+
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-44 bg-[#0e0e0f] rounded-lg animate-pulse" />)}
@@ -130,8 +135,8 @@ function TrainersTab({ onChanged }) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {list.map((t) => (
-            <button key={t.id} type="button" onClick={() => setEditing(t)}
-              className={`text-left bg-[#0e0e0f] border border-[#1a1a1e] hover:border-primary-container/60 rounded-lg p-4 flex flex-col gap-3 ${t.is_active ? '' : 'opacity-60'}`}>
+            <button key={t.id} type="button" onClick={() => setEditing(t)} data-highlight={highlight.has(t.id)}
+              className={`text-left bg-[#0e0e0f] border border-[#1a1a1e] hover:border-primary-container/60 rounded-lg p-4 flex flex-col gap-3 ${t.is_active ? '' : 'opacity-60'} ${highlight.has(t.id) ? HIGHLIGHT_ROW : ''}`}>
               <div className="flex items-center gap-3">
                 {t.photo_url
                   ? <img src={t.photo_url} alt="" className="w-12 h-12 rounded object-cover" />

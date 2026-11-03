@@ -2221,5 +2221,17 @@
  "Session booked — see you there!": "تم حجز الجلسة — نراك هناك!",
  "Your nutritionists ({0})": "أخصائيو التغذية لديك ({0})",
  "Your nutritionists": "أخصائيو التغذية لديك",
- "Requesting here adds a plan with {0}. Your other plans stay as they are.": "الطلب هنا يضيف خطة مع {0}. تبقى خططك الأخرى كما هي."
+ "Requesting here adds a plan with {0}. Your other plans stay as they are.": "الطلب هنا يضيف خطة مع {0}. تبقى خططك الأخرى كما هي.",
+ "members": "أعضاء",
+ "signup": "تسجيل",
+ "signups": "تسجيلات",
+ "product": "منتج",
+ "products": "منتجات",
+ "trainers": "مدربين",
+ "class": "حصة",
+ "classes": "حصص",
+ "machine": "جهاز",
+ "machines": "أجهزة",
+ "payments": "دفعات",
+ "Needs attention: {0} {1} highlighted below.": "يحتاج إلى متابعة: {0} {1} مميزة أدناه."
 }

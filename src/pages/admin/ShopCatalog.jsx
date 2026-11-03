@@ -11,6 +11,8 @@ import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import { formatSAR } from '../../utils/money';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { tl, locale } from '../../i18n';
+import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
+import HighlightBar from '../../components/admin/HighlightBar';
 
 const FILTERS = [['', tl("All")], ['active', tl("On sale")], ['low', tl("Low stock")], ['out', tl("Out of stock")], ['hidden', tl("Hidden")]];
 
@@ -75,6 +77,7 @@ function Products({ categories, onChanged }) {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
   const [editing, setEditing] = useState(null);
+  const highlight = useHighlight();
   const { data, loading, refetch } = useApi(
     () => adminService.shopProducts({ q: q || undefined, status: status || undefined }), [q, status]);
   const list = Array.isArray(data) ? data : [];
@@ -103,6 +106,8 @@ function Products({ categories, onChanged }) {
 
       {!categories.length && <p className="text-[12px] text-amber-300">{tl("Add a category first (Categories tab), then add products to it.")}</p>}
 
+      <HighlightBar highlight={highlight} noun={[tl('product'), tl('products')]} ready={!loading} />
+
       {loading ? (
         <div className="h-48 bg-[#0e0e0f] rounded-lg animate-pulse" />
       ) : list.length === 0 ? (
@@ -118,7 +123,8 @@ function Products({ categories, onChanged }) {
             </thead>
             <tbody>
               {list.map((p) => (
-                <tr key={p.id} onClick={() => setEditing(p)} className="border-b border-[#1a1a1e] last:border-0 hover:bg-[#131316] cursor-pointer">
+                <tr key={p.id} onClick={() => setEditing(p)} data-highlight={highlight.has(p.id)}
+                  className={`border-b border-[#1a1a1e] last:border-0 hover:bg-[#131316] cursor-pointer ${highlight.has(p.id) ? HIGHLIGHT_ROW : ''}`}>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       {p.image_url ? <img src={p.image_url} alt="" className="w-10 h-10 rounded object-cover" />

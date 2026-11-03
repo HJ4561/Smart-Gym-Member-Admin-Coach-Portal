@@ -9,6 +9,8 @@ import { formatSAR } from '../../utils/money';
 import { errorMessage } from '../../utils/apiError';
 import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import { tl } from '../../i18n';
+import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
+import HighlightBar from '../../components/admin/HighlightBar';
 
 const STATUS_FILTERS = [
   { id: 'pending', label: tl("Pending") },
@@ -48,6 +50,7 @@ export default function AdminRegistrations() {
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [rejecting, setRejecting] = useState(null);   // the registration being rejected
+  const highlight = useHighlight();
   const load = async (background = false) => {
     if (!background) setLoading(true);
     try {
@@ -237,6 +240,8 @@ export default function AdminRegistrations() {
         </button>
       </div>
 
+      <div className="mb-4 empty:hidden"><HighlightBar highlight={highlight} noun={[tl('signup'), tl('signups')]} ready={!loading} /></div>
+
       {/* Table */}
       {loading ? (
         <div className="text-center py-16 text-on-surface-variant text-[13px]">
@@ -274,7 +279,8 @@ export default function AdminRegistrations() {
                   return (
                     <tr
                       key={r.id}
-                      className="border-b border-[#1a1a1e] last:border-0 hover:bg-[#131316]"
+                      data-highlight={highlight.has(r.id)}
+                      className={`border-b border-[#1a1a1e] last:border-0 hover:bg-[#131316] ${highlight.has(r.id) ? HIGHLIGHT_ROW : ''}`}
                     >
                       <td className="px-4 py-3">
                         {r.photo_url ? (
