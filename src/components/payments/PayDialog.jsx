@@ -6,8 +6,10 @@
 import { useEffect, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { paymentsService } from '../../services/paymentsService';
+import { zatcaService } from '../../services/zatcaService';
 import { errorMessage } from '../../utils/apiError';
 import { formatSAR } from '../../utils/money';
+import CompanyPicker from './CompanyPicker';
 import MoyasarForm from './MoyasarForm';
 import { tl } from '../../i18n';
 
@@ -26,32 +28,42 @@ export default function PayDialog({ request, title, allowCredit = false, onPaid,
   const [intent, setIntent] = useState(null);
   const [error, setError] = useState('');
   const [credit, setCredit] = useState(null);
+  // ZATCA B2B: when the gym can issue company tax invoices, the member may pick one of their companies.
+  const [b2b, setB2b] = useState({ b2b: false, companies: [] });
+  const [wantCompany, setWantCompany] = useState(false);
+  const [companyId, setCompanyId] = useState(null);
 
   useEffect(() => {
     if (!open) return undefined;
     let alive = true;
     (async () => {
-      setStep(allowCredit ? 'choose' : 'working');
+      setStep('working');
       setIntent(null);
       setError('');
-      if (allowCredit) {
-        try {
-          const c = await paymentsService.lockerCredit();
-          if (alive) setCredit(Number(c.balance));
-        } catch { if (alive) setCredit(null); }
-        return;
-      }
+      setWantCompany(false);
+      setCompanyId(null);
+      const [c, info] = await Promise.all([
+        allowCredit ? paymentsService.lockerCredit().catch(() => null) : null,
+        zatcaService.myCompanies().catch(() => ({ b2b: false, companies: [] })),
+      ]);
+      if (!alive) return;
+      setCredit(c ? Number(c.balance) : null);
+      setB2b(info);
+      if (allowCredit || info.b2b) { setStep('choose'); return; }
       await startCard(alive);
     })();
     return () => { alive = false; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
+  const body = (extra = {}) => ({ ...request, ...(wantCompany && companyId ? { business_customer_id: companyId } : {}), ...extra });
+  const companyMissing = wantCompany && !companyId;
+
   async function startCard(alive = true) {
     setStep('working');
     setError('');
     try {
-      const data = await paymentsService.checkout(request);
+      const data = await paymentsService.checkout(body());
       if (!alive) return;
       setIntent(data);
       // Where to come back to after the 3-D Secure redirect.
@@ -68,7 +80,7 @@ export default function PayDialog({ request, title, allowCredit = false, onPaid,
     setStep('working');
     setError('');
     try {
-      const data = await paymentsService.checkout({ ...request, method: 'locker_credit' });
+      const data = await paymentsService.checkout(body({ method: 'locker_credit' }));
       setIntent(data);
       setStep('done');
       onPaid?.(data);
@@ -111,13 +123,18 @@ export default function PayDialog({ request, title, allowCredit = false, onPaid,
 
             {step === 'choose' && (
               <div className="flex flex-col gap-2">
-                <button type="button" onClick={() => startCard()}
-                  className="w-full py-3 rounded-lg bg-primary-container hover:bg-secondary-container text-on-primary-container font-bold uppercase tracking-wider text-[12px] flex items-center justify-center gap-2">
+                {b2b.b2b && (
+                  <CompanyPicker companies={b2b.companies} want={wantCompany} onWant={setWantCompany}
+                    value={companyId} onChange={setCompanyId}
+                    onAdded={(c) => { setB2b((s) => ({ ...s, companies: [...s.companies, c] })); setCompanyId(c.id); }} />
+                )}
+                <button type="button" onClick={() => startCard()} disabled={companyMissing}
+                  className="w-full py-3 rounded-lg bg-primary-container hover:bg-secondary-container text-on-primary-container font-bold uppercase tracking-wider text-[12px] flex items-center justify-center gap-2 disabled:opacity-50">
                   <span className="material-symbols-outlined text-[18px]">credit_card</span>
                   {tl("Card (mada / Visa / Mastercard) or STC Pay")}
                 </button>
                 {allowCredit && (
-                  <button type="button" onClick={payWithCredit} disabled={credit === null}
+                  <button type="button" onClick={payWithCredit} disabled={credit === null || companyMissing}
                     className="w-full py-3 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-bold uppercase tracking-wider text-[12px] flex items-center justify-center gap-2 disabled:opacity-50">
                     <span className="material-symbols-outlined text-[18px]">account_balance_wallet</span>
                     {tl("Locker credit")}{credit !== null && tl(" (balance {0})", { 0: formatSAR(credit) })}

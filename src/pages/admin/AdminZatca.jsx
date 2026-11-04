@@ -19,11 +19,12 @@ const TABS = [
   ['details', tl('Business details'), 'storefront'],
   ['golive', tl('Go live'), 'rocket_launch'],
   ['invoices', tl('Invoices'), 'receipt_long'],
+  ['companies', tl('Companies'), 'domain'],
   ['activity', tl('Activity'), 'history'],
 ];
 const STATUS_BADGE = {
   reported: 'bg-emerald-500/15 text-emerald-400', pending: 'bg-amber-500/15 text-amber-300',
-  rejected: 'bg-rose-500/15 text-rose-300',
+  rejected: 'bg-rose-500/15 text-rose-300', cleared: 'bg-emerald-500/15 text-emerald-400',
 };
 const sar = (v) => `SAR ${Number(v || 0).toFixed(2)}`;
 const when = (v) => (v ? new Date(v).toLocaleString(locale, { dateStyle: 'medium', timeStyle: 'short' }) : '—');
@@ -135,6 +136,7 @@ export default function AdminZatca() {
       {tab === 'details' && <Details s={s} isAdmin={isAdmin} onSaved={setData} />}
       {tab === 'golive' && <GoLive s={s} isAdmin={isAdmin} onChanged={setData} />}
       {tab === 'invoices' && <Invoices isAdmin={isAdmin} onChanged={refetch} />}
+      {tab === 'companies' && <Companies isAdmin={isAdmin} b2b={s.b2b} />}
       {tab === 'activity' && <Activity />}
     </div>
   );
@@ -164,7 +166,7 @@ function Overview({ s, isAdmin, onChanged, refetch, go }) {
     } catch (err) { toast.error(errorMessage(err)); } finally { setBusy(false); }
   };
   const tiles = [
-    [tl('Reported'), s.summary.reported, 'text-emerald-400'], [tl('Waiting to be sent'), s.summary.pending, 'text-amber-300'],
+    [tl('Reported / cleared'), s.summary.reported, 'text-emerald-400'], [tl('Waiting to be sent'), s.summary.pending, 'text-amber-300'],
     [tl('Late (12 h+)'), s.summary.late, s.summary.late ? 'text-rose-400' : 'text-on-surface'],
     [tl('Rejected'), s.summary.rejected, s.summary.rejected ? 'text-rose-400' : 'text-on-surface'],
     [tl('Accepted with warnings'), s.summary.with_warnings, 'text-on-surface'],
@@ -222,6 +224,7 @@ function Overview({ s, isAdmin, onChanged, refetch, go }) {
           ) : (
             <dl className="flex flex-col gap-2">
               <Row label={tl('Device (EGS unit)')} value={d.common_name} />
+              <Row label={tl('Invoice types')} value={d.b2b ? tl('Members and companies (B2C + B2B)') : tl('Members only (B2C)')} />
               <Row label={tl('Environment')} value={d.environment_label} />
               <Row label={tl('Private key')} value={tl(d.private_key === 'set' ? 'Set' : 'Not set')} tone={d.private_key === 'set' ? 'ok' : 'bad'} />
               <Row label={tl('Production certificate')} value={tl(d.production_certificate === 'set' ? 'Set' : 'Not set')}
@@ -338,6 +341,7 @@ function GoLive({ s, isAdmin, onChanged }) {
   const env = dev?.environment || picked;     // an unfinished device keeps its environment
   const [chosen, setChosen] = useState(false);
   const [confirmProd, setConfirmProd] = useState(false);
+  const [withB2b, setWithB2b] = useState(true);
   const [detailsOk, setDetailsOk] = useState(false);
   const [otp, setOtp] = useState('');
   const [busy, setBusy] = useState('');
@@ -384,6 +388,13 @@ function GoLive({ s, isAdmin, onChanged }) {
               </button>
             ))}
           </div>
+          <label className="flex items-start gap-2 text-[13px] text-on-surface">
+            <input type="checkbox" checked={withB2b} onChange={(e) => setWithB2b(e.target.checked)} className="mt-0.5" />
+            <span>
+              {tl('Also issue company (B2B) tax invoices')}
+              <span className="block text-[12px] text-on-surface-variant">{tl('Members can ask for a tax invoice in their company’s name; ZATCA clears each one before it is issued. Adds three more compliance checks.')}</span>
+            </span>
+          </label>
           {env === 'production' && (
             <label className="flex items-start gap-2 text-[13px] text-rose-200">
               <input type="checkbox" checked={confirmProd} onChange={(e) => setConfirmProd(e.target.checked)} className="mt-0.5" />
@@ -410,7 +421,7 @@ function GoLive({ s, isAdmin, onChanged }) {
           <div className="flex gap-2">
             <button type="button" className={btn.ghost} onClick={() => setDetailsOk(false)}>{tl('Back')}</button>
             <button type="button" className={btn.primary} disabled={!!busy}
-              onClick={() => run('start', () => api.start(env, confirmProd), tl('Device created'))}>
+              onClick={() => run('start', () => api.start(env, confirmProd, withB2b), tl('Device created'))}>
               {busy === 'start' ? tl('Creating…') : tl('Create device')}</button>
           </div>
         </Step>
@@ -475,7 +486,7 @@ function GoLive({ s, isAdmin, onChanged }) {
 // INVOICES
 // ============================================================
 const FILTERS = [['', tl('All')], ['pending', tl('Waiting')], ['late', tl('Late')], ['rejected', tl('Rejected')],
-  ['warnings', tl('With warnings')], ['reported', tl('Reported')]];
+  ['warnings', tl('With warnings')], ['reported', tl('Reported')], ['cleared', tl('Cleared')], ['company', tl('Company invoices')]];
 
 function Invoices({ isAdmin, onChanged }) {
   const [status, setStatus] = useState('');
@@ -495,12 +506,12 @@ function Invoices({ isAdmin, onChanged }) {
       onChanged();
     } catch (err) { toast.error(errorMessage(err)); }
   };
-  const download = async () => {
+  const download = async (copy) => {
     try {
-      const url = URL.createObjectURL(await api.xml(open.id));
+      const url = URL.createObjectURL(await api.xml(open.id, copy));
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${open.number}.xml`;
+      a.download = `${open.number}${copy === 'cleared' ? '-cleared' : ''}.xml`;
       a.click();
       URL.revokeObjectURL(url);
     } catch (err) { toast.error(errorMessage(err)); }
@@ -537,7 +548,10 @@ function Invoices({ isAdmin, onChanged }) {
                   </td>
                   <td className="px-4 py-3 text-on-surface-variant">{tl(d.doc_type_label)}</td>
                   <td className="px-4 py-3 text-on-surface-variant whitespace-nowrap">{when(d.issued_at)}</td>
-                  <td className="px-4 py-3 text-on-surface">{d.customer_name || '—'}</td>
+                  <td className="px-4 py-3 text-on-surface" dir="auto">
+                    {d.customer_name || '—'}
+                    {d.standard && <span className="ms-2 text-[9px] text-sky-300 font-bold uppercase">{tl('Company')}</span>}
+                  </td>
                   <td className="px-4 py-3 text-right text-on-surface-variant">{Number(d.vat).toFixed(2)}</td>
                   <td className="px-4 py-3 text-right text-on-surface whitespace-nowrap">{sar(d.total)}</td>
                   <td className="px-4 py-3 whitespace-nowrap">
@@ -564,6 +578,13 @@ function Invoices({ isAdmin, onChanged }) {
           <div className="p-5 flex flex-col gap-4 text-[13px]">
             <dl className="flex flex-col gap-2">
               <Row label={tl('ZATCA')} value={tl(open.status_label)} tone={{ reported: 'ok', pending: 'warn', rejected: 'bad' }[open.status]} />
+              {open.standard && open.buyer_details && (
+                <>
+                  <Row label={tl('Buyer')} value={open.buyer_details.name} />
+                  <Row label={tl('Buyer VAT number')} value={open.buyer_details.vat_number} />
+                  <Row label={tl('Buyer address')} value={[`${open.buyer_details.building_number} ${open.buyer_details.street}`, open.buyer_details.district, open.buyer_details.city, open.buyer_details.postal_code].join(', ')} />
+                </>
+              )}
               {open.original && <Row label={tl('Original invoice')} value={open.original} />}
               {open.reason && <Row label={tl('Reason')} value={open.reason} />}
               <Row label={tl('Customer')} value={open.customer_name || '—'} />
@@ -601,7 +622,10 @@ function Invoices({ isAdmin, onChanged }) {
               <p className="text-on-surface-variant">{tl('Credit notes')}: {open.credit_notes.map((n) => n.number).join(', ')}</p>
             )}
             <div className="flex gap-2 flex-wrap">
-              <button type="button" className={btn.ghost} onClick={download}>{tl('Download signed XML')}</button>
+              <button type="button" className={btn.ghost} onClick={() => download()}>{tl('Download signed XML')}</button>
+              {open.has_cleared_copy && (
+                <button type="button" className={btn.ghost} onClick={() => download('cleared')}>{tl('Download ZATCA’s cleared copy')}</button>
+              )}
               {isAdmin && open.status === 'pending' && <button type="button" className={btn.primary} onClick={send}>{tl('Send now')}</button>}
             </div>
           </div>
@@ -628,6 +652,58 @@ function Activity() {
           <span className="text-on-surface-variant">{e.actor}{e.device && ` · ${e.device}`}</span>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ============================================================
+// COMPANIES (B2B buyers)
+// ============================================================
+function Companies({ isAdmin, b2b }) {
+  const [q, setQ] = useState('');
+  const { data, loading, refetch } = useApi(() => api.companies({ q: q || undefined }), [q]);
+  const rows = Array.isArray(data) ? data : [];
+  const remove = async (c) => {
+    if (!window.confirm(tl('Remove {0}? Invoices already issued keep its details.', { 0: c.name }))) return;
+    try { await api.removeCompany(c.id); toast.success(tl('Company removed')); refetch(); } catch (err) { toast.error(errorMessage(err)); }
+  };
+  return (
+    <div className="flex flex-col gap-3">
+      {!b2b && (
+        <Notice tone="info" icon="info">
+          {tl('Company invoices are off: the live device only issues member (B2C) invoices. Go live again with “Also issue company (B2B) tax invoices” ticked.')}
+        </Notice>
+      )}
+      <p className="text-[13px] text-on-surface-variant">
+        {tl('Companies members buy for. Members add them when paying (“I need a tax invoice for my company”); the front desk can choose one when extending a membership.')}
+      </p>
+      <input className={`${inputCls} md:w-72`} value={q} onChange={(e) => setQ(e.target.value)}
+        placeholder={tl('Search company, VAT number or member…')} aria-label={tl('Search companies')} />
+      {loading && !data ? <Empty>{tl('Loading…')}</Empty> : !rows.length ? <Empty>{tl('No companies yet.')}</Empty> : (
+        <div className="bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg overflow-x-auto">
+          <table className="w-full text-[13px]">
+            <thead>
+              <tr className="border-b border-[#1a1a1e] text-left text-[10px] uppercase tracking-widest text-on-surface-variant">
+                <th className="px-4 py-3">{tl('Company')}</th><th className="px-4 py-3">{tl('VAT number')}</th>
+                <th className="px-4 py-3">{tl('Address')}</th><th className="px-4 py-3">{tl('Member')}</th><th className="px-4 py-3" />
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((c) => (
+                <tr key={c.id} className="border-b border-[#1a1a1e] last:border-0">
+                  <td className="px-4 py-3 text-on-surface font-bold" dir="auto">{c.name}{c.crn && <span className="block text-[11px] font-normal text-on-surface-variant">CR {c.crn}</span>}</td>
+                  <td className="px-4 py-3 font-mono text-on-surface-variant">{c.vat_number}</td>
+                  <td className="px-4 py-3 text-on-surface-variant">{c.building_number} {c.street}, {c.district}, {c.city} {c.postal_code}</td>
+                  <td className="px-4 py-3 text-on-surface">{c.owner_name}</td>
+                  <td className="px-4 py-3 text-right">
+                    {isAdmin && <button type="button" className={btn.ghost} onClick={() => remove(c)}>{tl('Remove')}</button>}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

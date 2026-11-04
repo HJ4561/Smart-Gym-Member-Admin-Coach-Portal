@@ -1,6 +1,7 @@
 import api from './api';
 
-// ZATCA e-invoicing (admin). Secrets never reach the browser: the device shows "set / not set" only.
+// ZATCA e-invoicing. Admin: secrets never reach the browser (the device shows "set / not set" only).
+// Members: the companies they buy for (B2B tax invoices).
 export const zatcaService = {
   async status() {
     const { data } = await api.get('/admin/zatca/status/');
@@ -12,8 +13,8 @@ export const zatcaService = {
   },
 
   // ---- go-live wizard ----
-  async start(environment, confirmProduction = false) {
-    const { data } = await api.post('/admin/zatca/onboard/start/', { environment, confirm_production: confirmProduction });
+  async start(environment, confirmProduction = false, b2b = false) {
+    const { data } = await api.post('/admin/zatca/onboard/start/', { environment, confirm_production: confirmProduction, b2b });
     return data;
   },
   async otp(deviceId, otp) {
@@ -42,8 +43,8 @@ export const zatcaService = {
     const { data } = await api.get(`/admin/zatca/documents/${id}/`);
     return data;
   },
-  async xml(id) {
-    const { data } = await api.get(`/admin/zatca/documents/${id}/xml/`, { responseType: 'blob' });
+  async xml(id, copy) {
+    const { data } = await api.get(`/admin/zatca/documents/${id}/xml/`, { params: copy ? { copy } : {}, responseType: 'blob' });
     return data;
   },
   async send(id) {
@@ -57,5 +58,27 @@ export const zatcaService = {
   async events() {
     const { data } = await api.get('/admin/zatca/events/');
     return data;
+  },
+
+  // ---- companies (B2B buyers) ----
+  async companies(params = {}) {
+    const { data } = await api.get('/admin/zatca/companies/', { params });
+    return data;
+  },
+  async removeCompany(id) {
+    await api.delete(`/admin/zatca/companies/${id}/`);
+  },
+
+  // ---- the member's own companies: { b2b, companies } ----
+  async myCompanies() {
+    const { data } = await api.get('/zatca/companies/');
+    return data;
+  },
+  async addMyCompany(payload) {
+    const { data } = await api.post('/zatca/companies/', payload);
+    return data;
+  },
+  async removeMyCompany(id) {
+    await api.delete(`/zatca/companies/${id}/`);
   },
 };

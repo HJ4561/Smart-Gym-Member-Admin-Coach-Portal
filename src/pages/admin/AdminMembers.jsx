@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { adminService as api } from '../../services/adminService';
+import { zatcaService } from '../../services/zatcaService';
 import { errorMessage } from '../../utils/apiError';
 import { formatDate, formatRemaining } from '../../utils/membershipTime';
 import { formatSAR } from '../../utils/money';
@@ -240,9 +241,17 @@ function MemberFile({ file }) {
 
 function ActionDialog({ dialog, busy, onClose, onSubmit }) {
   const [f, setF] = useState({});
+  const [companies, setCompanies] = useState([]);     // the member's saved companies → a B2B tax invoice
   useEffect(() => {
     const id = setTimeout(() => setF(dialog?.kind === 'extend' ? { months: 1, payment: 'cash', amount: '' } : dialog?.kind === 'freeze' ? { days: 14 } : { title: '', message: '' }), 0);
     return () => clearTimeout(id);
+  }, [dialog]);
+  useEffect(() => {
+    let alive = true;
+    if (dialog?.kind === 'extend' && dialog.id) {
+      zatcaService.companies({ member: dialog.id }).then((rows) => { if (alive) setCompanies(rows); }).catch(() => {});
+    }
+    return () => { alive = false; setCompanies([]); };
   }, [dialog]);
   if (!dialog) return null;
   const title = { extend: 'Extend membership', freeze: 'Freeze membership', message: tl("Send a message") }[dialog.kind];
@@ -266,6 +275,14 @@ function ActionDialog({ dialog, busy, onClose, onSubmit }) {
             {f.payment !== 'complimentary' && (
               <label className="flex flex-col gap-1"><span className={labelCls}>{tl("Amount received (SAR)")}</span>
                 <input className={inputCls} inputMode="decimal" required value={f.amount} onChange={(e) => setF({ ...f, amount: e.target.value })} /></label>
+            )}
+            {f.payment !== 'complimentary' && companies.length > 0 && (
+              <label className="flex flex-col gap-1"><span className={labelCls}>{tl("Tax invoice for")}</span>
+                <select className={inputCls} value={f.business_customer_id || ''}
+                  onChange={(e) => setF({ ...f, business_customer_id: e.target.value ? Number(e.target.value) : undefined })}>
+                  <option value="">{tl("The member (simplified invoice)")}</option>
+                  {companies.map((c) => <option key={c.id} value={c.id}>{c.name} · {c.vat_number}</option>)}
+                </select></label>
             )}
             <label className="flex flex-col gap-1"><span className={labelCls}>{tl("Note (optional)")}</span>
               <input className={inputCls} maxLength={120} value={f.note || ''} onChange={(e) => setF({ ...f, note: e.target.value })} /></label>
