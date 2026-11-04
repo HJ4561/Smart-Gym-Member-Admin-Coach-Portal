@@ -69,12 +69,24 @@ export default function AdminZatca() {
   const [params, setParams] = useSearchParams();
   const tab = TABS.some(([id]) => id === params.get('tab')) ? params.get('tab') : 'overview';
   const setTab = (id) => setParams(id === 'overview' ? {} : { tab: id }, { replace: true });
-  const { data: s, loading, refetch, setData } = useApi(() => api.status(), [], { poll: 30_000 });
+  const { data: s, loading, error, refetch, setData } = useApi(() => api.status(), [], { poll: 30_000 });
 
   if (loading && !s) {
     return <div className="p-6 md:p-8"><div className="h-96 bg-[#0e0e0f] rounded-lg animate-pulse" /></div>;
   }
-  if (!s) return <div className="p-6 md:p-8"><Empty>{tl('Could not load ZATCA settings.')}</Empty></div>;
+  if (!s) {
+    return (
+      <div className="p-6 md:p-8">
+        <Empty>
+          <div className="flex flex-col items-center gap-3">
+            {tl('Could not load ZATCA settings.')}
+            {error && <span className="text-[12px] text-rose-300">{errorMessage(error)}</span>}
+            <button type="button" className={btn.ghost} onClick={refetch}>{tl('Try again')}</button>
+          </div>
+        </Empty>
+      </div>
+    );
+  }
 
   return (
     <div className="p-6 md:p-8 flex flex-col gap-5">
