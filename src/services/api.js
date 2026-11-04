@@ -1,10 +1,14 @@
 import axios from 'axios';
+import { lang } from '../i18n';
 
 const API_URL = import.meta.env.VITE_API_URL || 'https://gym-backend-xi-seven.vercel.app/api';
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
+    // Exactly "ar" or "en": the server answers its messages and notifications in this language and
+    // remembers it on the account. (A browser's own header is never this bare, so it changes nothing.)
+    'Accept-Language': lang,
   },
 });
 
