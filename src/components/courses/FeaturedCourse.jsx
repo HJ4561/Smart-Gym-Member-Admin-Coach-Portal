@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { categoryLabel } from './courseOptions';
 import CountUp from '../CountUp';
-import { tl, locale } from '../../i18n';
+import { getLocalized, tl, locale } from '../../i18n';
 
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -43,7 +43,7 @@ export default function FeaturedCourse({ course, enrolled, onEnroll }) {
         {image && (
           <motion.img
             src={image}
-            alt={course.title}
+            alt={getLocalized(course, 'title')}
             className="w-full h-full object-cover object-center"
             animate={{ scale: [1.06, 1.12, 1.06] }}
             transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
@@ -104,12 +104,12 @@ export default function FeaturedCourse({ course, enrolled, onEnroll }) {
           </div>
 
           <h2 className="font-headline-lg text-headline-lg uppercase text-on-surface tracking-wider mt-space-sm leading-tight m-0">
-            {course.title}
+            {getLocalized(course, 'title')}
           </h2>
 
           <p className="font-body-md text-body-md text-on-surface-variant mt-space-xs">
             {tl("By")}{' '}<strong className="text-on-surface">{course.trainer_name}</strong>.{' '}
-            {course.subtitle || course.description}
+            {getLocalized(course, 'subtitle') || getLocalized(course, 'description')}
           </p>
 
           <div className="grid grid-cols-3 gap-space-xs mt-space-md pt-space-md bg-surface-container-low/50 rounded-lg p-space-sm">

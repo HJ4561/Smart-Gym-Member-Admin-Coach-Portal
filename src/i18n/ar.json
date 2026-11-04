@@ -2406,5 +2406,9 @@
  "standard debit": "إشعار مدين (شركات)",
  "simplified invoice": "فاتورة مبسطة",
  "simplified credit": "إشعار دائن مبسط",
- "simplified debit": "إشعار مدين مبسط"
+ "simplified debit": "إشعار مدين مبسط",
+ "New category name (Arabic)": "اسم الفئة الجديدة (بالعربية)",
+ "Category name (Arabic)": "اسم الفئة (بالعربية)",
+ "Category name is required": "اسم الفئة مطلوب",
+ "Renamed": "تمت إعادة التسمية"
 }

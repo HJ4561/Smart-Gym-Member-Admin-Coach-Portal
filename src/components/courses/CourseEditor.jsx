@@ -4,7 +4,7 @@
 //  · coach: writes drafts, sends them for review; once published, title and price are the gym's.
 import { useState } from 'react';
 import toast from 'react-hot-toast';
-import { Drawer, ImageUploader } from '../site/SiteUi';
+import { BiInput, Drawer, ImageUploader } from '../site/SiteUi';
 import { btn, inputCls, labelCls } from '../site/siteStyles';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { tl } from '../../i18n';
@@ -53,6 +53,7 @@ export default function CourseEditor({ course, mode = 'admin', api, trainers = [
   const body = () => {
     const b = {
       title: f.title, subtitle: f.subtitle, description: f.description, category: f.category, level: f.level,
+      title_ar: f.title_ar || '', subtitle_ar: f.subtitle_ar || '', description_ar: f.description_ar || '',
       duration_weeks: f.duration_weeks, days_per_week: f.days_per_week,
       estimated_minutes_per_session: f.estimated_minutes_per_session, price: f.price || 0, promo_video_url: f.promo_video_url,
       modules: f.modules.map(({ id, title, description, week_number, day_number, duration_minutes, video_url, pdf_url }) => ({
@@ -170,12 +171,13 @@ export default function CourseEditor({ course, mode = 'admin', api, trainers = [
         <p className="text-[12px] text-on-surface-variant">{tl("You can add a cover image after the first save.")}</p>
       )}
       <fieldset disabled={lockedReview} className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <Field label={tl("Title")} error={errors.title} className="md:col-span-2">
-          <input className={inputCls} value={f.title} onChange={set('title')} readOnly={lockedLive}
-            title={lockedLive ? tl("The gym changes the title of a live course.") : undefined} /></Field>
-        <Field label={tl("Subtitle")} error={errors.subtitle} className="md:col-span-2"><input className={inputCls} value={f.subtitle} onChange={set('subtitle')} /></Field>
-        <Field label={tl("Description")} error={errors.description} className="md:col-span-2">
-          <textarea className={inputCls} rows={4} value={f.description} onChange={set('description')} /></Field>
+        <BiInput label={tl("Title")} form={f} field="title" errors={errors} required maxLength={120} readOnly={lockedLive}
+          hint={lockedLive ? tl("The gym changes the title of a live course.") : undefined}
+          className="md:col-span-2" onChange={(k, v) => set(k)(v)} />
+        <BiInput label={tl("Subtitle")} form={f} field="subtitle" errors={errors} maxLength={200}
+          className="md:col-span-2" onChange={(k, v) => set(k)(v)} />
+        <BiInput label={tl("Description")} form={f} field="description" errors={errors} multiline rows={4} required
+          className="md:col-span-2" onChange={(k, v) => set(k)(v)} />
         {admin && (
           <Field label={tl("Trainer")} error={errors.trainer_id}>
             <select className={inputCls} value={f.trainer_id} onChange={set('trainer_id')}>

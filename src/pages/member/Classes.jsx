@@ -10,7 +10,7 @@ import { classesService } from '../../services/classesService';
 import PayDialog from '../../components/payments/PayDialog';
 import { errorMessage } from '../../utils/apiError';
 import { formatSAR } from '../../utils/money';
-import { tl, locale } from '../../i18n';
+import { getLocalized, tl, locale } from '../../i18n';
 
 const TODAY = (new Date().getDay() + 6) % 7;   // Mon = 0, like the timetable
 const fmtDay = (d) => new Date(`${d}T12:00:00`).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
@@ -40,7 +40,7 @@ export default function Classes() {
   };
 
   const cancelSession = async (c, date) => {
-    if (!window.confirm(tl("Cancel {0} on {1}? The price goes back to your locker credit.", { 0: c.name, 1: fmtDay(date) }))) return;
+    if (!window.confirm(tl("Cancel {0} on {1}? The price goes back to your locker credit.", { 0: getLocalized(c, 'name'), 1: fmtDay(date) }))) return;
     try {
       toast.success((await classesService.cancel(c.id, date)).detail);
       refetch();
@@ -67,7 +67,7 @@ export default function Classes() {
             {mine.map((c) => (
               <button key={c.id} type="button" onClick={() => setDay(c.day_of_week)}
                 className="px-3 py-2 rounded-lg bg-surface-container-high text-left text-[13px] text-on-surface hover:bg-surface-bright">
-                <span className="font-bold">{c.name}</span>
+                <span className="font-bold">{getLocalized(c, 'name')}</span>
                 <span className="block text-[11px] text-on-surface-variant">
                   {c.day.slice(0, 3)} {c.start_time}
                   {c.my_status === 'waitlist' && tl(" · waitlist #{0}", { 0: c.my_waitlist_position })}
@@ -108,7 +108,7 @@ export default function Classes() {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="font-mono text-primary font-bold">{c.start_time}–{c.end_time}</div>
-                  <h3 className="font-title-lg text-title-lg text-on-surface break-words">{c.name}</h3>
+                  <h3 className="font-title-lg text-title-lg text-on-surface break-words">{getLocalized(c, 'name')}</h3>
                   <div className="text-[12px] text-on-surface-variant">
                     {tl(c.category_label)} · {c.level_label}{c.trainer && ` · ${c.trainer}`}{c.location && ` · ${c.location}`}
                   </div>
@@ -124,7 +124,7 @@ export default function Classes() {
                   </span>
                 )}
               </div>
-              {c.description && <p className="text-[13px] text-on-surface-variant line-clamp-3">{c.description}</p>}
+              {c.description && <p className="text-[13px] text-on-surface-variant line-clamp-3">{getLocalized(c, 'description')}</p>}
 
               {c.is_paid ? (
                 <PaidPanel c={c} open={pick === c.id} onToggleDates={() => setPick(pick === c.id ? null : c.id)}
@@ -151,7 +151,7 @@ export default function Classes() {
 
       <PayDialog
         request={buy ? { purpose: 'class_pass', class_id: buy.cls.id, kind: buy.kind, ...(buy.date ? { date: buy.date } : {}) } : null}
-        title={buy ? (buy.kind === 'full' ? tl("{0} — whole class", { 0: buy.cls.name }) : tl("{0} — {1}", { 0: buy.cls.name, 1: fmtDay(buy.date) })) : ''}
+        title={buy ? (buy.kind === 'full' ? tl("{0} — whole class", { 0: getLocalized(buy.cls, 'name') }) : tl("{0} — {1}", { 0: getLocalized(buy.cls, 'name'), 1: fmtDay(buy.date) })) : ''}
         allowCredit
         onPaid={() => { toast.success(tl("You’re booked in!")); setBuy(null); setPick(null); refetch(); }}
         onClose={() => { setBuy(null); refetch(); }}

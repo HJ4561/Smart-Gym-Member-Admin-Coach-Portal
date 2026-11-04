@@ -14,7 +14,7 @@ import CurriculumGrid from '../../components/trainers/CurriculumGrid';
 import ReviewsList from '../../components/trainers/ReviewsList';
 import ReviewForm from '../../components/trainers/ReviewForm';
 import BookingPanel from '../../components/trainers/BookingPanel';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 // Subtle fade-up wrapper that respects reduced-motion.
 function Section({ children, delay = 0, className = '' }) {
@@ -154,7 +154,7 @@ export default function TrainerProfile() {
 
           {trainer.bio && (
             <Section delay={0.1} aria-label={tl("Coaching Philosophy")}>
-              <PhilosophyCard bio={trainer.bio} title={tl("Coaching Philosophy")} />
+              <PhilosophyCard bio={getLocalized(trainer, 'bio')} title={tl("Coaching Philosophy")} />
             </Section>
           )}
 

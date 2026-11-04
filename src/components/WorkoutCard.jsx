@@ -4,7 +4,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { workoutsService } from '../services/workoutsService';
 import { errorMessage } from '../utils/apiError';
-import { tl, locale } from '../i18n';
+import { getLocalized, tl, locale } from '../i18n';
 
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -114,7 +114,7 @@ function ExerciseRow({ ex, onLogged }) {
     setSaving(true);
     try {
       const set = await workoutsService.logSet(ex.id, { set_number: (ex.total_sets || 0) + 1, reps: r, weight_kg: w });
-      toast.success(set.is_pr ? tl("New PR on {0}!", { 0: ex.name }) : tl("Set {0} logged", { 0: set.set_number }));
+      toast.success(set.is_pr ? tl("New PR on {0}!", { 0: getLocalized(ex, 'name') }) : tl("Set {0} logged", { 0: set.set_number }));
       onLogged?.();
     } catch (err) {
       toast.error(errorMessage(err, tl("Could not log the set")));
@@ -126,16 +126,16 @@ function ExerciseRow({ ex, onLogged }) {
   return (
     <form onSubmit={log} className="flex items-center justify-between gap-space-sm bg-surface-container-low rounded-lg px-space-md py-space-sm flex-wrap">
       <div className="flex flex-col min-w-0">
-        <span className="font-title-md text-title-md text-on-surface truncate">{ex.name}</span>
+        <span className="font-title-md text-title-md text-on-surface truncate">{getLocalized(ex, 'name')}</span>
         <span className="font-label-md text-label-md text-on-surface-variant uppercase">
           {ex.muscle ? `${ex.muscle} · ` : ''}{ex.total_sets || 0} sets{last ? tl(" · last {0} kg × {1}", { 0: last.weight_kg, 1: last.reps }) : ''}
         </span>
       </div>
       <div className="flex items-center gap-1">
-        <input aria-label={tl("{0} reps", { 0: ex.name })} inputMode="numeric" value={reps} onChange={(e) => setReps(e.target.value)}
+        <input aria-label={tl("{0} reps", { 0: getLocalized(ex, 'name') })} inputMode="numeric" value={reps} onChange={(e) => setReps(e.target.value)}
           className="w-14 bg-surface-container-lowest text-on-surface text-center px-1 py-1 rounded border border-surface-container-high" />
         <span className="text-on-surface-variant text-[11px]">{tl("reps ×")}</span>
-        <input aria-label={tl("{0} weight in kg", { 0: ex.name })} inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)}
+        <input aria-label={tl("{0} weight in kg", { 0: getLocalized(ex, 'name') })} inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)}
           className="w-16 bg-surface-container-lowest text-on-surface text-center px-1 py-1 rounded border border-surface-container-high" />
         <span className="text-on-surface-variant text-[11px]">kg</span>
         <button type="submit" disabled={saving}

@@ -8,7 +8,7 @@ import { shopService } from '../../services/shopService';
 import PayDialog from '../../components/payments/PayDialog';
 import { errorMessage } from '../../utils/apiError';
 import { formatSAR } from '../../utils/money';
-import { tl, locale } from '../../i18n';
+import { getLocalized, tl, locale } from '../../i18n';
 
 const ORDER_STATUS = {
   pending: { label: tl("Awaiting payment"), cls: 'bg-primary-container/20 text-primary' },
@@ -72,8 +72,7 @@ export default function Shop() {
       const s = search.trim().toLowerCase();
       result = result.filter(
         (p) =>
-          p.name?.toLowerCase().includes(s) ||
-          p.description?.toLowerCase().includes(s)
+          [p.name, p.name_ar, p.description, p.description_ar].some((v) => v?.toLowerCase().includes(s))
       );
     }
     return result;
@@ -83,7 +82,7 @@ export default function Shop() {
   const addToCart = async (product) => {
     try {
       await shopService.addToCart(product.id, 1);
-      toast.success(tl("Added {0}", { 0: product.name }));
+      toast.success(tl("Added {0}", { 0: getLocalized(product, 'name') }));
       refetchCart();
     } catch (e) {
       toast.error(e?.response?.data?.detail || 'Failed to add');
@@ -282,7 +281,7 @@ export default function Shop() {
                 }`}
                 type="button"
               >
-                {c.name}
+                {getLocalized(c, 'name')}
               </button>
             ))}
           </div>
@@ -352,7 +351,7 @@ export default function Shop() {
                 <div className="relative h-72 overflow-hidden">
                   <img
                     src={p.image_url || undefined}
-                    alt={p.name}
+                    alt={getLocalized(p, 'name')}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 opacity-90"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent" />
@@ -409,7 +408,7 @@ export default function Shop() {
                 <div className="p-4 flex flex-col gap-3 flex-1">
                   <div className="flex items-center justify-between text-[10px] uppercase">
                     <span className="text-on-surface-variant tracking-wider">
-                      {p.category?.name}
+                      {getLocalized(p.category, 'name')}
                     </span>
                     <span
                       className={`font-bold ${
@@ -427,10 +426,10 @@ export default function Shop() {
                   </div>
 
                   <h3 className="font-headline-md text-headline-md text-on-surface leading-tight">
-                    {p.name}
+                    {getLocalized(p, 'name')}
                   </h3>
                   <p className="font-body-md text-body-md text-on-surface-variant line-clamp-2">
-                    {p.description}
+                    {getLocalized(p, 'description')}
                   </p>
 
                   <div className="flex items-end justify-between mt-auto pt-3 border-t border-surface-container-high">
@@ -537,7 +536,7 @@ export default function Shop() {
                     >
                       <div className="flex flex-col flex-1 min-w-0">
                         <span className="font-title-md text-title-md text-on-surface truncate">
-                          {item.product.name}
+                          {getLocalized(item.product, 'name')}
                         </span>
                         <span className="font-label-md text-[10px] text-primary uppercase font-bold">
                           {formatSAR(item.product.price)} each

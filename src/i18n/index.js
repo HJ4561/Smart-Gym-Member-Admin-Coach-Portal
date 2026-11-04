@@ -29,6 +29,16 @@ export function tl(text, vars) {
   return out;
 }
 
+/**
+ * Staff-entered data in the reader's language: getLocalized(product, 'name') is product.name_ar in
+ * Arabic when it has a value, otherwise product.name (so untranslated items still show).
+ */
+export function getLocalized(item, field) {
+  if (item == null) return '';
+  const ar = item[`${field}_ar`];
+  return isAr && typeof ar === 'string' && ar.trim() ? ar : item[field];
+}
+
 export function setLang(next) {
   try {
     localStorage.setItem(KEY, next === 'ar' ? 'ar' : 'en');

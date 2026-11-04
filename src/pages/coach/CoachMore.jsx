@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 import { coachService } from '../../services/coachService';
 import { NOTIFICATIONS_CHANGED, notificationsService } from '../../services/notificationsService';
-import { Empty, ImageUploader, PageHeader } from '../../components/site/SiteUi';
+import { BiInput, Empty, ImageUploader, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls } from '../../components/site/siteStyles';
 import { Field } from '../../components/courses/CourseEditor';
 import SaudiPhoneInput from '../../components/SaudiPhoneInput';
@@ -159,8 +159,8 @@ function ProfileForm({ me, onSaved }) {
     setErrors({});
     try {
       const row = await coachService.updateMe({
-        first_name: f.first_name, last_name: f.last_name, phone: f.phone || '', title: f.title,
-        credentials: f.credentials, bio: f.bio, specialties: f.specialties, years_experience: f.years_experience,
+        first_name: f.first_name, last_name: f.last_name, phone: f.phone || '', title: f.title, title_ar: f.title_ar || '',
+        credentials: f.credentials, bio: f.bio, bio_ar: f.bio_ar || '', specialties: f.specialties, years_experience: f.years_experience,
       });
       setF({ ...row, specialties: row.specialties.join(', ') });
       toast.success(tl('Profile saved'));
@@ -193,14 +193,14 @@ function ProfileForm({ me, onSaved }) {
           <Field label={tl('Phone')} error={errors.phone}><SaudiPhoneInput value={f.phone} onChange={(phone) => setF((p) => ({ ...p, phone }))} /></Field>
           <Field label={tl('Years of experience')} error={errors.years_experience}>
             <input className={inputCls} type="number" min="0" max="60" value={f.years_experience} onChange={set('years_experience')} /></Field>
-          <Field label={tl('Title')} error={errors.title} className="sm:col-span-2">
-            <input className={inputCls} value={f.title} onChange={set('title')} placeholder={tl('e.g. Strength & Conditioning Coach')} /></Field>
+          <BiInput label={tl('Title')} form={f} field="title" errors={errors} required maxLength={120} className="sm:col-span-2"
+            placeholder={tl('e.g. Strength & Conditioning Coach')} onChange={(k, v) => set(k)(v)} />
           <Field label={tl('Credentials')} error={errors.credentials} className="sm:col-span-2">
             <input className={inputCls} value={f.credentials} onChange={set('credentials')} placeholder="CSCS, NASM-CPT" /></Field>
           <Field label={tl('Specialties (comma separated)')} error={errors.specialties} className="sm:col-span-2">
             <input className={inputCls} value={f.specialties} onChange={set('specialties')} placeholder={tl('Strength, Mobility, Fat loss')} /></Field>
-          <Field label={tl('About you')} error={errors.bio} className="sm:col-span-2">
-            <textarea className={inputCls} rows={4} value={f.bio} onChange={set('bio')} /></Field>
+          <BiInput label={tl('About you')} form={f} field="bio" errors={errors} multiline rows={4} className="sm:col-span-2"
+            onChange={(k, v) => set(k)(v)} />
         </div>
       </div>
       <div className="flex justify-end">

@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 function EmptyState() {
   return (
@@ -47,7 +47,7 @@ export default function CurriculumGrid({ courses = [] }) {
             whileFocus={{ y: -4 }}
             onClick={() => navigate(`/dashboard/courses/${c.id}`)}
             className="group text-left bg-surface-container-low rounded-xl overflow-hidden shadow-md flex flex-col justify-between hover:bg-surface-container transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-container"
-            aria-label={tl('Open course {0}', { 0: c.title })}
+            aria-label={tl('Open course {0}', { 0: getLocalized(c, 'title') })}
           >
             <div className="relative h-32 w-full overflow-hidden">
               {c.cover_image_url ? (
@@ -77,11 +77,11 @@ export default function CurriculumGrid({ courses = [] }) {
                 </span>
               )}
               <h3 className="font-title-lg text-title-lg text-on-surface uppercase leading-tight group-hover:text-primary transition-colors line-clamp-2">
-                {c.title}
+                {getLocalized(c, 'title')}
               </h3>
               {(c.subtitle || c.description) && (
                 <p className="font-body-md text-body-md text-on-surface-variant line-clamp-2">
-                  {c.subtitle || c.description}
+                  {getLocalized(c, 'subtitle') || getLocalized(c, 'description')}
                 </p>
               )}
 

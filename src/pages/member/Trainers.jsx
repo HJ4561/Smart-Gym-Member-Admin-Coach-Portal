@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useApi } from '../../hooks/useApi';
 import { catalogService } from '../../services/catalogService';
 import { formatSAR } from '../../utils/money';
-import { isAr, tl } from '../../i18n';
+import { getLocalized, isAr, tl } from '../../i18n';
 
 const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 const DAYS_AR = ['الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'];
@@ -47,7 +47,7 @@ export default function Trainers() {
     const rows = list.filter((t) => (show !== 'verified' || t.is_verified)
       && (show !== 'open' || (t.is_accepting_clients && t.offers_1on1))
       && (!specialty || (t.specialties || []).includes(specialty))
-      && (!q || `${t.user?.full_name} ${t.title} ${(t.specialties || []).join(' ')}`.toLowerCase().includes(q)));
+      && (!q || `${t.user?.full_name} ${t.title} ${t.title_ar || ''} ${(t.specialties || []).join(' ')}`.toLowerCase().includes(q)));
     const by = {
       rating: (a, b) => (Number(b.rating) - Number(a.rating)) || (b.total_reviews - a.total_reviews),
       price: (a, b) => Number(a.hourly_rate) - Number(b.hourly_rate),
@@ -168,7 +168,7 @@ function TrainerCard({ t, index, onOpen }) {
             <h3 className="font-bold text-[17px] text-on-surface truncate group-hover:text-primary transition-colors">{name}</h3>
             {t.is_verified && <span className="material-symbols-outlined text-primary text-[18px]" title={tl('Verified')} style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>}
           </div>
-          <p className="text-[13px] text-on-surface-variant truncate">{t.title}{t.credentials ? ` · ${t.credentials}` : ''}</p>
+          <p className="text-[13px] text-on-surface-variant truncate">{getLocalized(t, 'title')}{t.credentials ? ` · ${t.credentials}` : ''}</p>
           <div className="flex items-center gap-3 mt-2 text-[12px] text-on-surface-variant">
             {rated ? (
               <span className="flex items-center gap-1 text-on-surface">

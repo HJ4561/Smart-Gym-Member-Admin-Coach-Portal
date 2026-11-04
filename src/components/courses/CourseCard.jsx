@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import { categoryLabel } from './courseOptions';
 import CountUp from '../CountUp';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -9,7 +9,7 @@ export default function CourseCard({ course, index = 0, enrolled, onEnroll }) {
   // Backend uses `cover_image_url` / `trainer_name` / `duration_weeks` / `level`
   const image = course.cover_image_url || course.image;
   const trainer = course.trainer_name || course.author || 'Smart Gym';
-  const trainerRole = course.trainer_title || course.trainer_role || '';
+  const trainerRole = getLocalized(course, 'trainer_title') || course.trainer_role || '';
   const duration = course.duration_weeks
     ? `${course.duration_weeks} Weeks`
     : course.duration;
@@ -36,7 +36,7 @@ export default function CourseCard({ course, index = 0, enrolled, onEnroll }) {
           {image ? (
             <img
               src={image}
-              alt={course.title}
+              alt={getLocalized(course, 'title')}
               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
             />
           ) : (
@@ -115,11 +115,11 @@ export default function CourseCard({ course, index = 0, enrolled, onEnroll }) {
           </div>
 
           <h3 className="font-headline-md text-headline-md uppercase text-on-surface tracking-wide mt-space-xs leading-tight transition-colors duration-300 group-hover:text-primary">
-            {course.title}
+            {getLocalized(course, 'title')}
           </h3>
 
           <p className="font-body-md text-body-md text-on-surface-variant line-clamp-2">
-            {course.subtitle || course.description}
+            {getLocalized(course, 'subtitle') || getLocalized(course, 'description')}
           </p>
 
           <div className="flex items-center justify-between text-on-surface-variant pt-space-xs mt-space-xs border-t border-surface-container-high/60">

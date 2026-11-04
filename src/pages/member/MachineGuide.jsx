@@ -6,7 +6,7 @@ import { machineTagFrom } from '../../utils/machineQr';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 import { workoutsService } from '../../services/workoutsService';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import MachineVideos from '../../components/machines/MachineVideos';
 
@@ -131,7 +131,7 @@ export default function MachineGuide() {
       const ex = await workoutsService.exerciseByQR(tag);
       setPicked(ex);
       setQrInput(tag);
-      toast.success(tl("Found: {0}", { 0: ex.name }));
+      toast.success(tl("Found: {0}", { 0: getLocalized(ex, 'name') }));
     } catch {
       toast.error(tl("No machine matches that code"));
     } finally {
@@ -569,7 +569,7 @@ function AITrainingDirective({ exercise }) {
 
       {exercise.description && (
         <p className="font-body-md text-body-md text-on-surface-variant mt-3 pt-3 border-t border-surface-container-high">
-          {exercise.description}
+          {getLocalized(exercise, 'description')}
         </p>
       )}
     </motion.div>
@@ -863,7 +863,7 @@ function ExerciseList({ exercises, loading, selectedExercise, onSelect }) {
                     {ex.category}
                   </span>
                   <h3 className="font-title-md text-title-md text-on-surface mt-1">
-                    {ex.name}
+                    {getLocalized(ex, 'name')}
                   </h3>
                   <span className="font-label-md text-[10px] text-on-surface-variant uppercase">
                     {ex.primary_muscle}

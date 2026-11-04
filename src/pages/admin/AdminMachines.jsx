@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import BrandedQR from '../../components/BrandedQR';
 import { useApi } from '../../hooks/useApi';
 import { adminService } from '../../services/adminService';
-import { Drawer, Empty, PageHeader } from '../../components/site/SiteUi';
+import { BiInput, Drawer, Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { machineQrLink } from '../../utils/machineQr';
@@ -17,8 +17,8 @@ import { VideoEditor } from '../coach/CoachVideos';
 
 const STATUS = [['', tl("All")], ['active', tl("Active")], ['offline', tl("Offline")], ['untagged', tl("No QR")]];
 const NEW = {
-  name: '', category: 'strength', primary_muscle: 'full_body', equipment_type: '', machine_id: '', description: '',
-  setup_instructions: '', technique_cues: [], video_url: '', image_url: '', default_rest_seconds: 90,
+  name: '', name_ar: '', category: 'strength', primary_muscle: 'full_body', equipment_type: '', machine_id: '', description: '',
+  description_ar: '', setup_instructions: '', setup_instructions_ar: '', technique_cues: [], video_url: '', image_url: '', default_rest_seconds: 90,
   recommended_weight_kg: '', target_intensity: '', cadence: '', is_compound: false, is_active: true,
 };
 
@@ -203,7 +203,8 @@ function MachineEditor({ machine, options, onClose, onSaved }) {
         <button type="button" className={btn.primary} disabled={busy} onClick={save}>{busy ? tl("Saving…") : tl("Save")}</button>
       </>}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <Field label={tl("Name")} error={errors.name} className="md:col-span-2"><input className={inputCls} value={f.name} onChange={set('name')} placeholder={tl("Leg Press")} /></Field>
+        <BiInput label={tl("Name")} form={f} field="name" errors={errors} required maxLength={60} placeholder={tl("Leg Press")}
+          className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
         <Field label={tl("Category")} error={errors.category}>
           <select className={inputCls} value={f.category} onChange={set('category')}>
             {(options?.categories || []).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
@@ -214,10 +215,10 @@ function MachineEditor({ machine, options, onClose, onSaved }) {
           </select></Field>
         <Field label={tl("Equipment")} error={errors.equipment_type}><input className={inputCls} value={f.equipment_type} onChange={set('equipment_type')} placeholder={tl("Plate-loaded, 45° sled")} /></Field>
         <Field label={tl("Floor number / asset ID")} error={errors.machine_id}><input className={inputCls} value={f.machine_id} onChange={set('machine_id')} placeholder={tl("ST-07")} /></Field>
-        <Field label={tl("What it’s for")} error={errors.description} className="md:col-span-2">
-          <textarea className={inputCls} rows={3} value={f.description} onChange={set('description')} /></Field>
-        <Field label={tl("Setup")} error={errors.setup_instructions} className="md:col-span-2">
-          <textarea className={inputCls} rows={3} value={f.setup_instructions} onChange={set('setup_instructions')} placeholder={tl("Seat height so knees are at 90°…")} /></Field>
+        <BiInput label={tl("What it’s for")} form={f} field="description" errors={errors} multiline maxLength={4000}
+          className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
+        <BiInput label={tl("Setup")} form={f} field="setup_instructions" errors={errors} multiline maxLength={4000}
+          placeholder={tl("Seat height so knees are at 90°…")} className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
         <Field label={tl("Technique cues (one per line)")} error={errors.technique_cues} className="md:col-span-2">
           <textarea className={inputCls} rows={4} value={f.technique_cues} onChange={set('technique_cues')} /></Field>
         <Field label={tl("Rest between sets (seconds)")} error={errors.default_rest_seconds}>

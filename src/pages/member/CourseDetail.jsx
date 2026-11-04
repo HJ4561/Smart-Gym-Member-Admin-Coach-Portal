@@ -11,7 +11,7 @@ import PayDialog from '../../components/payments/PayDialog';
 import { categoryLabel } from '../../components/courses/courseOptions';
 import { formatSAR } from '../../utils/money';
 import { errorMessage } from '../../utils/apiError';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 const LEVEL = { beginner: tl('Beginner'), intermediate: tl('Intermediate'), advanced: tl('Advanced'), all_levels: tl('All levels') };
 
@@ -74,8 +74,8 @@ export default function CourseDetail() {
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
           <div className="relative p-5 sm:p-6 flex flex-col justify-end h-full gap-2 min-h-48">
             <span className="text-primary text-[11px] font-bold uppercase tracking-widest">{categoryLabel(c.category)} · {LEVEL[c.level] || c.level}</span>
-            <h1 className="font-headline-lg text-headline-lg text-white uppercase tracking-wide break-words">{c.title}</h1>
-            {c.subtitle && <p className="text-white/80">{c.subtitle}</p>}
+            <h1 className="font-headline-lg text-headline-lg text-white uppercase tracking-wide break-words">{getLocalized(c, 'title')}</h1>
+            {c.subtitle && <p className="text-white/80">{getLocalized(c, 'subtitle')}</p>}
           </div>
         </div>
         <div className="p-5 flex flex-col gap-3">
@@ -108,7 +108,7 @@ export default function CourseDetail() {
                 : <span className="w-10 h-10 rounded-lg bg-primary-container/15 text-primary grid place-items-center material-symbols-outlined">person</span>}
               <span className="min-w-0">
                 <span className="block text-on-surface font-bold truncate">{c.trainer.user?.full_name}</span>
-                <span className="block text-[12px] text-on-surface-variant truncate">{c.trainer.title}</span>
+                <span className="block text-[12px] text-on-surface-variant truncate">{getLocalized(c.trainer, 'title')}</span>
               </span>
             </Link>
           )}
@@ -118,7 +118,7 @@ export default function CourseDetail() {
       {c.description && (
         <section className="rounded-xl bg-surface-container border border-surface-container-high p-5">
           <h2 className="text-on-surface font-bold uppercase tracking-wider text-[13px] mb-2">{tl('About this course')}</h2>
-          <p className="text-on-surface-variant whitespace-pre-line break-words">{c.description}</p>
+          <p className="text-on-surface-variant whitespace-pre-line break-words">{getLocalized(c, 'description')}</p>
         </section>
       )}
 
@@ -153,7 +153,7 @@ export default function CourseDetail() {
 
       <PayDialog
         request={buying ? { purpose: 'course', course_id: c.id } : null}
-        title={c.title}
+        title={getLocalized(c, 'title')}
         allowCredit
         onPaid={() => { toast.success(tl('Enrolled! Opening player...')); setBuying(false); openPlayer(); }}
         onClose={() => { setBuying(false); refetch(); }}

@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 import { adminService } from '../../services/adminService';
 import { classesService } from '../../services/classesService';
-import { Drawer, PageHeader } from '../../components/site/SiteUi';
+import { BiInput, Drawer, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { tl, locale } from '../../i18n';
@@ -17,7 +17,7 @@ const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'
 const CATEGORIES = [['strength', tl("Strength")], ['hiit', tl("HIIT")], ['combat', tl("Combat")], ['mobility', tl("Mobility")],
   ['endurance', tl("Endurance")], ['olympic', tl("Olympic lifting")], ['recovery', tl("Recovery")]];
 const LEVELS = [['all_levels', tl("All levels")], ['beginner', tl("Beginner")], ['intermediate', tl("Intermediate")], ['advanced', tl("Advanced")]];
-const NEW = { name: '', category: 'strength', level: 'all_levels', description: '', trainer_id: '', day_of_week: 0,
+const NEW = { name: '', name_ar: '', category: 'strength', level: 'all_levels', description: '', description_ar: '', trainer_id: '', day_of_week: 0,
   start_time: '18:00', duration_minutes: 60, capacity: 12, location: '', is_active: true,
   price_per_session: '0', full_price: '', starts_on: '', ends_on: '' };
 
@@ -141,7 +141,8 @@ function ClassEditor({ cls, trainers, onClose, onSaved }) {
     setBusy(true);
     setErrors({});
     const body = {
-      name: f.name, category: f.category, level: f.level, description: f.description, trainer_id: f.trainer_id || null,
+      name: f.name, name_ar: f.name_ar || '', category: f.category, level: f.level, description: f.description,
+      description_ar: f.description_ar || '', trainer_id: f.trainer_id || null,
       day_of_week: Number(f.day_of_week), start_time: f.start_time, duration_minutes: f.duration_minutes,
       capacity: f.capacity, location: f.location, is_active: f.is_active,
       price_per_session: f.price_per_session || 0, full_price: f.full_price === '' ? null : f.full_price,
@@ -197,7 +198,8 @@ function ClassEditor({ cls, trainers, onClose, onSaved }) {
         <button type="button" className={btn.primary} disabled={busy} onClick={save}>{busy ? tl("Saving…") : tl("Save")}</button>
       </>}>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <Field label={tl("Name")} error={errors.name} className="md:col-span-2"><input className={inputCls} value={f.name} onChange={set('name')} placeholder={tl("Morning HIIT")} /></Field>
+        <BiInput label={tl("Name")} form={f} field="name" errors={errors} required maxLength={120} placeholder={tl("Morning HIIT")}
+          className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
         <Field label={tl("Day")} error={errors.day_of_week}>
           <select className={inputCls} value={f.day_of_week} onChange={set('day_of_week')}>
             {DAYS.map((d, i) => <option key={d} value={i}>{d}</option>)}
@@ -215,8 +217,8 @@ function ClassEditor({ cls, trainers, onClose, onSaved }) {
             {trainers.map((t) => <option key={t.id} value={t.id}>{t.user_name}</option>)}
           </select></Field>
         <Field label={tl("Room")} error={errors.location}><input className={inputCls} value={f.location} onChange={set('location')} placeholder={tl("Studio 1")} /></Field>
-        <Field label={tl("Description")} error={errors.description} className="md:col-span-2">
-          <textarea className={inputCls} rows={3} value={f.description} onChange={set('description')} /></Field>
+        <BiInput label={tl("Description")} form={f} field="description" errors={errors} multiline maxLength={2000}
+          className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
       </div>
 
       <fieldset className="grid grid-cols-1 md:grid-cols-2 gap-3 border-t border-[#1a1a1e] pt-4">

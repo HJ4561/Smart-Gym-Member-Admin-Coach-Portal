@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 const initialsOf = (name = '') =>
   name
@@ -93,7 +93,7 @@ export default function TrainerBanner({ trainer }) {
               >
                 {trainer.is_verified ? 'verified' : 'person'}
               </span>
-              <span className="truncate">{trainer.title || tl('Coach')}</span>
+              <span className="truncate">{getLocalized(trainer, 'title') || tl('Coach')}</span>
             </span>
             <h1 className="font-headline-lg text-headline-lg text-on-surface uppercase tracking-wide leading-none break-words">
               {name}

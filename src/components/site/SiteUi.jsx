@@ -47,6 +47,53 @@ export function BilingualField({ label, value, onChange, multiline = false, erro
   );
 }
 
+/**
+ * A staff-entered field in English and Arabic side by side, for models that keep `<field>_ar` next
+ * to `<field>` (products, classes, courses, machines, trainer and nutritionist profiles).
+ * `form` holds both values; `onChange(key, value)` gets `field` or `field_ar`. Arabic is optional:
+ * members reading in Arabic see the English until it is filled in.
+ */
+export function BiInput({ label, form, field, onChange, errors = {}, multiline = false, rows = 3, required = false,
+  placeholder, maxLength, readOnly = false, hint, className = '', inputClassName = inputCls }) {
+  const Tag = multiline ? 'textarea' : 'input';
+  const err = errors[field];
+  const errAr = errors[`${field}_ar`];
+  return (
+    <div className={`flex flex-col gap-1 ${className}`}>
+      <span className={labelCls}>{label}{required && <span className="text-primary"> *</span>}</span>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <Tag
+          className={`${inputClassName} ${err ? 'border-rose-500' : ''}`}
+          value={form[field] ?? ''}
+          rows={multiline ? rows : undefined}
+          maxLength={maxLength}
+          readOnly={readOnly}
+          placeholder={placeholder || tl('English')}
+          aria-label={`${label} (English)`}
+          aria-invalid={!!err}
+          onChange={(e) => onChange(field, e.target.value)}
+        />
+        <Tag
+          className={`${inputClassName} text-right ${errAr ? 'border-rose-500' : ''}`}
+          dir="rtl"
+          lang="ar"
+          value={form[`${field}_ar`] ?? ''}
+          rows={multiline ? rows : undefined}
+          maxLength={maxLength}
+          readOnly={readOnly}
+          placeholder="أدخل النص العربي"
+          aria-label={`${label} (العربية)`}
+          aria-invalid={!!errAr}
+          onChange={(e) => onChange(`${field}_ar`, e.target.value)}
+        />
+      </div>
+      {hint && <span className="text-[11px] text-on-surface-variant">{hint}</span>}
+      {err && <span className="text-[11px] text-rose-400">{err}</span>}
+      {errAr && <span className="text-[11px] text-rose-400" dir="auto">{errAr}</span>}
+    </div>
+  );
+}
+
 const MAX_BYTES = 4 * 1024 * 1024;
 const TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 

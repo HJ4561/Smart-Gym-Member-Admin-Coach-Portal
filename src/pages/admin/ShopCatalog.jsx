@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 import { adminService } from '../../services/adminService';
-import { Drawer, Empty, ImageUploader, PageHeader } from '../../components/site/SiteUi';
+import { BiInput, Drawer, Empty, ImageUploader, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import { formatSAR } from '../../utils/money';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
@@ -82,7 +82,7 @@ function Products({ categories, onChanged }) {
     () => adminService.shopProducts({ q: q || undefined, status: status || undefined }), [q, status]);
   const list = Array.isArray(data) ? data : [];
   const saved = () => { refetch(); onChanged(); };
-  const blank = { name: '', sku: '', description: '', category_id: categories[0]?.id || '', price: '', original_price: '',
+  const blank = { name: '', name_ar: '', sku: '', description: '', description_ar: '', category_id: categories[0]?.id || '', price: '', original_price: '',
     price_note: '', badge_top: '', badge_secondary: '', telemetry: [], stock_quantity: 0, stock_label: '',
     low_stock_threshold: 5, is_active: true, is_featured: false };
 
@@ -184,7 +184,8 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
     setBusy(true);
     setErrors({});
     const body = {
-      name: f.name, description: f.description, category_id: f.category_id, price: f.price,
+      name: f.name, name_ar: f.name_ar || '', description: f.description, description_ar: f.description_ar || '',
+      category_id: f.category_id, price: f.price,
       original_price: f.original_price === '' ? null : f.original_price, price_note: f.price_note,
       badge_top: f.badge_top, badge_secondary: f.badge_secondary, telemetry: f.telemetry,
       stock_quantity: f.stock_quantity, stock_label: f.stock_label, low_stock_threshold: f.low_stock_threshold,
@@ -244,7 +245,8 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
         <div className="max-w-[240px]"><ImageUploader label={tl("Photo")} aspect="aspect-square" url={f.image_url} customized={!!f.image_url} onUpload={upload} /></div>
       ) : <p className="text-[12px] text-on-surface-variant">{tl("You can add a photo after the first save.")}</p>}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        <Field label={tl("Name")} error={errors.name} className="md:col-span-2"><input className={inputCls} value={f.name} onChange={set('name')} /></Field>
+        <BiInput label={tl("Name")} form={f} field="name" errors={errors} required maxLength={200} className="md:col-span-2"
+          onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
         <Field label={tl("Category")} error={errors.category_id}>
           <select className={inputCls} value={f.category_id} onChange={changeCategory}>
             {categories.map((c) => <option key={c.id} value={c.id}>{c.name}{c.is_active ? '' : tl(" (hidden)")}</option>)}
@@ -264,7 +266,8 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
         <Field label={tl("Was (SAR, optional)")} error={errors.original_price} hint={tl("Shows a crossed-out price.")}><input className={inputCls} inputMode="decimal" value={f.original_price} onChange={set('original_price')} /></Field>
         <Field label={tl("In stock")} error={errors.stock_quantity}><input className={inputCls} type="number" min="0" value={f.stock_quantity} onChange={set('stock_quantity')} /></Field>
         <Field label={tl("Warn when stock is at or below")} error={errors.low_stock_threshold}><input className={inputCls} type="number" min="0" value={f.low_stock_threshold} onChange={set('low_stock_threshold')} /></Field>
-        <Field label={tl("Description")} error={errors.description} className="md:col-span-2"><textarea className={inputCls} rows={3} value={f.description} onChange={set('description')} /></Field>
+        <BiInput label={tl("Description")} form={f} field="description" errors={errors} multiline className="md:col-span-2"
+          onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
         <Field label={tl("Badge")} error={errors.badge_top} hint={tl("e.g. Best seller")}><input className={inputCls} value={f.badge_top} onChange={set('badge_top')} /></Field>
         <Field label={tl("Second badge")} error={errors.badge_secondary}><input className={inputCls} value={f.badge_secondary} onChange={set('badge_secondary')} /></Field>
         <Field label={tl("Price note")} error={errors.price_note}><input className={inputCls} value={f.price_note} onChange={set('price_note')} placeholder={tl("Per tub")} /></Field>
@@ -285,7 +288,9 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
 // ============================================================
 function Categories({ categories, onChanged }) {
   const [name, setName] = useState('');
+  const [nameAr, setNameAr] = useState('');
   const [busy, setBusy] = useState(false);
+  const [editing, setEditing] = useState(null);      // {id, name, name_ar} while renaming
 
   const add = async (e) => {
     e.preventDefault();
@@ -296,8 +301,9 @@ function Categories({ categories, onChanged }) {
     }
     setBusy(true);
     try {
-      await adminService.saveCategory(null, { name: name.trim() });
+      await adminService.saveCategory(null, { name: name.trim(), name_ar: nameAr.trim() });
       setName('');
+      setNameAr('');
       toast.success(tl("Category added"));
       onChanged();
     } catch (err) {
@@ -315,9 +321,11 @@ function Categories({ categories, onChanged }) {
       toast.error(errorMessage(err, tl("Could not save")));
     }
   };
-  const rename = (c) => {
-    const n = window.prompt(tl("Category name"), c.name);
-    if (n && n.trim() && n.trim() !== c.name) update(c, { name: n.trim() }, 'Renamed');
+  const saveRename = async (e) => {
+    e.preventDefault();
+    if (!editing.name.trim()) { toast.error(tl("Category name is required")); return; }
+    await update(editing, { name: editing.name.trim(), name_ar: (editing.name_ar || '').trim() }, tl("Renamed"));
+    setEditing(null);
   };
   const remove = async (c) => {
     if (!window.confirm(tl("Delete {0}?", { 0: c.name }))) return;
@@ -338,23 +346,36 @@ function Categories({ categories, onChanged }) {
 
   return (
     <div className="flex flex-col gap-3 max-w-3xl">
-      <form onSubmit={add} className="flex gap-2">
+      <form onSubmit={add} className="flex gap-2 flex-wrap md:flex-nowrap">
         <input id="new-category-name" className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder={tl("New category, e.g. Protein")} aria-label={tl("New category name")} />
+        <input className={`${inputCls} text-right`} dir="rtl" lang="ar" value={nameAr} onChange={(e) => setNameAr(e.target.value)}
+          placeholder="أدخل النص العربي" aria-label={tl("New category name (Arabic)")} />
         <button type="submit" className={btn.primary} disabled={busy}>{busy ? tl("Adding…") : tl("+ Add category")}</button>
       </form>
       {categories.length === 0 ? <Empty>{tl("No categories yet.")}</Empty> : categories.map((c, i) => (
+        editing?.id === c.id ? (
+          <form key={c.id} onSubmit={saveRename} className="flex items-center gap-2 bg-[#0e0e0f] border border-primary-container/50 rounded px-3 py-2 text-[13px]">
+            <input className={inputCls} value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} aria-label={tl("Category name")} autoFocus />
+            <input className={`${inputCls} text-right`} dir="rtl" lang="ar" value={editing.name_ar || ''} placeholder="أدخل النص العربي"
+              onChange={(e) => setEditing({ ...editing, name_ar: e.target.value })} aria-label={tl("Category name (Arabic)")} />
+            <button type="submit" className={btn.primary}>{tl("Save")}</button>
+            <button type="button" className={btn.ghost} onClick={() => setEditing(null)}>{tl("Cancel")}</button>
+          </form>
+        ) : (
         <div key={c.id} className="flex items-center gap-2 bg-[#0e0e0f] border border-[#1a1a1e] rounded px-3 py-2 text-[13px]">
           <div className="flex-1 min-w-0">
             <span className={`font-bold ${c.is_active ? 'text-on-surface' : 'text-on-surface-variant line-through'}`}>{c.name}</span>
+            {c.name_ar && <span className="text-on-surface-variant" dir="rtl" lang="ar"> · {c.name_ar}</span>}
             <span className="text-[11px] text-on-surface-variant"> · {c.products} product{c.products === 1 ? '' : 's'}</span>
           </div>
           <button type="button" className={btn.ghost} disabled={i === 0} onClick={() => move(i, -1)} aria-label={tl("Move up")}>↑</button>
           <button type="button" className={btn.ghost} disabled={i === categories.length - 1} onClick={() => move(i, 1)} aria-label={tl("Move down")}>↓</button>
-          <button type="button" className={btn.ghost} onClick={() => rename(c)}>{tl("Rename")}</button>
+          <button type="button" className={btn.ghost} onClick={() => setEditing({ id: c.id, name: c.name, name_ar: c.name_ar || '' })}>{tl("Rename")}</button>
           <button type="button" className={btn.ghost} onClick={() => update(c, { is_active: !c.is_active }, c.is_active ? 'Hidden from members' : 'Shown to members')}>
             {c.is_active ? tl("Hide") : tl("Show")}</button>
           {c.products === 0 && <button type="button" className={btn.danger} onClick={() => remove(c)}>{tl("Delete")}</button>}
         </div>
+        )
       ))}
       <p className="text-[11px] text-on-surface-variant">{tl("Hiding a category hides all of its products from members.")}</p>
     </div>

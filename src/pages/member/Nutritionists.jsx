@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 import { nutritionService } from '../../services/nutritionService';
 import { formatSAR } from '../../utils/money';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -386,13 +386,13 @@ function FeaturedNutritionist({ nutritionist: n, isAssigned, onOpen }) {
             )}
           </div>
           <span className="font-label-md text-[10px] text-primary uppercase tracking-widest font-bold">
-            {n.title}
+            {getLocalized(n, 'title')}
           </span>
           <span className="font-label-md text-[10px] text-on-surface-variant uppercase mt-0.5">
             {n.credentials}
           </span>
           <p className="font-body-md text-body-md text-on-surface-variant mt-2 line-clamp-2">
-            {n.bio || tl("Sports nutrition specialist")}
+            {getLocalized(n, 'bio') || tl("Sports nutrition specialist")}
           </p>
         </div>
 
@@ -488,7 +488,7 @@ function SpecialistsGrid({ nutritionists, heading, onOpen }) {
                     {n.user?.full_name}
                   </span>
                   <span className="font-label-md text-[10px] text-primary uppercase tracking-widest font-bold">
-                    {n.title}
+                    {getLocalized(n, 'title')}
                   </span>
                   <span className="font-label-md text-[9px] text-on-surface-variant uppercase">
                     {n.credentials}
@@ -497,7 +497,7 @@ function SpecialistsGrid({ nutritionists, heading, onOpen }) {
               </div>
 
               <p className="font-body-md text-body-md text-on-surface-variant line-clamp-2">
-                {n.bio || tl("Sports nutrition specialist")}
+                {getLocalized(n, 'bio') || tl("Sports nutrition specialist")}
               </p>
 
               {Array.isArray(n.specialties) && n.specialties.length > 0 && (

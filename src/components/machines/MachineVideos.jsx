@@ -9,7 +9,7 @@ import { useApi } from '../../hooks/useApi';
 import { workoutsService } from '../../services/workoutsService';
 import PayDialog from '../payments/PayDialog';
 import { formatSAR } from '../../utils/money';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 const TIER = {
   basic: { label: tl('Basic · free'), tone: 'bg-emerald-500/15 text-emerald-500' },
@@ -55,7 +55,7 @@ export default function MachineVideos({ exercise }) {
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
         ) : (
           <>
-            {exercise.image_url && <img src={exercise.image_url} alt={exercise.name} className="absolute inset-0 w-full h-full object-cover opacity-50" />}
+            {exercise.image_url && <img src={exercise.image_url} alt={getLocalized(exercise, 'name')} className="absolute inset-0 w-full h-full object-cover opacity-50" />}
             <div className="absolute inset-0 grid place-items-center">
               {current ? (
                 <a href={current.video_url} target="_blank" rel="noreferrer"
@@ -79,7 +79,7 @@ export default function MachineVideos({ exercise }) {
       <div className="p-space-lg flex flex-col gap-3">
         <div>
           <span className="font-label-md text-[10px] text-primary uppercase tracking-widest font-bold">{exercise.category}</span>
-          <h2 className="font-headline-md text-headline-md text-on-surface uppercase mt-1 break-words">{exercise.name}</h2>
+          <h2 className="font-headline-md text-headline-md text-on-surface uppercase mt-1 break-words">{getLocalized(exercise, 'name')}</h2>
         </div>
 
         {data && (
@@ -90,7 +90,7 @@ export default function MachineVideos({ exercise }) {
         )}
 
         {videos.length > 0 && (
-          <ul className="flex flex-col gap-2" aria-label={tl('Videos for {0}', { 0: exercise.name })}>
+          <ul className="flex flex-col gap-2" aria-label={tl('Videos for {0}', { 0: getLocalized(exercise, 'name') })}>
             {videos.map((v) => {
               const active = current && v.id === current.id && !v.locked;
               return (

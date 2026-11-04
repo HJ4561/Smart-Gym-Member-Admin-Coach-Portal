@@ -1,6 +1,6 @@
 // src/components/profile/PRMilestones.jsx
 import { motion } from 'framer-motion';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 export default function PRMilestones({ prs, loading }) {
   const list = Array.isArray(prs) ? prs : [];
@@ -72,7 +72,7 @@ export default function PRMilestones({ prs, loading }) {
               </div>
               <div className="flex flex-col">
                 <span className="font-title-md text-title-md text-on-surface leading-snug">
-                  {pr.exercise_name}
+                  {getLocalized(pr, 'exercise_name')}
                 </span>
                 <span className="font-body-md text-body-md text-on-surface-variant">
                   {Number(pr.best_weight_kg).toFixed(1)}{' '}{tl("kg ×")}{' '}{pr.best_reps} reps

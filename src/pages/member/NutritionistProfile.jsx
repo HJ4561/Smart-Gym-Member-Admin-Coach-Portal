@@ -9,7 +9,7 @@ import { nutritionService } from '../../services/nutritionService';
 import { formatSAR } from '../../utils/money';
 import { errorMessage } from '../../utils/apiError';
 import PayDialog from '../../components/payments/PayDialog';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 // Same starting targets the backend gives each goal (apps/nutrition/views.py GOAL_DEFAULTS).
 const GOALS = [
@@ -107,7 +107,7 @@ export default function NutritionistProfile() {
               <h1 className="font-headline-md text-headline-md text-on-surface">{name}</h1>
               {n.is_verified && <span className="material-symbols-outlined text-primary text-[22px]" title={tl('Verified')} style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>}
             </div>
-            <p className="text-on-surface-variant">{n.title}{n.credentials ? ` · ${n.credentials}` : ''}</p>
+            <p className="text-on-surface-variant">{getLocalized(n, 'title')}{n.credentials ? ` · ${n.credentials}` : ''}</p>
             <div className="flex flex-wrap gap-2 mt-3">
               {isMine && <Badge tone="primary" icon="check_circle">{tl('Your nutritionist')}</Badge>}
               {n.is_accepting_clients
@@ -135,7 +135,7 @@ export default function NutritionistProfile() {
           <section className="rounded-xl bg-surface-container border border-surface-container-high p-5">
             <h2 className="text-on-surface font-bold text-[16px] mb-2">{tl('About')}</h2>
             <p className="text-on-surface-variant whitespace-pre-line leading-relaxed">
-              {n.bio || tl('{0} hasn’t added a bio yet.', { 0: name })}
+              {getLocalized(n, 'bio') || tl('{0} hasn’t added a bio yet.', { 0: name })}
             </p>
           </section>
           {(n.specialties || []).length > 0 && (

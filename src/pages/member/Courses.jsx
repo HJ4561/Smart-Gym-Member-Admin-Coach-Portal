@@ -10,7 +10,7 @@ import FeaturedCourse from '../../components/courses/FeaturedCourse';
 import CourseFilters from '../../components/courses/CourseFilters';
 import CourseCard from '../../components/courses/CourseCard';
 import PayDialog from '../../components/payments/PayDialog';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -64,7 +64,7 @@ export default function Courses() {
       const s = search.toLowerCase();
       result = result.filter(
         (c) =>
-          c.title.toLowerCase().includes(s) ||
+          [c.title, c.title_ar].some((v) => v?.toLowerCase().includes(s)) ||
           c.category?.toLowerCase().includes(s)
       );
     }
@@ -97,7 +97,7 @@ export default function Courses() {
     }
     try {
       await catalogService.enroll(course.id);
-      toast.success(tl("Enrolled in {0}! Opening player...", { 0: course.title }));
+      toast.success(tl("Enrolled in {0}! Opening player...", { 0: getLocalized(course, 'title') }));
       refetchEnrollments();
       setTimeout(() => navigate(`/dashboard/player/${course.id}`), 800);
     } catch (e) {

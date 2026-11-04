@@ -12,7 +12,7 @@ import PayDialog from '../../components/payments/PayDialog';
 import { formatGymDateTime } from '../../utils/gymTime';
 import { formatSAR } from '../../utils/money';
 import { errorMessage } from '../../utils/apiError';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 const CANCEL_HOURS = 24;   // same rule as the backend (apps/catalog/views.py REFUND_HOURS)
 const STATUS = {
@@ -105,7 +105,7 @@ export default function MySessions() {
                     : <span className="w-12 h-12 rounded-lg bg-primary-container/15 text-primary grid place-items-center font-bold shrink-0">{initials(s.trainer_name)}</span>}
                   <div className="flex-1 min-w-0">
                     <Link to={`/dashboard/trainers/${s.trainer}`} className="text-on-surface font-bold hover:underline break-words">{s.trainer_name}</Link>
-                    {s.trainer_title && <div className="text-[12px] text-on-surface-variant truncate">{s.trainer_title}</div>}
+                    {s.trainer_title && <div className="text-[12px] text-on-surface-variant truncate">{getLocalized(s, 'trainer_title')}</div>}
                   </div>
                   <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase whitespace-nowrap ${tone}`}>{label}</span>
                 </div>

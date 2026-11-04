@@ -11,7 +11,7 @@ import CoachNotes from '../../components/player/CoachNotes';
 import SyllabusSidebar from '../../components/player/SyllabusSidebar';
 import SessionSummaryDock from '../../components/player/SessionSummaryDock';
 import { errorMessage } from '../../utils/apiError';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 export default function Player() {
   const navigate = useNavigate();
@@ -75,7 +75,7 @@ export default function Player() {
     try {
       setStarting(true);
       await workoutsService.start({
-        name: shown ? `${course.title} — ${shown.title}` : course.title,
+        name: shown ? `${getLocalized(course, 'title')} — ${shown.title}` : getLocalized(course, 'title'),
       });
 
       toast.success(tl("Workout started! Log sets in Machine Guide or here."));
@@ -230,7 +230,7 @@ function CourseSwitcher({ enrollments, activeId, onOpen }) {
             <button key={e.id} type="button" onClick={() => onOpen(e.course?.id)} aria-current={active ? 'true' : undefined}
               className={`snap-start shrink-0 w-60 text-start rounded-xl border p-3 flex flex-col gap-2 transition-colors ${
                 active ? 'border-primary-container bg-primary-container/10' : 'border-surface-container-high bg-surface-container hover:border-outline'}`}>
-              <span className="text-on-surface font-bold text-[14px] line-clamp-2 break-words">{e.course?.title}</span>
+              <span className="text-on-surface font-bold text-[14px] line-clamp-2 break-words">{getLocalized(e.course, 'title')}</span>
               <span className="flex items-center justify-between text-[11px] text-on-surface-variant">
                 <span>{e.status === 'completed' ? tl("Completed") : tl("{0}% done", { 0: pct })}</span>
                 {active && <span className="text-primary font-bold">{tl("Open")}</span>}

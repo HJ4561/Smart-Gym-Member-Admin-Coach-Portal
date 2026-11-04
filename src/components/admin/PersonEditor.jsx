@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
-import { Drawer, ImageUploader } from '../site/SiteUi';
+import { BiInput, Drawer, ImageUploader } from '../site/SiteUi';
 import { btn, inputCls, labelCls } from '../site/siteStyles';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { tl } from '../../i18n';
@@ -52,8 +52,10 @@ export default function PersonEditor({ person: trainer, kind = 'trainer', api, o
       last_name: f.last_name,
       phone: f.phone || '',
       title: f.title,
+      title_ar: f.title_ar || '',
       credentials: f.credentials,
       bio: f.bio,
+      bio_ar: f.bio_ar || '',
       specialties: f.specialties,
       years_experience: f.years_experience,
       hourly_rate: f.hourly_rate || 0,
@@ -177,15 +179,8 @@ export default function PersonEditor({ person: trainer, kind = 'trainer', api, o
             aria-invalid={!!errors.last_name}
           />
         </Field>
-        <Field label={tl('Title')} error={errors.title}>
-          <input
-            className={inputCls}
-            value={f.title}
-            onChange={set('title')}
-            placeholder={tl('Strength & conditioning coach')}
-            aria-invalid={!!errors.title}
-          />
-        </Field>
+        <BiInput label={tl('Title')} form={f} field="title" onChange={(k, v) => set(k)(v)} errors={errors}
+          required maxLength={120} placeholder={tl('Strength & conditioning coach')} className="md:col-span-2" />
         <Field label={tl('Phone')} error={errors.phone}>
           <SaudiPhoneInput
             value={f.phone || ''}
@@ -222,15 +217,8 @@ export default function PersonEditor({ person: trainer, kind = 'trainer', api, o
             aria-invalid={!!errors.specialties}
           />
         </Field>
-        <Field label={tl('Bio')} error={errors.bio} className="md:col-span-2">
-          <textarea
-            className={inputCls}
-            rows={4}
-            value={f.bio}
-            onChange={set('bio')}
-            aria-invalid={!!errors.bio}
-          />
-        </Field>
+        <BiInput label={tl('Bio')} form={f} field="bio" onChange={(k, v) => set(k)(v)} errors={errors}
+          multiline rows={4} className="md:col-span-2" />
         <Field
           label={isTrainer ? tl('1:1 session price per hour (SAR)') : tl('Consultation price per hour (SAR)')}
           error={errors.hourly_rate}
