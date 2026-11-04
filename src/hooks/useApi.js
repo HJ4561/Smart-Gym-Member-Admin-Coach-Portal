@@ -99,7 +99,7 @@ export function useApi(fetcher, deps = [], options = {}) {
   /** Reload now; shows the loading state only when there's nothing on screen yet. */
   const refetch = useCallback(() => run(hasData.current), [run]);
 
-  return { data, loading, error, refetch };
+  return { data, loading, error, refetch, setData };
 }
 
 export default useApi;

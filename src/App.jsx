@@ -36,6 +36,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminMembers from './pages/admin/AdminMembers';
 import AdminMachines from './pages/admin/AdminMachines';
 import AdminFinance from './pages/admin/AdminFinance';
+import AdminZatca from './pages/admin/AdminZatca';
 import AdminTrainers from './pages/admin/AdminTrainers';
 import AdminFacilities from './pages/admin/AdminFacilities';
 import AdminClasses from './pages/admin/AdminClasses';
@@ -225,6 +226,7 @@ function App() {
         <Route path="facilities" element={<AdminFacilities />} />
         <Route path="classes" element={<AdminClasses />} />
         <Route path="finance" element={<AdminFinance />} />
+        <Route path="zatca" element={<AdminZatca />} />
         <Route path="reports" element={<AdminReports />} />
         <Route path="analytics" element={<AdminAnalytics />} />
         <Route path="cms" element={<Navigate to="/admin/site-lists?list=articles" replace />} />

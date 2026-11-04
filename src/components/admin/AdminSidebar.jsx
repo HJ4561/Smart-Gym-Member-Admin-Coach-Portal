@@ -111,6 +111,7 @@ const navGroups = [
     label: tl('Finance'),
     items: [
       { path: '/admin/finance', label: tl('Finance'), icon: 'payments' },
+      { path: '/admin/zatca', label: tl('ZATCA e-invoicing'), icon: 'receipt_long' },
       { path: '/admin/reports', label: tl('Reports'), icon: 'assessment' },
     ],
   },
