@@ -146,13 +146,13 @@ export default function TrainerProfile() {
       <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-space-xl items-start">
         {/* LEFT: Content */}
         <div className="flex flex-col gap-space-xl min-w-0">
-          {trainer.specialties?.length > 0 && (
+          {getLocalized(trainer, 'specialties')?.length > 0 && (
             <Section delay={0.05} aria-label={tl("Specialties")}>
-              <SpecialtiesPillRow specialties={trainer.specialties} />
+              <SpecialtiesPillRow specialties={getLocalized(trainer, 'specialties')} />
             </Section>
           )}
 
-          {trainer.bio && (
+          {getLocalized(trainer, 'bio') && (
             <Section delay={0.1} aria-label={tl("Coaching Philosophy")}>
               <PhilosophyCard bio={getLocalized(trainer, 'bio')} title={tl("Coaching Philosophy")} />
             </Section>

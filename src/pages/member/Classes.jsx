@@ -110,7 +110,7 @@ export default function Classes() {
                   <div className="font-mono text-primary font-bold">{c.start_time}–{c.end_time}</div>
                   <h3 className="font-title-lg text-title-lg text-on-surface break-words">{getLocalized(c, 'name')}</h3>
                   <div className="text-[12px] text-on-surface-variant">
-                    {tl(c.category_label)} · {c.level_label}{c.trainer && ` · ${c.trainer}`}{c.location && ` · ${c.location}`}
+                    {tl(c.category_label)} · {c.level_label}{c.trainer && ` · ${c.trainer}`}{getLocalized(c, 'location') && ` · ${getLocalized(c, 'location')}`}
                   </div>
                 </div>
                 {c.is_paid && c.locked ? (
@@ -124,7 +124,7 @@ export default function Classes() {
                   </span>
                 )}
               </div>
-              {c.description && <p className="text-[13px] text-on-surface-variant line-clamp-3">{getLocalized(c, 'description')}</p>}
+              {getLocalized(c, 'description') && <p className="text-[13px] text-on-surface-variant line-clamp-3">{getLocalized(c, 'description')}</p>}
 
               {c.is_paid ? (
                 <PaidPanel c={c} open={pick === c.id} onToggleDates={() => setPick(pick === c.id ? null : c.id)}

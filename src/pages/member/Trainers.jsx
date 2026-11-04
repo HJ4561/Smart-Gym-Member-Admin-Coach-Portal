@@ -38,7 +38,7 @@ export default function Trainers() {
 
   const specialties = useMemo(() => {
     const count = {};
-    list.forEach((t) => (t.specialties || []).forEach((s) => { count[s] = (count[s] || 0) + 1; }));
+    list.forEach((t) => (getLocalized(t, 'specialties') || []).forEach((s) => { count[s] = (count[s] || 0) + 1; }));
     return Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([s]) => s);
   }, [list]);
 
@@ -46,8 +46,8 @@ export default function Trainers() {
     const q = search.trim().toLowerCase();
     const rows = list.filter((t) => (show !== 'verified' || t.is_verified)
       && (show !== 'open' || (t.is_accepting_clients && t.offers_1on1))
-      && (!specialty || (t.specialties || []).includes(specialty))
-      && (!q || `${t.user?.full_name} ${t.title} ${t.title_ar || ''} ${(t.specialties || []).join(' ')}`.toLowerCase().includes(q)));
+      && (!specialty || (getLocalized(t, 'specialties') || []).includes(specialty))
+      && (!q || `${t.user?.full_name} ${t.title} ${t.title_ar || ''} ${(t.specialties || []).join(' ')} ${(t.specialties_ar || []).join(' ')}`.toLowerCase().includes(q)));
     const by = {
       rating: (a, b) => (Number(b.rating) - Number(a.rating)) || (b.total_reviews - a.total_reviews),
       price: (a, b) => Number(a.hourly_rate) - Number(b.hourly_rate),
@@ -168,7 +168,7 @@ function TrainerCard({ t, index, onOpen }) {
             <h3 className="font-bold text-[17px] text-on-surface truncate group-hover:text-primary transition-colors">{name}</h3>
             {t.is_verified && <span className="material-symbols-outlined text-primary text-[18px]" title={tl('Verified')} style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>}
           </div>
-          <p className="text-[13px] text-on-surface-variant truncate">{getLocalized(t, 'title')}{t.credentials ? ` · ${t.credentials}` : ''}</p>
+          <p className="text-[13px] text-on-surface-variant truncate">{getLocalized(t, 'title')}{getLocalized(t, 'credentials') ? ` · ${getLocalized(t, 'credentials')}` : ''}</p>
           <div className="flex items-center gap-3 mt-2 text-[12px] text-on-surface-variant">
             {rated ? (
               <span className="flex items-center gap-1 text-on-surface">
@@ -181,9 +181,9 @@ function TrainerCard({ t, index, onOpen }) {
         </div>
       </div>
 
-      {(t.specialties || []).length > 0 && (
+      {(getLocalized(t, 'specialties') || []).length > 0 && (
         <div className="flex flex-wrap gap-1.5 px-4">
-          {t.specialties.slice(0, 4).map((s) => (
+          {getLocalized(t, 'specialties').slice(0, 4).map((s) => (
             <span key={s} className="px-2 py-0.5 rounded-full bg-surface-container-high text-on-surface-variant text-[11px]">{s}</span>
           ))}
         </div>

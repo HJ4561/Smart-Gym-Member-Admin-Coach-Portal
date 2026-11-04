@@ -7,7 +7,7 @@ import PayDialog from '../payments/PayDialog';
 import { errorMessage } from '../../utils/apiError';
 import { formatSAR } from '../../utils/money';
 import { formatGymDateTime } from '../../utils/gymTime';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 const DAYS_AHEAD = 14;
 const CANCEL_HOURS = 24;
@@ -151,7 +151,8 @@ export default function BookingPanel({ trainer }) {
     }
   };
 
-  const specialties = Array.isArray(trainer?.specialties) ? trainer.specialties : [];
+  const localized = trainer ? getLocalized(trainer, 'specialties') : null;
+  const specialties = Array.isArray(localized) ? localized : [];
   const accepting = meta ? meta.accepting : trainer?.is_accepting_clients;
   const price = meta?.price ?? trainer?.hourly_rate ?? 0;
   const priceLabel = Number(price) > 0 ? formatSAR(price) : tl('Free');

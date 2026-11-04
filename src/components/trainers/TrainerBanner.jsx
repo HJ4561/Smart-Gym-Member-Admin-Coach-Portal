@@ -98,9 +98,9 @@ export default function TrainerBanner({ trainer }) {
             <h1 className="font-headline-lg text-headline-lg text-on-surface uppercase tracking-wide leading-none break-words">
               {name}
             </h1>
-            {trainer.credentials && (
+            {getLocalized(trainer, 'credentials') && (
               <p className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
-                {trainer.credentials}
+                {getLocalized(trainer, 'credentials')}
               </p>
             )}
           </div>

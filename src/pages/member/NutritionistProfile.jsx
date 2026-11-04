@@ -107,7 +107,7 @@ export default function NutritionistProfile() {
               <h1 className="font-headline-md text-headline-md text-on-surface">{name}</h1>
               {n.is_verified && <span className="material-symbols-outlined text-primary text-[22px]" title={tl('Verified')} style={{ fontVariationSettings: "'FILL' 1" }}>verified</span>}
             </div>
-            <p className="text-on-surface-variant">{getLocalized(n, 'title')}{n.credentials ? ` · ${n.credentials}` : ''}</p>
+            <p className="text-on-surface-variant">{getLocalized(n, 'title')}{getLocalized(n, 'credentials') ? ` · ${getLocalized(n, 'credentials')}` : ''}</p>
             <div className="flex flex-wrap gap-2 mt-3">
               {isMine && <Badge tone="primary" icon="check_circle">{tl('Your nutritionist')}</Badge>}
               {n.is_accepting_clients
@@ -138,11 +138,11 @@ export default function NutritionistProfile() {
               {getLocalized(n, 'bio') || tl('{0} hasn’t added a bio yet.', { 0: name })}
             </p>
           </section>
-          {(n.specialties || []).length > 0 && (
+          {(getLocalized(n, 'specialties') || []).length > 0 && (
             <section className="rounded-xl bg-surface-container border border-surface-container-high p-5">
               <h2 className="text-on-surface font-bold text-[16px] mb-3">{tl('Specialties')}</h2>
               <div className="flex flex-wrap gap-2">
-                {n.specialties.map((s) => (
+                {getLocalized(n, 'specialties').map((s) => (
                   <span key={s} className="px-3 py-1 rounded-full bg-surface-container-high text-on-surface text-[13px]">{s}</span>
                 ))}
               </div>

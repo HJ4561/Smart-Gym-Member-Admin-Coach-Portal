@@ -75,7 +75,7 @@ export default function CourseDetail() {
           <div className="relative p-5 sm:p-6 flex flex-col justify-end h-full gap-2 min-h-48">
             <span className="text-primary text-[11px] font-bold uppercase tracking-widest">{categoryLabel(c.category)} · {LEVEL[c.level] || c.level}</span>
             <h1 className="font-headline-lg text-headline-lg text-white uppercase tracking-wide break-words">{getLocalized(c, 'title')}</h1>
-            {c.subtitle && <p className="text-white/80">{getLocalized(c, 'subtitle')}</p>}
+            {getLocalized(c, 'subtitle') && <p className="text-white/80">{getLocalized(c, 'subtitle')}</p>}
           </div>
         </div>
         <div className="p-5 flex flex-col gap-3">
@@ -115,7 +115,7 @@ export default function CourseDetail() {
         </div>
       </motion.section>
 
-      {c.description && (
+      {getLocalized(c, 'description') && (
         <section className="rounded-xl bg-surface-container border border-surface-container-high p-5">
           <h2 className="text-on-surface font-bold uppercase tracking-wider text-[13px] mb-2">{tl('About this course')}</h2>
           <p className="text-on-surface-variant whitespace-pre-line break-words">{getLocalized(c, 'description')}</p>
@@ -138,7 +138,7 @@ export default function CourseDetail() {
                   <span className="text-[11px] font-bold text-on-surface-variant w-12 shrink-0 pt-0.5">{tl('Day {0}', { 0: m.day_number })}</span>
                   <span className="flex-1 min-w-0">
                     <span className="block text-on-surface text-[14px] font-bold break-words">{getLocalized(m, 'title')}</span>
-                    {m.description && <span className="block text-[12px] text-on-surface-variant line-clamp-2">{getLocalized(m, 'description')}</span>}
+                    {getLocalized(m, 'description') && <span className="block text-[12px] text-on-surface-variant line-clamp-2">{getLocalized(m, 'description')}</span>}
                   </span>
                   <span className="text-[11px] text-on-surface-variant whitespace-nowrap flex items-center gap-1">
                     {!c.enrolled && <span className="material-symbols-outlined text-[14px]" aria-label={tl('Locked')}>lock</span>}

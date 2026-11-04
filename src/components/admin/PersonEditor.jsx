@@ -38,7 +38,8 @@ function Toggle({ label, hint, checked, onChange }) {
 export default function PersonEditor({ person: trainer, kind = 'trainer', api, onClose, onSaved }) {
   const isTrainer = kind === 'trainer';
   const noun = isTrainer ? tl('trainer') : tl('nutritionist');
-  const [f, setF] = useState(() => ({ ...trainer, specialties: (trainer.specialties || []).join(', ') }));
+  const [f, setF] = useState(() => ({ ...trainer, specialties: (trainer.specialties || []).join(', '),
+    specialties_ar: (trainer.specialties_ar || []).join('، ') }));
   const [created, setCreated] = useState(false);
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
@@ -54,9 +55,11 @@ export default function PersonEditor({ person: trainer, kind = 'trainer', api, o
       title: f.title,
       title_ar: f.title_ar || '',
       credentials: f.credentials,
+      credentials_ar: f.credentials_ar || '',
       bio: f.bio,
       bio_ar: f.bio_ar || '',
       specialties: f.specialties,
+      specialties_ar: f.specialties_ar || '',
       years_experience: f.years_experience,
       hourly_rate: f.hourly_rate || 0,
       is_verified: f.is_verified,
@@ -73,7 +76,7 @@ export default function PersonEditor({ person: trainer, kind = 'trainer', api, o
       if (f.id) onClose();
       else {
         setCreated(true);
-        setF({ ...row, specialties: row.specialties.join(', ') });
+        setF({ ...row, specialties: row.specialties.join(', '), specialties_ar: (row.specialties_ar || []).join('، ') });
       }
     } catch (err) {
       setErrors(fieldErrors(err));
@@ -188,15 +191,8 @@ export default function PersonEditor({ person: trainer, kind = 'trainer', api, o
             aria-invalid={!!errors.phone}
           />
         </Field>
-        <Field label={tl('Credentials')} error={errors.credentials}>
-          <input
-            className={inputCls}
-            value={f.credentials}
-            onChange={set('credentials')}
-            placeholder={tl('NASM-CPT, CSCS')}
-            aria-invalid={!!errors.credentials}
-          />
-        </Field>
+        <BiInput label={tl('Credentials')} form={f} field="credentials" onChange={(k, v) => set(k)(v)} errors={errors}
+          maxLength={200} placeholder={tl('NASM-CPT, CSCS')} className="md:col-span-2" />
         <Field label={tl('Years of experience')} error={errors.years_experience}>
           <input
             className={inputCls}
@@ -208,15 +204,8 @@ export default function PersonEditor({ person: trainer, kind = 'trainer', api, o
             aria-invalid={!!errors.years_experience}
           />
         </Field>
-        <Field label={tl('Specialties (comma separated)')} error={errors.specialties} className="md:col-span-2">
-          <input
-            className={inputCls}
-            value={f.specialties}
-            onChange={set('specialties')}
-            placeholder={tl('Powerlifting, Mobility, Weight loss')}
-            aria-invalid={!!errors.specialties}
-          />
-        </Field>
+        <BiInput label={tl('Specialties (comma separated)')} form={f} field="specialties" onChange={(k, v) => set(k)(v)}
+          errors={errors} placeholder={tl('Powerlifting, Mobility, Weight loss')} className="md:col-span-2" />
         <BiInput label={tl('Bio')} form={f} field="bio" onChange={(k, v) => set(k)(v)} errors={errors}
           multiline rows={4} className="md:col-span-2" />
         <Field

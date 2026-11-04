@@ -357,7 +357,7 @@ export default function Shop() {
                   <div className="absolute inset-0 bg-gradient-to-t from-surface-container-lowest via-transparent to-transparent" />
 
                   <div className="absolute top-3 left-3 flex flex-col gap-1">
-                    {p.badge_top && (
+                    {getLocalized(p, 'badge_top') && (
                       <span
                         className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${
                           p.badge_top_accent
@@ -365,12 +365,12 @@ export default function Shop() {
                             : 'bg-surface-container-lowest/90 text-on-surface'
                         }`}
                       >
-                        {p.badge_top}
+                        {getLocalized(p, 'badge_top')}
                       </span>
                     )}
-                    {p.badge_secondary && (
+                    {getLocalized(p, 'badge_secondary') && (
                       <span className="px-2 py-1 rounded bg-surface-container-lowest/90 text-on-surface text-[10px] font-bold uppercase">
-                        {p.badge_secondary}
+                        {getLocalized(p, 'badge_secondary')}
                       </span>
                     )}
                   </div>
@@ -385,10 +385,10 @@ export default function Shop() {
                     {Number(p.rating).toFixed(1)}
                   </div>
 
-                  {Array.isArray(p.telemetry) && p.telemetry.length > 0 && (
+                  {Array.isArray(getLocalized(p, 'telemetry')) && getLocalized(p, 'telemetry').length > 0 && (
                     <div className="absolute bottom-3 left-3 right-3">
                       <div className="inline-flex gap-2 px-2 py-1 rounded bg-surface-container-highest/80 backdrop-blur text-[10px] flex-wrap">
-                        {p.telemetry.map((t, idx) => (
+                        {getLocalized(p, 'telemetry').map((t, idx) => (
                           <span
                             key={idx}
                             className={
@@ -421,7 +421,7 @@ export default function Shop() {
                     >
                       {p.is_out_of_stock
                         ? tl("Out of Stock")
-                        : p.stock_label || tl("In Stock ({0})", { 0: p.stock_quantity })}
+                        : getLocalized(p, 'stock_label') || tl("In Stock ({0})", { 0: p.stock_quantity })}
                     </span>
                   </div>
 
@@ -451,7 +451,7 @@ export default function Shop() {
                             : 'text-on-surface-variant'
                         }`}
                       >
-                        {p.price_note}
+                        {getLocalized(p, 'price_note')}
                       </span>
                     </div>
 

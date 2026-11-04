@@ -91,7 +91,7 @@ export default function VideoStage({ course, currentModule }) {
         <h2 className="font-headline-md text-headline-md text-on-surface uppercase mt-1">
           {currentModule?.title || course?.title}
         </h2>
-        {currentModule?.description && (
+        {currentModule && getLocalized(currentModule, 'description') && (
           <p className="font-body-md text-body-md text-on-surface-variant mt-1 max-w-2xl line-clamp-2">
             {getLocalized(currentModule, 'description')}
           </p>

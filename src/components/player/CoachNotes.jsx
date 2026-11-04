@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 export default function CoachNotes({ trainer, course }) {
   const coachName = trainer?.user?.full_name || course?.trainer_name || 'Your Coach';
@@ -61,7 +61,7 @@ export default function CoachNotes({ trainer, course }) {
           tl("Follow the day-by-day protocol. Log each set to sync your velocity and tonnage to your profile.")}
       </p>
 
-      {trainer?.credentials && (
+      {trainer && getLocalized(trainer, 'credentials') && (
         <div className="p-space-sm rounded-lg bg-surface-container-lowest flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-space-xs">
             <span className="material-symbols-outlined text-primary-container text-title-md">
@@ -71,7 +71,7 @@ export default function CoachNotes({ trainer, course }) {
               {tl("Credentials:")}
             </span>
             <span className="text-body-md font-body-md text-on-surface">
-              {trainer.credentials}
+              {getLocalized(trainer, 'credentials')}
             </span>
           </div>
           {trainer.years_experience > 0 && (

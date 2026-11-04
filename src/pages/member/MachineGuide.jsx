@@ -567,7 +567,7 @@ function AITrainingDirective({ exercise }) {
         )}
       </div>
 
-      {exercise.description && (
+      {getLocalized(exercise, 'description') && (
         <p className="font-body-md text-body-md text-on-surface-variant mt-3 pt-3 border-t border-surface-container-high">
           {getLocalized(exercise, 'description')}
         </p>

@@ -84,6 +84,7 @@ function Products({ categories, onChanged }) {
   const saved = () => { refetch(); onChanged(); };
   const blank = { name: '', name_ar: '', sku: '', description: '', description_ar: '', category_id: categories[0]?.id || '', price: '', original_price: '',
     price_note: '', badge_top: '', badge_secondary: '', telemetry: [], stock_quantity: 0, stock_label: '',
+    price_note_ar: '', badge_top_ar: '', badge_secondary_ar: '', telemetry_ar: [], stock_label_ar: '',
     low_stock_threshold: 5, is_active: true, is_featured: false };
 
   return (
@@ -161,6 +162,7 @@ function Products({ categories, onChanged }) {
 
 function ProductEditor({ product, categories, onClose, onSaved }) {
   const [f, setF] = useState(() => ({ ...product, telemetry: (product.telemetry || []).join('\n'),
+    telemetry_ar: (product.telemetry_ar || []).join('\n'),
     original_price: product.original_price ?? '' }));
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
@@ -189,6 +191,8 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
       original_price: f.original_price === '' ? null : f.original_price, price_note: f.price_note,
       badge_top: f.badge_top, badge_secondary: f.badge_secondary, telemetry: f.telemetry,
       stock_quantity: f.stock_quantity, stock_label: f.stock_label, low_stock_threshold: f.low_stock_threshold,
+      price_note_ar: f.price_note_ar || '', badge_top_ar: f.badge_top_ar || '', badge_secondary_ar: f.badge_secondary_ar || '',
+      stock_label_ar: f.stock_label_ar || '', telemetry_ar: f.telemetry_ar || '',
       is_active: f.is_active, is_featured: f.is_featured,
     };
     body.sku = skuNum;   // empty → the next free number in the category
@@ -198,7 +202,8 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
       onSaved();
       if (f.id) onClose();
       else {
-        setF({ ...row, telemetry: row.telemetry.join('\n'), original_price: row.original_price ?? '' });
+        setF({ ...row, telemetry: row.telemetry.join('\n'), telemetry_ar: (row.telemetry_ar || []).join('\n'),
+          original_price: row.original_price ?? '' });
         setSkuNum(row.sku.slice(4));
       }
     } catch (err) {
@@ -268,12 +273,15 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
         <Field label={tl("Warn when stock is at or below")} error={errors.low_stock_threshold}><input className={inputCls} type="number" min="0" value={f.low_stock_threshold} onChange={set('low_stock_threshold')} /></Field>
         <BiInput label={tl("Description")} form={f} field="description" errors={errors} multiline className="md:col-span-2"
           onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
-        <Field label={tl("Badge")} error={errors.badge_top} hint={tl("e.g. Best seller")}><input className={inputCls} value={f.badge_top} onChange={set('badge_top')} /></Field>
-        <Field label={tl("Second badge")} error={errors.badge_secondary}><input className={inputCls} value={f.badge_secondary} onChange={set('badge_secondary')} /></Field>
-        <Field label={tl("Price note")} error={errors.price_note}><input className={inputCls} value={f.price_note} onChange={set('price_note')} placeholder={tl("Per tub")} /></Field>
-        <Field label={tl("Stock note")} error={errors.stock_label}><input className={inputCls} value={f.stock_label} onChange={set('stock_label')} placeholder={tl("Ships in 2 days")} /></Field>
-        <Field label={tl("Key facts (one per line, up to 6)")} error={errors.telemetry} className="md:col-span-2">
-          <textarea className={inputCls} rows={3} value={f.telemetry} onChange={set('telemetry')} placeholder={tl("25 g protein per scoop\n30 servings")} /></Field>
+        <BiInput label={tl("Badge")} form={f} field="badge_top" errors={errors} maxLength={60} hint={tl("e.g. Best seller")}
+          className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
+        <BiInput label={tl("Second badge")} form={f} field="badge_secondary" errors={errors} maxLength={60} className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
+        <BiInput label={tl("Price note")} form={f} field="price_note" errors={errors} maxLength={100} placeholder={tl("Per tub")}
+          className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
+        <BiInput label={tl("Stock note")} form={f} field="stock_label" errors={errors} maxLength={60} placeholder={tl("Ships in 2 days")}
+          className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
+        <BiInput label={tl("Key facts (one per line, up to 6)")} form={f} field="telemetry" errors={errors} multiline
+          placeholder={tl("25 g protein per scoop\n30 servings")} className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
       </div>
       <div className="flex flex-col gap-2 text-[13px] text-on-surface">
         <label className="flex items-start gap-2"><input type="checkbox" className="mt-1" checked={!!f.is_active} onChange={set('is_active')} />{tl("On sale (members can see and buy it)")}</label>

@@ -31,12 +31,14 @@ export function tl(text, vars) {
 
 /**
  * Staff-entered data in the reader's language: getLocalized(product, 'name') is product.name_ar in
- * Arabic when it has a value, otherwise product.name (so untranslated items still show).
+ * Arabic when it has a value, otherwise product.name (so untranslated items still show). Lists (key
+ * facts, specialties) work the same way: the Arabic list when it isn't empty.
  */
 export function getLocalized(item, field) {
   if (item == null) return '';
   const ar = item[`${field}_ar`];
-  return isAr && typeof ar === 'string' && ar.trim() ? ar : item[field];
+  const filled = Array.isArray(ar) ? ar.length > 0 : typeof ar === 'string' && ar.trim() !== '';
+  return isAr && filled ? ar : item[field];
 }
 
 export function setLang(next) {

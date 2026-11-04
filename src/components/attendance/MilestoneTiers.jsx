@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { attendanceService } from '../../services/attendanceService';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 const EASE = [0.22, 1, 0.36, 1];
 
@@ -73,7 +73,7 @@ export default function MilestoneTiers({ milestones, onClaim }) {
                   <span className={`font-label-md text-label-md uppercase tracking-wider font-bold ${
                     isLocked ? 'text-on-surface-variant' : 'text-primary'
                   }`}>
-                    {m.tier}
+                    {getLocalized(m, 'tier')}
                   </span>
                 </div>
                 <span className={`px-space-xs py-0.5 rounded font-label-md text-label-md font-bold uppercase ${
@@ -89,9 +89,9 @@ export default function MilestoneTiers({ milestones, onClaim }) {
 
               <div className="my-space-md">
                 <h3 className={`font-headline-md text-headline-md uppercase ${isLocked ? 'text-on-surface-variant' : 'text-on-surface'}`}>
-                  {m.title}
+                  {getLocalized(m, 'title')}
                 </h3>
-                <p className="font-body-md text-body-md text-on-surface-variant mt-1">{m.description}</p>
+                <p className="font-body-md text-body-md text-on-surface-variant mt-1">{getLocalized(m, 'description')}</p>
               </div>
 
               {isClaimed && (

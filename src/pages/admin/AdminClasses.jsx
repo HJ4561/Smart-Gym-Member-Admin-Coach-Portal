@@ -144,7 +144,7 @@ function ClassEditor({ cls, trainers, onClose, onSaved }) {
       name: f.name, name_ar: f.name_ar || '', category: f.category, level: f.level, description: f.description,
       description_ar: f.description_ar || '', trainer_id: f.trainer_id || null,
       day_of_week: Number(f.day_of_week), start_time: f.start_time, duration_minutes: f.duration_minutes,
-      capacity: f.capacity, location: f.location, is_active: f.is_active,
+      capacity: f.capacity, location: f.location, location_ar: f.location_ar || '', is_active: f.is_active,
       price_per_session: f.price_per_session || 0, full_price: f.full_price === '' ? null : f.full_price,
       starts_on: f.starts_on || null, ends_on: f.ends_on || null,
     };
@@ -216,7 +216,8 @@ function ClassEditor({ cls, trainers, onClose, onSaved }) {
             <option value="">{tl("No trainer")}</option>
             {trainers.map((t) => <option key={t.id} value={t.id}>{t.user_name}</option>)}
           </select></Field>
-        <Field label={tl("Room")} error={errors.location}><input className={inputCls} value={f.location} onChange={set('location')} placeholder={tl("Studio 1")} /></Field>
+        <BiInput label={tl("Room")} form={f} field="location" errors={errors} maxLength={100} placeholder={tl("Studio 1")}
+          className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
         <BiInput label={tl("Description")} form={f} field="description" errors={errors} multiline maxLength={2000}
           className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
       </div>

@@ -107,7 +107,7 @@ export default function MachineVideos({ exercise }) {
                       <span className="block text-[12px] text-on-surface-variant">
                         {v.coach}{v.duration_minutes ? ` · ${tl('{0} min', { 0: v.duration_minutes })}` : ''}
                       </span>
-                      {v.description && <span className="block text-[12px] text-on-surface-variant mt-0.5 line-clamp-2">{getLocalized(v, 'description')}</span>}
+                      {getLocalized(v, 'description') && <span className="block text-[12px] text-on-surface-variant mt-0.5 line-clamp-2">{getLocalized(v, 'description')}</span>}
                     </span>
                   </button>
                   <div className="flex items-center gap-2 flex-wrap sm:justify-end">

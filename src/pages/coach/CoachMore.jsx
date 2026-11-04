@@ -150,7 +150,8 @@ export function CoachProfile() {
 }
 
 function ProfileForm({ me, onSaved }) {
-  const [f, setF] = useState(() => ({ ...me, specialties: (me.specialties || []).join(', ') }));
+  const [f, setF] = useState(() => ({ ...me, specialties: (me.specialties || []).join(', '),
+    specialties_ar: (me.specialties_ar || []).join('، ') }));
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e?.target ? e.target.value : e }));
@@ -160,9 +161,10 @@ function ProfileForm({ me, onSaved }) {
     try {
       const row = await coachService.updateMe({
         first_name: f.first_name, last_name: f.last_name, phone: f.phone || '', title: f.title, title_ar: f.title_ar || '',
-        credentials: f.credentials, bio: f.bio, bio_ar: f.bio_ar || '', specialties: f.specialties, years_experience: f.years_experience,
+        credentials: f.credentials, credentials_ar: f.credentials_ar || '', bio: f.bio, bio_ar: f.bio_ar || '',
+        specialties: f.specialties, specialties_ar: f.specialties_ar || '', years_experience: f.years_experience,
       });
-      setF({ ...row, specialties: row.specialties.join(', ') });
+      setF({ ...row, specialties: row.specialties.join(', '), specialties_ar: (row.specialties_ar || []).join('، ') });
       toast.success(tl('Profile saved'));
       onSaved();
     } catch (err) {
@@ -195,10 +197,10 @@ function ProfileForm({ me, onSaved }) {
             <input className={inputCls} type="number" min="0" max="60" value={f.years_experience} onChange={set('years_experience')} /></Field>
           <BiInput label={tl('Title')} form={f} field="title" errors={errors} required maxLength={120} className="sm:col-span-2"
             placeholder={tl('e.g. Strength & Conditioning Coach')} onChange={(k, v) => set(k)(v)} />
-          <Field label={tl('Credentials')} error={errors.credentials} className="sm:col-span-2">
-            <input className={inputCls} value={f.credentials} onChange={set('credentials')} placeholder="CSCS, NASM-CPT" /></Field>
-          <Field label={tl('Specialties (comma separated)')} error={errors.specialties} className="sm:col-span-2">
-            <input className={inputCls} value={f.specialties} onChange={set('specialties')} placeholder={tl('Strength, Mobility, Fat loss')} /></Field>
+          <BiInput label={tl('Credentials')} form={f} field="credentials" errors={errors} maxLength={200} className="sm:col-span-2"
+            placeholder="CSCS, NASM-CPT" onChange={(k, v) => set(k)(v)} />
+          <BiInput label={tl('Specialties (comma separated)')} form={f} field="specialties" errors={errors} className="sm:col-span-2"
+            placeholder={tl('Strength, Mobility, Fat loss')} onChange={(k, v) => set(k)(v)} />
           <BiInput label={tl('About you')} form={f} field="bio" errors={errors} multiline rows={4} className="sm:col-span-2"
             onChange={(k, v) => set(k)(v)} />
         </div>

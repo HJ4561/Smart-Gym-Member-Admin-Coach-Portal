@@ -389,7 +389,7 @@ function FeaturedNutritionist({ nutritionist: n, isAssigned, onOpen }) {
             {getLocalized(n, 'title')}
           </span>
           <span className="font-label-md text-[10px] text-on-surface-variant uppercase mt-0.5">
-            {n.credentials}
+            {getLocalized(n, 'credentials')}
           </span>
           <p className="font-body-md text-body-md text-on-surface-variant mt-2 line-clamp-2">
             {getLocalized(n, 'bio') || tl("Sports nutrition specialist")}
@@ -491,7 +491,7 @@ function SpecialistsGrid({ nutritionists, heading, onOpen }) {
                     {getLocalized(n, 'title')}
                   </span>
                   <span className="font-label-md text-[9px] text-on-surface-variant uppercase">
-                    {n.credentials}
+                    {getLocalized(n, 'credentials')}
                   </span>
                 </div>
               </div>
@@ -500,9 +500,9 @@ function SpecialistsGrid({ nutritionists, heading, onOpen }) {
                 {getLocalized(n, 'bio') || tl("Sports nutrition specialist")}
               </p>
 
-              {Array.isArray(n.specialties) && n.specialties.length > 0 && (
+              {Array.isArray(getLocalized(n, 'specialties')) && getLocalized(n, 'specialties').length > 0 && (
                 <div className="flex flex-wrap gap-1">
-                  {n.specialties.slice(0, 3).map((sp) => (
+                  {getLocalized(n, 'specialties').slice(0, 3).map((sp) => (
                     <span
                       key={sp}
                       className="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-md text-[9px] uppercase tracking-wider"
