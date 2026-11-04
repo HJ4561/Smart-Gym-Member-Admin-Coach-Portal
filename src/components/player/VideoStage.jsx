@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 export default function VideoStage({ course, currentModule }) {
   const [playing, setPlaying] = useState(false);
@@ -93,7 +93,7 @@ export default function VideoStage({ course, currentModule }) {
         </h2>
         {currentModule?.description && (
           <p className="font-body-md text-body-md text-on-surface-variant mt-1 max-w-2xl line-clamp-2">
-            {currentModule.description}
+            {getLocalized(currentModule, 'description')}
           </p>
         )}
       </div>

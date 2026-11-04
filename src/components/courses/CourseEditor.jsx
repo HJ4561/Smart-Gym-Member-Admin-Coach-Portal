@@ -56,8 +56,10 @@ export default function CourseEditor({ course, mode = 'admin', api, trainers = [
       title_ar: f.title_ar || '', subtitle_ar: f.subtitle_ar || '', description_ar: f.description_ar || '',
       duration_weeks: f.duration_weeks, days_per_week: f.days_per_week,
       estimated_minutes_per_session: f.estimated_minutes_per_session, price: f.price || 0, promo_video_url: f.promo_video_url,
-      modules: f.modules.map(({ id, title, description, week_number, day_number, duration_minutes, video_url, pdf_url }) => ({
-        id, title, description, week_number, day_number, duration_minutes, video_url, pdf_url })),
+      modules: f.modules.map(({ id, title, title_ar, description, description_ar, week_number, day_number, duration_minutes,
+        video_url, pdf_url }) => ({
+        id, title, title_ar: title_ar || '', description, description_ar: description_ar || '', week_number, day_number,
+        duration_minutes, video_url, pdf_url })),
     };
     if (admin) Object.assign(b, { trainer_id: f.trainer_id, is_included_with_pro: f.is_included_with_pro, is_featured: f.is_featured });
     return b;
@@ -222,8 +224,8 @@ export default function CourseEditor({ course, mode = 'admin', api, trainers = [
         {f.modules.length === 0 && <p className="text-[12px] text-on-surface-variant">{tl("A course needs at least one lesson before it can be published.")}</p>}
         {f.modules.map((m, i) => (
           <div key={m.id ?? `new-${i}`} className="bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg p-3 grid grid-cols-6 gap-2">
-            <Field label={tl("Lesson {0}", { 0: i + 1 })} className="col-span-6 md:col-span-3">
-              <input className={inputCls} value={m.title} onChange={(e) => setLesson(i, 'title', e.target.value)} /></Field>
+            <BiInput label={tl("Lesson {0}", { 0: i + 1 })} form={m} field="title" maxLength={200} className="col-span-6"
+              onChange={(k, v) => setLesson(i, k, v)} />
             <Field label={tl("Week")} className="col-span-2 md:col-span-1"><input className={inputCls} type="number" min="1" value={m.week_number} onChange={(e) => setLesson(i, 'week_number', e.target.value)} /></Field>
             <Field label={tl("Day")} className="col-span-2 md:col-span-1"><input className={inputCls} type="number" min="1" max="7" value={m.day_number} onChange={(e) => setLesson(i, 'day_number', e.target.value)} /></Field>
             <Field label={tl("Min")} className="col-span-2 md:col-span-1"><input className={inputCls} type="number" min="1" value={m.duration_minutes} onChange={(e) => setLesson(i, 'duration_minutes', e.target.value)} /></Field>
@@ -231,8 +233,8 @@ export default function CourseEditor({ course, mode = 'admin', api, trainers = [
               <input className={inputCls} value={m.video_url} onChange={(e) => setLesson(i, 'video_url', e.target.value)} placeholder="https://…" /></Field>
             <Field label={tl("PDF link")} className="col-span-6 md:col-span-3">
               <input className={inputCls} value={m.pdf_url} onChange={(e) => setLesson(i, 'pdf_url', e.target.value)} placeholder="https://…" /></Field>
-            <Field label={tl("Notes")} className="col-span-6">
-              <textarea className={inputCls} rows={2} value={m.description} onChange={(e) => setLesson(i, 'description', e.target.value)} /></Field>
+            <BiInput label={tl("Notes")} form={m} field="description" multiline rows={2} className="col-span-6"
+              onChange={(k, v) => setLesson(i, k, v)} />
             <div className="col-span-6 flex gap-2 justify-end">
               <button type="button" className={btn.ghost} disabled={i === 0} onClick={() => move(i, -1)} aria-label={tl("Move lesson up")}>↑</button>
               <button type="button" className={btn.ghost} disabled={i === f.modules.length - 1} onClick={() => move(i, 1)} aria-label={tl("Move lesson down")}>↓</button>

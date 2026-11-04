@@ -5,7 +5,7 @@ import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 import { coachService } from '../../services/coachService';
-import { Drawer, Empty, PageHeader } from '../../components/site/SiteUi';
+import { BiInput, Drawer, Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls } from '../../components/site/siteStyles';
 import { Field } from '../../components/courses/CourseEditor';
 import { formatSAR } from '../../utils/money';
@@ -20,7 +20,8 @@ const TIERS = [
 ];
 const TONE = Object.fromEntries(TIERS.map(([k, , , t]) => [k, t]));
 const LABEL = Object.fromEntries(TIERS.map(([k, l]) => [k, l]));
-const NEW = { exercise_id: '', tier: 'basic', title: '', video_url: '', duration_minutes: 5, price: '', description: '', is_active: true };
+const NEW = { exercise_id: '', tier: 'basic', title: '', title_ar: '', video_url: '', duration_minutes: 5, price: '', description: '',
+  description_ar: '', is_active: true };
 
 export default function CoachVideos() {
   const [tier, setTier] = useState('');
@@ -149,8 +150,9 @@ export function VideoEditor({ video, machines = [], fixedMachine, api, onClose, 
     setBusy(true);
     setErrors({});
     const body = {
-      tier: f.tier, title: (f.title || '').trim(), video_url: (f.video_url || '').trim(),
-      duration_minutes: f.duration_minutes, price: f.tier === 'basic' ? 0 : f.price, description: f.description, ...patch,
+      tier: f.tier, title: (f.title || '').trim(), title_ar: (f.title_ar || '').trim(), video_url: (f.video_url || '').trim(),
+      duration_minutes: f.duration_minutes, price: f.tier === 'basic' ? 0 : f.price, description: f.description,
+      description_ar: f.description_ar || '', ...patch,
     };
     try {
       if (f.id) await api.update(f.id, body);
@@ -235,10 +237,8 @@ export function VideoEditor({ video, machines = [], fixedMachine, api, onClose, 
           {f.purchases > 0 && <span className="text-[11px] text-on-surface-variant">{tl('Members bought this video, so its tier stays the same.')}</span>}
           <FieldMessage k="tier" error={errors.tier} />
         </fieldset>
-        <Field label={tl('Title')} className="md:col-span-2">
-          <input {...invalid('title')} value={f.title} onChange={set('title')} maxLength={120} placeholder={tl('e.g. Seat height and grip')} />
-          <FieldMessage k="title" error={errors.title} />
-        </Field>
+        <BiInput label={tl('Title')} form={f} field="title" errors={errors} id="vid-title" maxLength={120} className="md:col-span-2"
+          placeholder={tl('e.g. Seat height and grip')} onChange={(k, v) => set(k)(v)} />
         <Field label={tl('Video link')} className="md:col-span-2">
           <input {...invalid('video_url')} value={f.video_url} onChange={set('video_url')} inputMode="url" placeholder="https://youtu.be/…" />
           <FieldMessage k="video_url" error={errors.video_url} />
@@ -252,10 +252,8 @@ export function VideoEditor({ video, machines = [], fixedMachine, api, onClose, 
             onChange={set('price')} placeholder="15" />
           <FieldMessage k="price" error={errors.price} />
         </Field>
-        <Field label={tl('What members learn (optional)')} className="md:col-span-2">
-          <textarea {...invalid('description')} rows={3} value={f.description} onChange={set('description')} />
-          <FieldMessage k="description" error={errors.description} />
-        </Field>
+        <BiInput label={tl('What members learn (optional)')} form={f} field="description" errors={errors} id="vid-description"
+          multiline maxLength={2000} className="md:col-span-2" onChange={(k, v) => set(k)(v)} />
       </div>
     </Drawer>
   );

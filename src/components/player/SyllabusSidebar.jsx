@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 // Clicking a day only opens it; finishing a day is the explicit button under the video.
 export default function SyllabusSidebar({ modules = [], enrollment, selectedId, onSelect }) {
@@ -139,7 +139,7 @@ export default function SyllabusSidebar({ modules = [], enrollment, selectedId, 
                             : 'text-on-surface-variant'
                         }`}
                       >
-                        {m.title}
+                        {getLocalized(m, 'title')}
                       </span>
                     </div>
                     <span

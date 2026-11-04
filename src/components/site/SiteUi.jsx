@@ -54,7 +54,7 @@ export function BilingualField({ label, value, onChange, multiline = false, erro
  * members reading in Arabic see the English until it is filled in.
  */
 export function BiInput({ label, form, field, onChange, errors = {}, multiline = false, rows = 3, required = false,
-  placeholder, maxLength, readOnly = false, hint, className = '', inputClassName = inputCls }) {
+  placeholder, maxLength, readOnly = false, hint, id, className = '', inputClassName = inputCls }) {
   const Tag = multiline ? 'textarea' : 'input';
   const err = errors[field];
   const errAr = errors[`${field}_ar`];
@@ -63,6 +63,7 @@ export function BiInput({ label, form, field, onChange, errors = {}, multiline =
       <span className={labelCls}>{label}{required && <span className="text-primary"> *</span>}</span>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
         <Tag
+          id={id}
           className={`${inputClassName} ${err ? 'border-rose-500' : ''}`}
           value={form[field] ?? ''}
           rows={multiline ? rows : undefined}

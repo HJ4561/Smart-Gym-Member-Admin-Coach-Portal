@@ -137,8 +137,8 @@ export default function CourseDetail() {
                 <li key={m.id} className="flex items-start gap-3 rounded-lg bg-surface-container-low px-3 py-2">
                   <span className="text-[11px] font-bold text-on-surface-variant w-12 shrink-0 pt-0.5">{tl('Day {0}', { 0: m.day_number })}</span>
                   <span className="flex-1 min-w-0">
-                    <span className="block text-on-surface text-[14px] font-bold break-words">{m.title}</span>
-                    {m.description && <span className="block text-[12px] text-on-surface-variant line-clamp-2">{m.description}</span>}
+                    <span className="block text-on-surface text-[14px] font-bold break-words">{getLocalized(m, 'title')}</span>
+                    {m.description && <span className="block text-[12px] text-on-surface-variant line-clamp-2">{getLocalized(m, 'description')}</span>}
                   </span>
                   <span className="text-[11px] text-on-surface-variant whitespace-nowrap flex items-center gap-1">
                     {!c.enrolled && <span className="material-symbols-outlined text-[14px]" aria-label={tl('Locked')}>lock</span>}

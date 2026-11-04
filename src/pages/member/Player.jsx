@@ -75,7 +75,7 @@ export default function Player() {
     try {
       setStarting(true);
       await workoutsService.start({
-        name: shown ? `${getLocalized(course, 'title')} — ${shown.title}` : getLocalized(course, 'title'),
+        name: shown ? `${getLocalized(course, 'title')} — ${getLocalized(shown, 'title')}` : getLocalized(course, 'title'),
       });
 
       toast.success(tl("Workout started! Log sets in Machine Guide or here."));
@@ -254,7 +254,7 @@ function DayActions({ module: m, busy, canComplete, onDone, onUndo }) {
         <div className="text-[11px] uppercase tracking-widest text-on-surface-variant">
           {tl("Week {0} · Day {1}", { 0: m.week_number, 1: m.day_number })}
         </div>
-        <div className="text-on-surface font-bold break-words">{m.title}</div>
+        <div className="text-on-surface font-bold break-words">{getLocalized(m, 'title')}</div>
         <div className="text-[12px] text-on-surface-variant">
           {m.is_completed ? tl("You’ve finished this day.")
             : canComplete ? tl("Watch the session, train, then mark the day as done.")

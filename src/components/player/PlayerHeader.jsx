@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-import { tl } from '../../i18n';
+import { getLocalized, tl } from '../../i18n';
 
 export default function PlayerHeader({ course, currentModule, enrollment, onLog, logged, starting }) {
   const moduleLabel = currentModule
@@ -33,7 +33,7 @@ export default function PlayerHeader({ course, currentModule, enrollment, onLog,
               <span className="text-primary-container font-headline-md text-headline-md tracking-normal mx-2">
                 •
               </span>
-              {currentModule.title}
+              {getLocalized(currentModule, 'title')}
             </>
           )}
         </h1>

@@ -51,7 +51,7 @@ export default function MachineVideos({ exercise }) {
       className="relative bg-surface-container rounded-xl overflow-hidden shadow-lg">
       <div className="aspect-video bg-gradient-to-br from-surface-container-high to-surface-container-lowest relative">
         {embed ? (
-          <iframe key={embed} src={embed} title={current.title} className="absolute inset-0 w-full h-full"
+          <iframe key={embed} src={embed} title={getLocalized(current, 'title')} className="absolute inset-0 w-full h-full"
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
         ) : (
           <>
@@ -61,7 +61,7 @@ export default function MachineVideos({ exercise }) {
                 <a href={current.video_url} target="_blank" rel="noreferrer"
                   className="flex flex-col items-center gap-3 text-primary hover:text-secondary-container">
                   <span className="material-symbols-outlined text-[64px]">play_circle</span>
-                  <span className="font-label-lg text-label-lg uppercase tracking-wider">{tl('Watch: {0}', { 0: current.title })}</span>
+                  <span className="font-label-lg text-label-lg uppercase tracking-wider">{tl('Watch: {0}', { 0: getLocalized(current, 'title') })}</span>
                 </a>
               ) : (
                 <div className="flex flex-col items-center gap-3 text-on-surface-variant/60 text-center px-4">
@@ -103,11 +103,11 @@ export default function MachineVideos({ exercise }) {
                       {v.locked ? 'lock' : active ? 'play_arrow' : 'play_circle'}
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-on-surface font-bold text-[14px] break-words">{v.title}</span>
+                      <span className="block text-on-surface font-bold text-[14px] break-words">{getLocalized(v, 'title')}</span>
                       <span className="block text-[12px] text-on-surface-variant">
                         {v.coach}{v.duration_minutes ? ` · ${tl('{0} min', { 0: v.duration_minutes })}` : ''}
                       </span>
-                      {v.description && <span className="block text-[12px] text-on-surface-variant mt-0.5 line-clamp-2">{v.description}</span>}
+                      {v.description && <span className="block text-[12px] text-on-surface-variant mt-0.5 line-clamp-2">{getLocalized(v, 'description')}</span>}
                     </span>
                   </button>
                   <div className="flex items-center gap-2 flex-wrap sm:justify-end">
