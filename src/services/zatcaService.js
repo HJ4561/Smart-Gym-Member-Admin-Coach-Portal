@@ -11,6 +11,16 @@ export const zatcaService = {
     const { data } = await api.patch('/admin/zatca/settings/', payload);
     return data;
   },
+  async uploadLogo(file) {
+    const form = new FormData();
+    form.append('logo', file);
+    const { data } = await api.post('/admin/zatca/logo/', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return data;
+  },
+  async removeLogo() {
+    const { data } = await api.delete('/admin/zatca/logo/');
+    return data;
+  },
 
   // ---- go-live wizard ----
   async start(environment, confirmProduction = false, b2b = false) {

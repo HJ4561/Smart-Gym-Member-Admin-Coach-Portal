@@ -253,6 +253,7 @@ const DETAIL_FIELDS = [
   ['street', tl('Street')], ['building_number', tl('Building number (4 digits)')],
   ['additional_number', tl('Additional number (4 digits, optional)')], ['district', tl('District')],
   ['city', tl('City')], ['postal_code', tl('Postal code (5 digits)')],
+  ['address_ar', tl('Address in Arabic (printed on receipts)'), 'rtl'],
   ['branch_name', tl('Branch name')], ['business_category', tl('Business category')],
   ['vat_rate', tl('VAT rate (%)')],
 ];
@@ -312,7 +313,51 @@ function Details({ s, isAdmin, onSaved }) {
         {tl('Printed on every tax invoice and sent to ZATCA. They must match the business’s VAT registration.')}
       </p>
       <DetailsForm s={s} isAdmin={isAdmin} onSaved={onSaved} />
+      <ReceiptLogo s={s} isAdmin={isAdmin} onSaved={onSaved} />
     </Card>
+  );
+}
+
+function ReceiptLogo({ s, isAdmin, onSaved }) {
+  const [busy, setBusy] = useState(false);
+  const run = async (fn, done) => {
+    setBusy(true);
+    try {
+      onSaved(await fn());
+      toast.success(done);
+    } catch (err) {
+      toast.error(errorMessage(err, tl('Could not save the logo')));
+    } finally { setBusy(false); }
+  };
+  const pick = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (file) run(() => api.uploadLogo(file), tl('Logo saved'));
+  };
+  return (
+    <div className="flex items-center gap-4 border-t border-outline-variant/40 pt-4">
+      <div className="h-16 w-16 shrink-0 rounded-lg bg-white flex items-center justify-center overflow-hidden">
+        {s.logo_url
+          ? <img src={s.logo_url} alt="" className="max-h-full max-w-full object-contain" />
+          : <span className="material-symbols-outlined text-neutral-400">image</span>}
+      </div>
+      <div className="flex flex-col gap-1">
+        <span className={labelCls}>{tl('Logo on receipts')}</span>
+        <span className="text-[12px] text-on-surface-variant">{tl('PNG, JPG or WebP, up to 1 MB. Printed at the top of every receipt.')}</span>
+        {isAdmin && (
+          <div className="flex gap-2 mt-1">
+            <label className={`${btn.ghost} cursor-pointer`}>
+              {busy ? tl('Saving…') : s.logo_url ? tl('Replace logo') : tl('Upload logo')}
+              <input type="file" accept="image/png,image/jpeg,image/webp" className="hidden" disabled={busy} onChange={pick} />
+            </label>
+            {s.logo_url && (
+              <button type="button" className={btn.ghost} disabled={busy}
+                onClick={() => run(() => api.removeLogo(), tl('Logo removed'))}>{tl('Remove')}</button>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 

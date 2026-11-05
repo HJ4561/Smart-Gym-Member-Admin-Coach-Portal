@@ -2410,5 +2410,13 @@
  "New category name (Arabic)": "اسم الفئة الجديدة (بالعربية)",
  "Category name (Arabic)": "اسم الفئة (بالعربية)",
  "Category name is required": "اسم الفئة مطلوب",
- "Renamed": "تمت إعادة التسمية"
+ "Renamed": "تمت إعادة التسمية",
+ "Address in Arabic (printed on receipts)": "العنوان بالعربية (يُطبع على الإيصالات)",
+ "Could not save the logo": "تعذّر حفظ الشعار",
+ "Logo saved": "تم حفظ الشعار",
+ "Logo removed": "تمت إزالة الشعار",
+ "Logo on receipts": "الشعار على الإيصالات",
+ "PNG, JPG or WebP, up to 1 MB. Printed at the top of every receipt.": "PNG أو JPG أو WebP، حتى 1 ميغابايت. يُطبع أعلى كل إيصال.",
+ "Replace logo": "استبدال الشعار",
+ "Upload logo": "رفع الشعار"
 }
