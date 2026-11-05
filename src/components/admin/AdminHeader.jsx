@@ -213,7 +213,7 @@ export default function AdminHeader() {
             <AnimatePresence>
               {open === 'search' && results && (
                 <Panel
-                  className="w-96 left-0 right-auto"
+                  className="sm:w-96 sm:left-0 sm:right-auto"
                   label={tl('Search results')}
                   reduce={reduce}
                 >
@@ -276,7 +276,7 @@ export default function AdminHeader() {
             </button>
             <AnimatePresence>
               {open === 'alerts' && (
-                <Panel className="w-96" label={tl('Needs attention')} reduce={reduce}>
+                <Panel className="sm:w-96" label={tl('Needs attention')} reduce={reduce}>
                   {news.length > 0 && (
                     <div className="border-b border-[#1a1a1e]">
                       <div className="px-4 py-3 flex items-center justify-between">
@@ -295,6 +295,10 @@ export default function AdminHeader() {
                       ))}
                     </div>
                   )}
+                  <button type="button" onClick={() => go('/admin/notifications')}
+                    className="w-full px-4 py-2.5 border-b border-[#1a1a1e] text-left text-[12px] text-primary font-bold hover:bg-[#1a1a1e]">
+                    {tl('See all notifications')} →
+                  </button>
                   <div className="px-4 py-3 border-b border-[#1a1a1e] text-[13px] text-on-surface font-bold uppercase tracking-wider">
                     {tl('Needs attention')}
                   </div>
@@ -368,7 +372,7 @@ export default function AdminHeader() {
             </button>
             <AnimatePresence>
               {open === 'profile' && (
-                <Panel className="w-64" label={tl('Account menu')} reduce={reduce}>
+                <Panel className="sm:w-64" label={tl('Account menu')} reduce={reduce}>
                   <div className="px-4 py-3 border-b border-[#1a1a1e]">
                     <div className="text-[13px] text-on-surface font-bold">{name}</div>
                     <div className="text-[12px] text-on-surface-variant truncate">{user?.email}</div>
@@ -424,7 +428,7 @@ function Panel({ children, className = '', label, reduce }) {
       role="dialog"
       aria-modal="false"
       aria-label={label}
-      className={`absolute right-0 top-full mt-2 max-w-[calc(100vw-1.5rem)] max-h-[70vh] overflow-y-auto bg-[#0e0e0f] border border-[#1a1a1e] rounded-xl shadow-2xl z-50 ${className}`}
+      className={`fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full mt-2 sm:max-w-[calc(100vw-1.5rem)] max-h-[70vh] overflow-y-auto bg-[#0e0e0f] border border-[#1a1a1e] rounded-xl shadow-2xl z-50 ${className}`}
     >
       {children}
     </motion.div>

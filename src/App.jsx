@@ -37,6 +37,8 @@ import AdminMembers from './pages/admin/AdminMembers';
 import AdminMachines from './pages/admin/AdminMachines';
 import AdminFinance from './pages/admin/AdminFinance';
 import AdminZatca from './pages/admin/AdminZatca';
+import MissingArabic from './pages/admin/MissingArabic';
+import AdminNotifications from './pages/admin/AdminNotifications';
 import AdminTrainers from './pages/admin/AdminTrainers';
 import AdminFacilities from './pages/admin/AdminFacilities';
 import AdminClasses from './pages/admin/AdminClasses';
@@ -227,6 +229,8 @@ function App() {
         <Route path="classes" element={<AdminClasses />} />
         <Route path="finance" element={<AdminFinance />} />
         <Route path="zatca" element={<AdminZatca />} />
+        <Route path="missing-arabic" element={<MissingArabic />} />
+        <Route path="notifications" element={<AdminNotifications />} />
         <Route path="reports" element={<AdminReports />} />
         <Route path="analytics" element={<AdminAnalytics />} />
         <Route path="cms" element={<Navigate to="/admin/site-lists?list=articles" replace />} />

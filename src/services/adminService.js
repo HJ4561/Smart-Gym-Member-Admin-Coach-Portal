@@ -217,6 +217,12 @@ export const adminService = {
     return data;
   },
 
+  /** {total, groups: [{key, label, label_ar, count, items: [{id, name, fields, link | edit_url}]}]} */
+  async missingArabic() {
+    const { data } = await api.get('/admin/missing-arabic/');
+    return data;
+  },
+
   async settings() {
     const { data } = await api.get('/admin/settings/');
     return data;

@@ -14,6 +14,7 @@ import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import { tl, locale } from '../../i18n';
 import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
 import HighlightBar from '../../components/admin/HighlightBar';
+import { LOCKER_CREDIT_ENABLED } from '../../config/features';
 
 const FILTERS = [
   ['', tl("All"), 'total'], ['active', tl("Active"), 'active'], ['expiring', tl("Expiring (14 days)"), 'expiring'],
@@ -214,7 +215,7 @@ function MemberFile({ file }) {
         <Info label={tl("Status")} value={file.membership_status === 'frozen' ? `Frozen until ${formatDate(file.frozen_until)}` : file.membership_status} />
         <Info label={tl("Expires")} value={m ? `${formatDate(m.expiry_date)} (${formatRemaining(m.time_remaining)})` : '—'} />
         <Info label={tl("Iqama · Pass")} value={m ? `${m.iqama_number || '—'} · ${m.pass_id}` : '—'} />
-        <Info label={tl("Locker credit")} value={formatSAR(file.locker_credit)} />
+        {LOCKER_CREDIT_ENABLED && <Info label={tl("Locker credit")} value={formatSAR(file.locker_credit)} />}
         <Info label={tl("Visits")} value={m?.total_check_ins ?? 0} />
       </div>
       {file.must_change_password && <p className="text-amber-300 text-[12px]">{tl("Must change password at next login.")}</p>}

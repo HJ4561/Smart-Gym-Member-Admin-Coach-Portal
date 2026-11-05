@@ -199,7 +199,7 @@ export default function Header() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.98 }}
                   transition={{ duration: 0.18 }}
-                  className="w-96"
+                  className="sm:w-96"
                 >
                   {/* Header */}
                   <div className="flex items-center justify-between px-space-md py-space-sm border-b border-surface-container-high">
@@ -318,7 +318,7 @@ export default function Header() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.98 }}
                   transition={{ duration: 0.18 }}
-                  className="w-64"
+                  className="sm:w-64"
                 >
                   <div className="px-space-md py-space-xs border-b border-surface-container-high">
                     <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
@@ -366,7 +366,7 @@ export default function Header() {
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: -8, scale: 0.98 }}
                   transition={{ duration: 0.18 }}
-                  className="w-72"
+                  className="sm:w-72"
                 >
                   {/* Profile header */}
                   <div className="px-space-md py-space-md border-b border-surface-container-high">
@@ -434,7 +434,7 @@ function DropdownPanel({ children, className = '', ...motionProps }) {
   return (
     <motion.div
       {...motionProps}
-      className={`absolute right-0 top-full mt-2 max-w-[calc(100vw-1.5rem)] bg-surface-container-low rounded-xl shadow-2xl border border-surface-container-high overflow-hidden z-50 origin-top-right ${className}`}
+      className={`fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full mt-2 sm:max-w-[calc(100vw-1.5rem)] bg-surface-container-low rounded-xl shadow-2xl border border-surface-container-high overflow-hidden z-50 origin-top-right ${className}`}
     >
       {children}
     </motion.div>

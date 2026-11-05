@@ -130,7 +130,7 @@ function CoachHeader({ unread, onRead }) {
             <AnimatePresence>
               {open === 'bell' && (
                 <motion.div initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }}
-                  className="absolute right-0 top-full mt-2 w-80 max-w-[calc(100vw-1.5rem)] max-h-[70vh] overflow-y-auto bg-[#0e0e0f] border border-[#1a1a1e] rounded-xl shadow-2xl"
+                  className="fixed inset-x-3 top-16 sm:absolute sm:inset-x-auto sm:right-0 sm:top-full mt-2 sm:w-80 sm:max-w-[calc(100vw-1.5rem)] max-h-[70vh] overflow-y-auto bg-[#0e0e0f] border border-[#1a1a1e] rounded-xl shadow-2xl"
                   role="dialog" aria-label={tl('Notifications')}>
                   {items.length === 0 ? (
                     <p className="px-4 py-8 text-center text-[12px] text-on-surface-variant">{tl('Nothing new.')}</p>

@@ -9,6 +9,7 @@ import PayDialog from '../../components/payments/PayDialog';
 import { errorMessage } from '../../utils/apiError';
 import { formatSAR } from '../../utils/money';
 import { getLocalized, tl, locale } from '../../i18n';
+import { LOCKER_CREDIT_ENABLED } from '../../config/features';
 
 const ORDER_STATUS = {
   pending: { label: tl("Awaiting payment"), cls: 'bg-primary-container/20 text-primary' },
@@ -173,7 +174,9 @@ export default function Shop() {
               {tl("Supplements & Gear")}
             </h1>
             <p className="font-body-lg text-body-lg text-on-surface-variant mt-2">
-              {tl("Order here, pay by card, STC Pay or locker credit, and collect from your locker or the front desk.")}
+              {LOCKER_CREDIT_ENABLED
+                ? tl("Order here, pay by card, STC Pay or locker credit, and collect from your locker or the front desk.")
+                : tl("Order here, pay by card or STC Pay, and collect from your locker or the front desk.")}
             </p>
           </div>
 

@@ -1,7 +1,7 @@
 // src/pages/member/MySessions.jsx
 // Every 1-on-1 session the member booked, in two tabs: Upcoming (scheduled, still ahead — plus
 // bookings waiting for payment) and History (completed, cancelled, no-show or past). Upcoming
-// sessions can be cancelled up to 24 hours before they start (refund to locker credit).
+// sessions can be cancelled up to 24 hours before they start (refund to locker credit, or to the card while it is off).
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -13,6 +13,7 @@ import { formatGymDateTime } from '../../utils/gymTime';
 import { formatSAR } from '../../utils/money';
 import { errorMessage } from '../../utils/apiError';
 import { getLocalized, tl } from '../../i18n';
+import { LOCKER_CREDIT_ENABLED } from '../../config/features';
 
 const CANCEL_HOURS = 24;   // same rule as the backend (apps/catalog/views.py REFUND_HOURS)
 const STATUS = {
@@ -43,12 +44,14 @@ export default function MySessions() {
   const cancel = async (s) => {
     const paid = s.status === 'scheduled' && Number(s.amount_charged) > 0;
     if (!window.confirm(paid
-      ? tl('Cancel your session with {0}? {1} goes back to your locker credit.', { 0: s.trainer_name, 1: formatSAR(s.amount_charged) })
+      ? (LOCKER_CREDIT_ENABLED
+        ? tl('Cancel your session with {0}? {1} goes back to your locker credit.', { 0: s.trainer_name, 1: formatSAR(s.amount_charged) })
+        : tl('Cancel your session with {0}? {1} is refunded to the card you paid with.', { 0: s.trainer_name, 1: formatSAR(s.amount_charged) }))
       : tl('Cancel your session with {0}?', { 0: s.trainer_name }))) return;
     setBusy(s.id);
     try {
       await catalogService.cancelSession(s.id);
-      toast.success(paid ? tl('Cancelled — refunded to your locker credit') : tl('Cancelled'));
+      toast.success(paid ? (LOCKER_CREDIT_ENABLED ? tl('Cancelled — refunded to your locker credit') : tl('Cancelled — refund on its way')) : tl('Cancelled'));
       refetch();
     } catch (err) {
       toast.error(errorMessage(err, tl('Couldn’t cancel the session.')));

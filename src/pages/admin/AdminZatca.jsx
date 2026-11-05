@@ -663,20 +663,101 @@ function Invoices({ isAdmin, onChanged }) {
               {Number(open.rounding) !== 0 && <Row label={tl('Rounding')} value={Number(open.rounding).toFixed(2)} />}
               <Row label={tl('Total incl. VAT')} value={sar(open.total)} />
             </dl>
-            {open.credit_notes?.length > 0 && (
-              <p className="text-on-surface-variant">{tl('Credit notes')}: {open.credit_notes.map((n) => n.number).join(', ')}</p>
+            {(open.notes || open.credit_notes)?.length > 0 && (
+              <p className="text-on-surface-variant">
+                {tl('Credit and debit notes')}:{' '}
+                {(open.notes || open.credit_notes).map((n) => (
+                  <button key={n.id} type="button" className="underline me-2 font-mono" onClick={() => show(n.id)}>{n.number}</button>
+                ))}
+              </p>
             )}
             <div className="flex gap-2 flex-wrap">
+              {open.print_url && (
+                <a className={btn.ghost} href={open.print_url} target="_blank" rel="noreferrer">{tl('Print')}</a>
+              )}
               <button type="button" className={btn.ghost} onClick={() => download()}>{tl('Download signed XML')}</button>
               {open.has_cleared_copy && (
                 <button type="button" className={btn.ghost} onClick={() => download('cleared')}>{tl('Download ZATCA’s cleared copy')}</button>
               )}
               {isAdmin && open.status === 'pending' && <button type="button" className={btn.primary} onClick={send}>{tl('Send now')}</button>}
             </div>
+            {isAdmin && open.doc_type === 'invoice' && open.status !== 'rejected' && (
+              <DebitNoteForm key={open.id} doc={open} onIssued={(note) => { setOpen(note); refetch(); onChanged(); }} />
+            )}
           </div>
         )}
       </Drawer>
     </div>
+  );
+}
+
+// A debit note corrects an undercharge on this invoice: the extra amount (VAT included), signed,
+// linked to the invoice and reported to ZATCA. Optionally the extra money taken at the desk is recorded.
+function DebitNoteForm({ doc, onIssued }) {
+  const [openForm, setOpenForm] = useState(false);
+  const [form, setForm] = useState({ amount: '', reason: '', description: '', collected_with: '' });
+  const [errors, setErrors] = useState({});
+  const [busy, setBusy] = useState(false);
+  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!window.confirm(tl('Issue a debit note of {0} on {1}? It is signed and sent to ZATCA and can’t be undone.',
+      { 0: sar(form.amount || 0), 1: doc.number }))) return;
+    setBusy(true);
+    setErrors({});
+    try {
+      const note = await api.debitNote(doc.id, form);
+      toast.success(tl('Debit note {0} issued', { 0: note.number }));
+      onIssued(note);
+    } catch (err) {
+      const f = fieldErrors(err);
+      setErrors(f);
+      toast.error(f.detail || errorMessage(err));
+    } finally { setBusy(false); }
+  };
+  if (!openForm) {
+    return (
+      <button type="button" className={`${btn.ghost} self-start`} onClick={() => setOpenForm(true)}>
+        {tl('Undercharged? Issue a debit note')}
+      </button>
+    );
+  }
+  return (
+    <form onSubmit={submit} className="flex flex-col gap-3 border-t border-[#1a1a1e] pt-4">
+      <span className={labelCls}>{tl('Debit note')}</span>
+      <p className="text-on-surface-variant text-[12px]">
+        {tl('For when the customer paid less than they should have. Enter only the extra amount, VAT included.')}
+      </p>
+      <label className="flex flex-col gap-1">
+        <span className={labelCls}>{tl('Extra amount incl. VAT (SAR)')}</span>
+        <input className={`${inputCls} ${errors.amount ? 'border-rose-500' : ''}`} inputMode="decimal" value={form.amount} onChange={set('amount')} />
+        {errors.amount && <span className="text-[11px] text-rose-400">{errors.amount}</span>}
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className={labelCls}>{tl('Reason (sent to ZATCA)')}</span>
+        <input className={`${inputCls} ${errors.reason ? 'border-rose-500' : ''}`} value={form.reason} onChange={set('reason')} maxLength={200} dir="auto" />
+        {errors.reason && <span className="text-[11px] text-rose-400">{errors.reason}</span>}
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className={labelCls}>{tl('Line description (optional)')}</span>
+        <input className={inputCls} value={form.description} onChange={set('description')} maxLength={120} dir="auto"
+          placeholder={tl('Correction to {0}', { 0: doc.number })} />
+      </label>
+      <label className="flex flex-col gap-1">
+        <span className={labelCls}>{tl('Extra money taken at the desk')}</span>
+        <select className={inputCls} value={form.collected_with} onChange={set('collected_with')}>
+          <option value="">{tl('Not yet — only issue the debit note')}</option>
+          <option value="cash">{tl('Cash at desk')}</option>
+          <option value="card_terminal">{tl('Card terminal at desk')}</option>
+        </select>
+        {errors.collected_with && <span className="text-[11px] text-rose-400">{errors.collected_with}</span>}
+      </label>
+      {errors.detail && <span className="text-[12px] text-rose-400">{errors.detail}</span>}
+      <div className="flex gap-2">
+        <button type="submit" className={btn.primary} disabled={busy}>{busy ? tl('Issuing…') : tl('Issue debit note')}</button>
+        <button type="button" className={btn.ghost} onClick={() => setOpenForm(false)}>{tl('Cancel')}</button>
+      </div>
+    </form>
   );
 }
 

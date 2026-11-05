@@ -88,8 +88,8 @@ export default function ProfileBanner({
         </div>
 
         {/* Telemetry */}
-        <div className="flex items-center gap-space-md w-full xl:w-auto justify-start xl:justify-end border-t xl:border-t-0 border-surface-container-high pt-space-md xl:pt-0">
-          <div className="px-space-md py-space-sm rounded bg-surface-container-lowest flex flex-col min-w-[120px]">
+        <div className="flex flex-wrap items-stretch gap-space-md w-full xl:w-auto justify-start xl:justify-end border-t xl:border-t-0 border-surface-container-high pt-space-md xl:pt-0">
+          <div className="px-space-md py-space-sm rounded bg-surface-container-lowest flex flex-col min-w-[120px] flex-1 sm:flex-none">
             <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
               {tl("Membership left")}
             </span>
@@ -98,7 +98,7 @@ export default function ProfileBanner({
             </span>
           </div>
 
-          <div className="px-space-md py-space-sm rounded bg-surface-container-lowest flex flex-col min-w-[120px]">
+          <div className="px-space-md py-space-sm rounded bg-surface-container-lowest flex flex-col min-w-[120px] flex-1 sm:flex-none">
             <span className="font-label-md text-label-md text-on-surface-variant uppercase tracking-wider">
               {tl("Visits")}
             </span>
@@ -110,7 +110,7 @@ export default function ProfileBanner({
           <motion.button
             whileHover={{ y: -2 }}
             whileTap={{ scale: 0.97 }}
-            className="px-space-lg py-space-sm rounded bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-label-lg text-label-lg uppercase tracking-wider font-bold shadow-[0_0_16px_rgba(229,25,55,0.4)] transition-all flex items-center gap-space-xs self-stretch xl:self-auto justify-center"
+            className="px-space-lg py-space-sm rounded bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-label-lg text-label-lg uppercase tracking-wider font-bold shadow-[0_0_16px_rgba(229,25,55,0.4)] transition-all flex items-center gap-space-xs self-stretch xl:self-auto justify-center w-full sm:w-auto py-3 sm:py-space-sm"
             type="button"
             onClick={onExport}
           >

@@ -7,6 +7,7 @@ import { membersService } from '../../services/membersService';
 import PayDialog from '../../components/payments/PayDialog';
 import { formatSAR } from '../../utils/money';
 import { formatDate, formatRemaining } from '../../utils/membershipTime';
+import { LOCKER_CREDIT_ENABLED } from '../../config/features';
 import { tl, locale } from '../../i18n';
 
 const TOPUP_AMOUNTS = [25, 50, 100];
@@ -92,14 +93,17 @@ export default function Payments() {
         </div>
         <h1 className="font-headline-lg text-headline-lg text-on-surface uppercase tracking-wider">{tl("Billing & Payments")}</h1>
         <p className="font-body-md text-body-md text-on-surface-variant mt-2 max-w-2xl">
-          {tl("Renew your membership, top up locker credit and see every payment you’ve made.")}
+          {LOCKER_CREDIT_ENABLED
+            ? tl("Renew your membership, top up locker credit and see every payment you’ve made.")
+            : tl("Renew your membership and see every payment you’ve made.")}
         </p>
       </motion.div>
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatTile label={tl("Total paid")} value={formatSAR(summary?.total_spent)} icon="payments" accent />
-        <StatTile label={tl("Locker credit")} value={formatSAR(balance)} icon="account_balance_wallet" accent />
+        <StatTile label={tl("Locker credit")} value={LOCKER_CREDIT_ENABLED ? formatSAR(balance) : tl("Coming soon")}
+          icon="account_balance_wallet" accent />
         <StatTile label={tl("Membership left")} value={formatRemaining(membership?.time_remaining)} icon="hourglass_bottom" />
         <StatTile label={tl("Refunded")} value={formatSAR(summary?.refunded_amount)} icon="undo" />
       </div>
@@ -183,7 +187,21 @@ export default function Payments() {
             </Card>
           )}
 
-          {/* Locker credit */}
+          {/* Locker credit (off for now: "coming soon") */}
+          {!LOCKER_CREDIT_ENABLED ? (
+            <Card label={tl("Locker credit")}>
+              <div className="flex items-center gap-3">
+                <span className="material-symbols-outlined text-primary text-[32px]">schedule</span>
+                <div>
+                  <div className="font-headline-md text-headline-md text-on-surface uppercase">{tl("Coming soon")}</div>
+                  <p className="text-on-surface-variant text-[12px] mt-1">
+                    {tl("Topping up and paying with locker credit will be available soon.")}
+                    {balance > 0 && <>{' '}{tl("Your balance of {0} is saved.", { 0: formatSAR(balance) })}</>}
+                  </p>
+                </div>
+              </div>
+            </Card>
+          ) : (
           <Card label={tl("Locker credit")}>
             <div className="flex items-baseline gap-2 mb-3">
               <span className="font-display-xl text-display-xl text-on-surface">{formatSAR(balance)}</span>
@@ -204,11 +222,12 @@ export default function Payments() {
               ))}
             </div>
           </Card>
+          )}
 
           {/* How you can pay */}
           <Card label={tl("Payment methods")}>
             <div className="flex flex-wrap gap-1">
-              {(methods?.accepted || ['mada', 'Visa', 'Mastercard', 'STC Pay', 'Locker credit']).map((m) => (
+              {(methods?.accepted || ['mada', 'Visa', 'Mastercard', 'STC Pay', ...(LOCKER_CREDIT_ENABLED ? ['Locker credit'] : [])]).map((m) => (
                 <span key={m} className="px-2 py-1 rounded bg-surface-container-high text-on-surface text-[10px] font-bold uppercase">{m}</span>
               ))}
             </div>

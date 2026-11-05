@@ -11,6 +11,7 @@ import PayDialog from '../../components/payments/PayDialog';
 import { errorMessage } from '../../utils/apiError';
 import { formatSAR } from '../../utils/money';
 import { getLocalized, tl, locale } from '../../i18n';
+import { LOCKER_CREDIT_ENABLED } from '../../config/features';
 
 const TODAY = (new Date().getDay() + 6) % 7;   // Mon = 0, like the timetable
 const fmtDay = (d) => new Date(`${d}T12:00:00`).toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
@@ -40,7 +41,9 @@ export default function Classes() {
   };
 
   const cancelSession = async (c, date) => {
-    if (!window.confirm(tl("Cancel {0} on {1}? The price goes back to your locker credit.", { 0: getLocalized(c, 'name'), 1: fmtDay(date) }))) return;
+    if (!window.confirm((LOCKER_CREDIT_ENABLED
+      ? tl("Cancel {0} on {1}? The price goes back to your locker credit.", { 0: getLocalized(c, 'name'), 1: fmtDay(date) })
+      : tl("Cancel {0} on {1}? The price is refunded to the card you paid with.", { 0: getLocalized(c, 'name'), 1: fmtDay(date) })))) return;
     try {
       toast.success((await classesService.cancel(c.id, date)).detail);
       refetch();

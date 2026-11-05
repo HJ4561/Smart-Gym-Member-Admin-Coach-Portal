@@ -57,6 +57,11 @@ export const zatcaService = {
     const { data } = await api.get(`/admin/zatca/documents/${id}/xml/`, { params: copy ? { copy } : {}, responseType: 'blob' });
     return data;
   },
+  /** A debit note on invoice `id`: {amount (extra, incl. VAT), reason, description?, collected_with?: cash | card_terminal}. */
+  async debitNote(id, payload) {
+    const { data } = await api.post(`/admin/zatca/documents/${id}/debit/`, payload);
+    return data;
+  },
   async send(id) {
     const { data } = await api.post(`/admin/zatca/documents/${id}/send/`);
     return data;

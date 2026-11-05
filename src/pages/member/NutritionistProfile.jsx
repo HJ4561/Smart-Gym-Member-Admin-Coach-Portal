@@ -10,6 +10,7 @@ import { formatSAR } from '../../utils/money';
 import { errorMessage } from '../../utils/apiError';
 import PayDialog from '../../components/payments/PayDialog';
 import { getLocalized, tl } from '../../i18n';
+import { LOCKER_CREDIT_ENABLED } from '../../config/features';
 
 // Same starting targets the backend gives each goal (apps/nutrition/views.py GOAL_DEFAULTS).
 const GOALS = [
@@ -209,7 +210,9 @@ export default function NutritionistProfile() {
           </button>
           {!isMine && Number(n.hourly_rate) > 0 && n.is_accepting_clients && (
             <p className="text-[11px] text-on-surface-variant -mt-2">
-              {tl('One-time consultation fee, paid by card, STC Pay or locker credit. Your plan starts as soon as it’s paid.')}
+              {LOCKER_CREDIT_ENABLED
+                ? tl('One-time consultation fee, paid by card, STC Pay or locker credit. Your plan starts as soon as it’s paid.')
+                : tl('One-time consultation fee, paid by card or STC Pay. Your plan starts as soon as it’s paid.')}
             </p>
           )}
         </aside>

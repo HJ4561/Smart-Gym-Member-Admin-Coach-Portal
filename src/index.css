@@ -34,6 +34,10 @@
 }
 
 /* Material Symbols base styling */
+/* tables are the containing block of anything absolutely placed inside them (e.g. sr-only header labels),
+   so those stay inside the table's scroll area instead of stretching the page */
+table { position: relative; }
+
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   user-select: none;
@@ -62,6 +66,8 @@ input, select, textarea {
   .text-headline-lg { font-size: 1.75rem; line-height: 1.1; }
   .text-headline-md { font-size: 1.35rem; line-height: 1.15; }
   /* wide data tables scroll sideways inside their card instead of squashing their columns */
-  table { display: block; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; }
+  /* position: relative keeps absolutely placed bits (e.g. sr-only header labels) inside the scroll area,
+     so they can't stretch the page sideways */
+  table { display: block; overflow-x: auto; max-width: 100%; -webkit-overflow-scrolling: touch; position: relative; }
   td { min-width: 6rem; }
 }

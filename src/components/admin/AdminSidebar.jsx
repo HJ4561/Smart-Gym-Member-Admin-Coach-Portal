@@ -77,6 +77,7 @@ const navGroups = [
     label: tl('Overview'),
     items: [
       { path: '/admin', label: tl('Dashboard'), icon: 'dashboard', end: true },
+      { path: '/admin/notifications', label: tl('Notifications'), icon: 'notifications' },
       { path: '/admin/analytics', label: tl('Insights'), icon: 'insights' },
     ],
   },
@@ -122,6 +123,7 @@ const navGroups = [
       { path: '/admin/site-lists', label: tl('Facilities & Articles'), icon: 'view_list' },
       { path: '/admin/site-plans', label: tl('Membership Plans'), icon: 'sell' },
       { path: '/admin/site-inbox', label: tl('Website Inbox'), icon: 'inbox' },
+      { path: '/admin/missing-arabic', label: tl('Missing Arabic'), icon: 'translate' },
     ],
   },
   {

@@ -7,6 +7,7 @@ import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useApi } from '../hooks/useApi';
 import { membersService } from '../services/membersService';
+import { LOCKER_CREDIT_ENABLED } from '../config/features';
 import { tl } from '../i18n';
 
 export default function ReferralCard() {
@@ -48,6 +49,7 @@ export default function ReferralCard() {
             <span className="font-label-md text-[10px] text-on-surface-variant uppercase tracking-widest">{tl('Invite a friend')}</span>
             <span className="font-body-md text-on-surface">
               {tl('Get SAR {0} locker credit when a friend joins with your link.', { 0: reward })}
+              {!LOCKER_CREDIT_ENABLED && <>{' '}{tl('It’s saved for you and ready when locker credit launches.')}</>}
             </span>
           </div>
         </div>

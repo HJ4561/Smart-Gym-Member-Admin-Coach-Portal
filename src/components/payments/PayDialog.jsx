@@ -12,6 +12,7 @@ import { formatSAR } from '../../utils/money';
 import CompanyPicker from './CompanyPicker';
 import MoyasarForm from './MoyasarForm';
 import { tl } from '../../i18n';
+import { LOCKER_CREDIT_ENABLED } from '../../config/features';
 
 export const RETURN_KEY = 'sg.payment.return';
 
@@ -22,7 +23,8 @@ export const RETURN_KEY = 'sg.payment.return';
  * @param {function} onPaid  (intent) => void — locker-credit payments finish here
  * @param {function} onClose
  */
-export default function PayDialog({ request, title, allowCredit = false, onPaid, onClose }) {
+export default function PayDialog({ request, title, allowCredit: creditAsked = false, onPaid, onClose }) {
+  const allowCredit = creditAsked && LOCKER_CREDIT_ENABLED;     // off for now: card and STC Pay only
   const open = !!request;
   const [step, setStep] = useState('choose');      // choose | card | working | done
   const [intent, setIntent] = useState(null);

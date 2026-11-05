@@ -186,7 +186,7 @@ export default function AdminAnalytics() {
     },
     {
       key: 'visits',
-      icon: 'door_front_door',
+      icon: 'door_front',
       tone: 'primary',
       label: tl('Visits'),
       value: k?.visits_30d,

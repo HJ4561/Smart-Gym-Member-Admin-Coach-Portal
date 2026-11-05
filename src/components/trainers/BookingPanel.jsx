@@ -8,6 +8,7 @@ import { errorMessage } from '../../utils/apiError';
 import { formatSAR } from '../../utils/money';
 import { formatGymDateTime } from '../../utils/gymTime';
 import { getLocalized, tl } from '../../i18n';
+import { LOCKER_CREDIT_ENABLED } from '../../config/features';
 
 const DAYS_AHEAD = 14;
 const CANCEL_HOURS = 24;
@@ -314,7 +315,7 @@ export default function BookingPanel({ trainer }) {
             </button>
             <p className="text-on-surface-variant text-[11px]">
               {tl('Cancel up to')} {CANCEL_HOURS}{' '}
-              {tl('hours before for a full refund to your locker credit.')}
+              {LOCKER_CREDIT_ENABLED ? tl('hours before for a full refund to your locker credit.') : tl('hours before for a full refund.')}
             </p>
           </>
         )}
