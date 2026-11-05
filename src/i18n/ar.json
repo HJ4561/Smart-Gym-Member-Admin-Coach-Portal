@@ -2418,5 +2418,17 @@
  "Logo on receipts": "الشعار على الإيصالات",
  "PNG, JPG or WebP, up to 1 MB. Printed at the top of every receipt.": "PNG أو JPG أو WebP، حتى 1 ميغابايت. يُطبع أعلى كل إيصال.",
  "Replace logo": "استبدال الشعار",
- "Upload logo": "رفع الشعار"
+ "Upload logo": "رفع الشعار",
+ "Invite a friend": "ادعُ صديقًا",
+ "Get SAR {0} locker credit when a friend joins with your link.": "احصل على {0} ريال في رصيد خزانتك عندما ينضم صديق عبر رابطك.",
+ "Joined": "انضموا",
+ "SAR earned": "ريال مكتسبة",
+ "Your referral link": "رابط الإحالة الخاص بك",
+ "Copy link": "نسخ الرابط",
+ "Copied": "تم النسخ",
+ "Share": "مشاركة",
+ "Link copied": "تم نسخ الرابط",
+ "Could not copy — select the link and copy it.": "تعذّر النسخ — حدّد الرابط وانسخه.",
+ "Join me at Smart Gym": "انضم إليّ في سمارت جيم",
+ "Your code: {0} · The credit arrives once the gym approves their membership.": "رمزك: {0} · يُضاف الرصيد بعد موافقة النادي على عضويتهم."
 }

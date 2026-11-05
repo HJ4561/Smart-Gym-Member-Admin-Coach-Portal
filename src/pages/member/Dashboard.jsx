@@ -13,6 +13,7 @@ import AIDirectives from '../../components/AIDirectives';
 import FloorDensity from '../../components/FloorDensity';
 import RecentLogs from '../../components/RecentLogs';
 import MembershipCountdown from '../../components/MembershipCountdown';
+import ReferralCard from '../../components/ReferralCard';
 import { tl, locale } from '../../i18n';
 
 const EASE = [0.22, 1, 0.36, 1];
@@ -178,6 +179,9 @@ export default function Dashboard() {
         <AIDirectives directives={directives} />
         <FloorDensity density={density} />
       </div>
+
+      {/* Invite a friend */}
+      <ReferralCard />
 
       {/* Recent Logs */}
       <RecentLogs workouts={(history || []).filter((w) => w.status === 'completed')} loading={loading && !history} />

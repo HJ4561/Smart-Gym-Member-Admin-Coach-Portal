@@ -74,7 +74,7 @@ export default function AdminFinance() {
       </motion.div>
 
       <div className="flex gap-1" role="tablist" aria-label={tl("Period")}>
-        {[['7d', tl("7 days")], ['30d', tl("30 days")], ['90d', tl("90 days")], ['ytd', tl("Year to date")]].map(([id, label]) => (
+        {[['1d', tl("Today")], ['7d', tl("7 days")], ['30d', tl("30 days")], ['90d', tl("90 days")], ['ytd', tl("Year to date")]].map(([id, label]) => (
           <button key={id} type="button" role="tab" aria-selected={range === id} onClick={() => setRange(id)}
             className={`px-3 py-1.5 rounded text-[11px] font-bold uppercase tracking-wider ${range === id ? 'bg-primary-container text-on-primary-container' : 'bg-surface-container text-on-surface-variant hover:text-on-surface'}`}>
             {label}
