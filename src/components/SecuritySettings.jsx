@@ -1,6 +1,7 @@
 // src/components/SecuritySettings.jsx
 // 2-step verification while signed in: turn it on (app or email), switch method, new backup
-// codes, and (members only) turn it off. Staff and coaches must keep it on.
+// codes, and turn it off. Optional for everyone unless an admin makes it required for staff
+// (Admin → Settings → Sign-in security); then staff and coaches must keep it on.
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { authService } from '../services/authService';
