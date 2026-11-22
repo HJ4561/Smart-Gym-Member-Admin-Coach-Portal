@@ -12,7 +12,6 @@ import CheckInLedger from '../../components/attendance/CheckInLedger';
 import ArenaSnapshots from '../../components/attendance/ArenaSnapshots';
 import { tl } from '../../i18n';
 
-const EASE = [0.22, 1, 0.36, 1];
 
 export default function Attendance() {
   const [checkingOut, setCheckingOut] = useState(false);

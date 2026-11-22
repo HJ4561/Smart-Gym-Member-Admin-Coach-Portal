@@ -3,7 +3,6 @@ import { useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
-import { formatSAR } from '../../utils/money';
 import { adminService } from '../../services/adminService';
 import ControlBar from '../../components/admin/ControlBar';
 import Scorecards from '../../components/admin/Scorecards';

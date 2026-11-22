@@ -52,7 +52,7 @@ export default function Shop() {
     refetch: refetchCart,
   } = useApi(() => shopService.cart(), [], { showError: false });
 
-  const list = Array.isArray(products) ? products : [];
+  const list = useMemo(() => (Array.isArray(products) ? products : []), [products]);
   const cats = Array.isArray(categories) ? categories : [];
   const cartItems = cart?.items || [];
   const cartSubtotal = Number(cart?.subtotal || 0);

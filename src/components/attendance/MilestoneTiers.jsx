@@ -3,7 +3,6 @@ import toast from 'react-hot-toast';
 import { attendanceService } from '../../services/attendanceService';
 import { getLocalized, tl } from '../../i18n';
 
-const EASE = [0.22, 1, 0.36, 1];
 
 export default function MilestoneTiers({ milestones, onClaim }) {
   const safeMilestones = Array.isArray(milestones) ? milestones : [];
@@ -12,7 +11,7 @@ export default function MilestoneTiers({ milestones, onClaim }) {
       await attendanceService.claimMilestone(id);
       toast.success(tl("Milestone claimed! 🎉"));
       onClaim?.();
-    } catch (e) {
+    } catch {
       toast.error(tl("Failed to claim"));
     }
   };

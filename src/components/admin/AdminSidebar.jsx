@@ -30,19 +30,20 @@ function useActivity() {
     };
   }, []);
 
-  // Mark the current section as seen once when navigating into it.
+  // The section being viewed counts as seen: its badge shows 0 at once, and the server is told
+  // (once it confirms, the stored count drops too, so the badge stays 0 after leaving).
+  const section = pathname.split('/')[2];
+  const unseen = section ? counts[section] : 0;
   useEffect(() => {
-    const section = pathname.split('/')[2];
-    if (!section) return;
-    setCounts((c) => {
-      if (!c[section]) return c; // already zero or unknown — nothing to post
-      api.post('/admin/activity/', { section }).catch(() => {});
-      return { ...c, [section]: 0 };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname]);
+    if (!section || !unseen) return undefined;
+    let alive = true;
+    api.post('/admin/activity/', { section })
+      .then(() => { if (alive) setCounts((c) => ({ ...c, [section]: 0 })); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, [section, unseen]);
 
-  return counts;
+  return section ? { ...counts, [section]: 0 } : counts;
 }
 
 function useApiHealth() {

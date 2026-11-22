@@ -12,7 +12,6 @@ import CourseCard from '../../components/courses/CourseCard';
 import PayDialog from '../../components/payments/PayDialog';
 import { getLocalized, tl } from '../../i18n';
 
-const EASE = [0.22, 1, 0.36, 1];
 
 const emptyV = {
   hidden: { opacity: 0, scale: 0.92, y: 20 },
@@ -46,7 +45,7 @@ export default function Courses() {
     { showError: false }
   );
 
-  const list = Array.isArray(courses) ? courses : [];
+  const list = useMemo(() => (Array.isArray(courses) ? courses : []), [courses]);
   const enrolledIds = new Set(
     (Array.isArray(enrollments) ? enrollments : [])
       .map((e) => e.course?.id)

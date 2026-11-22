@@ -55,7 +55,7 @@ export default function Notifications() {
     live
   );
 
-  const list = notifications || [];
+  const list = useMemo(() => notifications || [], [notifications]);
   const unreadCount = unreadData?.unread_count || 0;
 
   /* -------- Filtered list -------- */
@@ -77,7 +77,7 @@ export default function Notifications() {
       toast.success(tl("All marked as read"));
       refetch();
       refetchUnread();
-    } catch (e) {
+    } catch {
       toast.error(tl("Failed to mark all as read"));
     }
   };
@@ -88,7 +88,7 @@ export default function Notifications() {
       await notificationsService.markRead(n.id);
       refetch();
       refetchUnread();
-    } catch (e) {
+    } catch {
       toast.error(tl("Failed to update"));
     }
   };
@@ -99,7 +99,7 @@ export default function Notifications() {
       toast.success(tl("Notification removed"));
       refetch();
       refetchUnread();
-    } catch (e) {
+    } catch {
       toast.error(tl("Failed to remove"));
     }
   };

@@ -4,7 +4,6 @@ import { getLocalized, tl } from '../../i18n';
 
 export default function VideoStage({ course, currentModule }) {
   const [playing, setPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
 
   const togglePlay = () => setPlaying((p) => !p);
 

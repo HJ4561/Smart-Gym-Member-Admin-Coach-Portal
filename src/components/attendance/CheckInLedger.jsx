@@ -11,7 +11,7 @@ export default function CheckInLedger() {
   const [page, setPage] = useState(1);
   const perPage = 5;
 
-  const { data, loading, refetch } = useApi(
+  const { data, loading } = useApi(
     () => attendanceService.ledger({ page, per_page: perPage }),
     [page]
   );
@@ -30,7 +30,7 @@ export default function CheckInLedger() {
       a.click();
       window.URL.revokeObjectURL(url);
       toast.success(tl("Ledger exported"));
-    } catch (e) {
+    } catch {
       toast.error(tl("Export failed"));
     }
   };
@@ -83,7 +83,7 @@ export default function CheckInLedger() {
                 </td>
               </tr>
             ) : (
-              rows.map((row, i) => (
+              rows.map((row) => (
                 <tr key={row.id} className="hover:bg-surface-container-high/60 transition-colors">
                   <td className="py-space-md px-space-md">
                     <div className="flex items-center gap-space-xs flex-wrap">

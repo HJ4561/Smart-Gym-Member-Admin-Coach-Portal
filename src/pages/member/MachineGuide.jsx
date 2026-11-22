@@ -65,25 +65,25 @@ export default function MachineGuide() {
   const selectedExercise = picked
     ?? (exerciseParam && Array.isArray(exercises) ? exercises.find((e) => String(e.id) === exerciseParam) ?? null : null);
 
-  // Update rest default when exercise changes
-  useEffect(() => {
+  // A different machine resets the rest timer to its default (adjusted while rendering, not in an effect).
+  const exerciseId = selectedExercise?.id ?? null;
+  const [restFor, setRestFor] = useState(undefined);
+  if (restFor !== exerciseId) {
+    setRestFor(exerciseId);
     if (selectedExercise?.default_rest_seconds) {
       setRestSeconds(selectedExercise.default_rest_seconds);
       setTotalRest(selectedExercise.default_rest_seconds);
       setTimerRunning(false);
     }
-  }, [selectedExercise]);
+  }
 
-  // Countdown
+  // Countdown: it stops by itself at 0.
+  const running = timerRunning && restSeconds > 0;
   useEffect(() => {
-    if (!timerRunning) return;
-    if (restSeconds <= 0) {
-      setTimerRunning(false);
-      return;
-    }
+    if (!running) return undefined;
     const t = setTimeout(() => setRestSeconds((s) => s - 1), 1000);
     return () => clearTimeout(t);
-  }, [timerRunning, restSeconds]);
+  }, [running, restSeconds]);
 
   const resetTimer = () => {
     const base = selectedExercise?.default_rest_seconds || 90;
@@ -235,12 +235,13 @@ export default function MachineGuide() {
           <RestTimer
             seconds={restSeconds}
             total={totalRest}
-            running={timerRunning}
-            onToggle={() => setTimerRunning((r) => !r)}
+            running={running}
+            onToggle={() => setTimerRunning(!running)}
             onReset={resetTimer}
             onAdd={(s) => addTime(s)}
           />
           <SetLogger
+            key={`${selectedExercise?.id ?? 'none'}-${selectedExercise?.recommended_weight_kg ?? ''}`}
             onLogSet={handleLogSet}
             exercise={selectedExercise}
             recommendedWeight={selectedExercise?.recommended_weight_kg}
@@ -691,14 +692,7 @@ function SetLogger({ onLogSet, exercise, recommendedWeight }) {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
 
-  // Sync weight when exercise changes
-  useEffect(() => {
-    if (recommendedWeight) {
-      setWeight(String(recommendedWeight));
-    } else {
-      setWeight('');
-    }
-  }, [recommendedWeight]);
+  // A different machine or recommended weight starts a fresh form (the parent keys it by both).
 
   const handleSubmit = async () => {
     if (!exercise) return;
