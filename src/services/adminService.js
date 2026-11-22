@@ -272,6 +272,14 @@ export const adminService = {
     const { data } = await api.get('/admin/nutrition/plans/', { params });
     return data;
   },
+  /** {member_id, nutritionist_id, goal, targets…, notes} → a plan set up by the gym (active, no fee). */
+  async createNutritionPlan(payload) {
+    const { data } = await api.post('/admin/nutrition/plans/', payload);
+    return data;
+  },
+  async deleteNutritionPlan(id) {
+    await api.delete(`/admin/nutrition/plans/${id}/`);
+  },
   async updateNutritionPlan(id, payload) {
     const { data } = await api.patch(`/admin/nutrition/plans/${id}/`, payload);
     return data;

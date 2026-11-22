@@ -9,6 +9,7 @@ import { Drawer, Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import PersonEditor from '../../components/admin/PersonEditor';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
+import { useDebounced } from '../../hooks/useListState';
 import { tl, locale } from '../../i18n';
 
 const NUTRITIONIST_API = {
@@ -82,6 +83,7 @@ function Plans() {
   const [status, setStatus] = useState('all');
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState(null);
+  const [adding, setAdding] = useState(false);
   const { data, loading, refetch } = useApi(() => adminService.nutritionPlans({ status, q: q || undefined }), [status, q], { poll: 30_000 });
   const list = Array.isArray(data) ? data : [];
   return (
@@ -98,6 +100,7 @@ function Plans() {
         </div>
         <div className="flex-1" />
         <input className={`${inputCls} md:w-64`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl("Search member…")} aria-label={tl("Search plans")} />
+        <button type="button" className={btn.primary} onClick={() => setAdding(true)}>{tl("+ New plan")}</button>
       </div>
       {loading ? <div className="h-40 bg-[#0e0e0f] rounded-lg animate-pulse" /> : list.length === 0 ? (
         <Empty>{status === 'to_review' ? tl("Nothing to review — every plan has been checked.") : tl("No plans.")}</Empty>
@@ -129,7 +132,83 @@ function Plans() {
         </div>
       )}
       {editing && <PlanEditor plan={editing} onClose={() => setEditing(null)} onSaved={refetch} />}
+      {adding && <NewPlan onClose={() => setAdding(false)} onSaved={(p) => { setAdding(false); refetch(); setEditing(p); }} />}
     </>
+  );
+}
+
+/** A plan set up by the gym for a member: active at once, no consultation fee; the member is told. */
+function NewPlan({ onClose, onSaved }) {
+  const [f, setF] = useState({ member_id: '', member_label: '', nutritionist_id: '', goal: 'maintenance', target_calories: 2200,
+    target_protein_g: 150, target_carbs_g: 250, target_fats_g: 70, target_water_ml: 3000, cycle_weeks: 8, notes: '' });
+  const [find, setFind] = useState('');
+  const search = useDebounced(find);
+  const [errors, setErrors] = useState({});
+  const [busy, setBusy] = useState(false);
+  const { data: people } = useApi(() => adminService.nutritionists(), []);
+  const { data: found } = useApi(() => (search.trim().length >= 2 ? adminService.members({ search }) : Promise.resolve(null)), [search]);
+  const matches = (found?.results || []).slice(0, 8);
+  const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
+  const save = async () => {
+    setBusy(true);
+    setErrors({});
+    try {
+      const row = await adminService.createNutritionPlan({ ...f, member_label: undefined });
+      toast.success(tl("Plan created — the member has been notified"));
+      onSaved(row);
+    } catch (err) {
+      setErrors(fieldErrors(err));
+      toast.error(errorMessage(err, tl("Could not create the plan")));
+    } finally {
+      setBusy(false);
+    }
+  };
+  const num = (k, label) => (
+    <Field label={label} error={errors[k]}><input className={inputCls} type="number" value={f[k]} onChange={set(k)} /></Field>
+  );
+  return (
+    <Drawer open title={tl("New nutrition plan")} subtitle={tl("Active at once, with no consultation fee. The member is told.")} onClose={onClose}
+      footer={<>
+        <button type="button" className={btn.ghost} onClick={onClose}>{tl("Cancel")}</button>
+        <button type="button" className={btn.primary} disabled={busy || !f.member_id || !f.nutritionist_id} onClick={save}>
+          {busy ? tl("Saving…") : tl("Create plan")}</button>
+      </>}>
+      <Field label={tl("Member")} error={errors.member_id}>
+        {f.member_id ? (
+          <div className="flex items-center gap-2">
+            <span className="text-on-surface text-[13px] flex-1">{f.member_label}</span>
+            <button type="button" className={btn.ghost} onClick={() => setF((p) => ({ ...p, member_id: '', member_label: '' }))}>{tl("Change")}</button>
+          </div>
+        ) : (
+          <>
+            <input className={inputCls} value={find} onChange={(e) => setFind(e.target.value)} placeholder={tl("Search name, email, phone or Iqama…")} />
+            {matches.length > 0 && (
+              <div className="flex flex-col border border-[#1a1a1e] rounded mt-1 max-h-56 overflow-y-auto">
+                {matches.map((m) => (
+                  <button key={m.id} type="button" className="text-left px-3 py-2 text-[13px] hover:bg-[#131316]"
+                    onClick={() => { setF((p) => ({ ...p, member_id: m.id, member_label: `${m.full_name} · ${m.email}` })); setFind(''); }}>
+                    <span className="text-on-surface">{m.full_name}</span>
+                    <span className="text-on-surface-variant text-[11px]"> · {m.email}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+      </Field>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        <Field label={tl("Nutritionist")} error={errors.nutritionist_id} className="col-span-2">
+          <select className={inputCls} value={f.nutritionist_id} onChange={set('nutritionist_id')}>
+            <option value="">{tl("Choose…")}</option>
+            {(Array.isArray(people) ? people : []).filter((n) => n.is_active).map((n) => <option key={n.id} value={n.id}>{n.user_name}</option>)}
+          </select></Field>
+        <Field label={tl("Goal")} error={errors.goal}><select className={inputCls} value={f.goal} onChange={set('goal')}>{GOALS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}</select></Field>
+        {num('target_calories', tl("Calories / day"))}{num('target_protein_g', tl("Protein g"))}{num('target_carbs_g', tl("Carbs g"))}
+        {num('target_fats_g', tl("Fats g"))}{num('target_water_ml', tl("Water ml"))}{num('cycle_weeks', tl("Weeks"))}
+        <Field label={tl("Notes for the member")} error={errors.notes} className="col-span-2 md:col-span-3">
+          <textarea className={inputCls} rows={3} value={f.notes} onChange={set('notes')} /></Field>
+      </div>
+    </Drawer>
   );
 }
 
@@ -221,6 +300,21 @@ function PlanEditor({ plan, onClose, onSaved }) {
     }
   };
 
+  const remove = async () => {
+    if (!window.confirm(tl("Delete {0}’s plan with {1}? Their meal log and scans stay.", { 0: plan.member, 1: plan.nutritionist }))) return;
+    setBusy(true);
+    try {
+      await adminService.deleteNutritionPlan(plan.id);
+      toast.success(tl("Plan deleted"));
+      onSaved();
+      onClose();
+    } catch (err) {
+      toast.error(errorMessage(err, tl("Could not delete the plan")));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const addScan = async (e) => {
     e.preventDefault();
     setScanErrors({});
@@ -238,6 +332,8 @@ function PlanEditor({ plan, onClose, onSaved }) {
   return (
     <Drawer open title={plan.member} onClose={onClose} subtitle={tl("{0} · with {1}", { 0: plan.goal_label, 1: plan.nutritionist })}
       footer={<>
+        <button type="button" className={btn.danger} disabled={busy} onClick={remove}>{tl("Delete")}</button>
+        <div className="flex-1" />
         <button type="button" className={btn.ghost} onClick={onClose}>{tl("Cancel")}</button>
         <button type="button" className={btn.primary} disabled={busy} onClick={save}>{busy ? tl("Saving…") : plan.reviewed_at ? tl("Save") : tl("Save & mark reviewed")}</button>
       </>}>
