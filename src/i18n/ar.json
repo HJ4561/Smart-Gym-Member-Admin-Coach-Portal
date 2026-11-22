@@ -2802,5 +2802,11 @@
  "Visible and hidden": "الظاهر والمخفي",
  "{0} of {1} shown — clear the search to change the order.": "يظهر {0} من {1} — امسح البحث لتغيير الترتيب.",
  "Nothing matches.": "لا توجد نتائج مطابقة.",
- "Your name, title, credentials, specialties, bio and photo go live once an admin approves them. Your phone and booking switches change straight away.": "يظهر اسمك ومسمّاك ومؤهلاتك وتخصصاتك ونبذتك وصورتك بعد موافقة المدير. أما هاتفك وإعدادات الحجز فتتغير فورًا."
+ "Your name, title, credentials, specialties, bio and photo go live once an admin approves them. Your phone and booking switches change straight away.": "يظهر اسمك ومسمّاك ومؤهلاتك وتخصصاتك ونبذتك وصورتك بعد موافقة المدير. أما هاتفك وإعدادات الحجز فتتغير فورًا.",
+ "Delete {0} for good? Their account, profile, photo, Iqama, visits, workouts and meals are erased. Payments and invoices are kept for tax records, without their details. This can’t be undone.\n\nType DELETE to confirm.": "حذف {0} نهائيًا؟ يُمحى حسابه وملفه وصورته وإقامته وزياراته وتمارينه ووجباته. تُحفظ المدفوعات والفواتير للسجلات الضريبية دون بياناته. لا يمكن التراجع عن ذلك.\n\nاكتب DELETE للتأكيد.",
+ "Type DELETE to confirm.": "اكتب DELETE للتأكيد.",
+ "Could not delete the member": "تعذّر حذف العضو",
+ "Delete member": "حذف العضو",
+ "Member deleted.": "تم حذف العضو.",
+ "Member deleted. Their payments and invoices are kept for tax records, without their details.": "تم حذف العضو. تُحفظ مدفوعاته وفواتيره للسجلات الضريبية دون بياناته الشخصية."
 }

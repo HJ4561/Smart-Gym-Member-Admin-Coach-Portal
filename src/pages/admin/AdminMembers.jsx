@@ -75,6 +75,19 @@ export default function AdminMembers() {
     } catch (err) { toast.error(errorMessage(err)); } finally { setBusy(false); }
   };
 
+  const removeMember = async () => {
+    const typed = window.prompt(tl('Delete {0} for good? Their account, profile, photo, Iqama, visits, workouts and meals are erased. Payments and invoices are kept for tax records, without their details. This can’t be undone.\n\nType DELETE to confirm.', { 0: file.full_name }));
+    if (typed === null) return;
+    if (typed.trim().toUpperCase() !== 'DELETE') { toast.error(tl('Type DELETE to confirm.')); return; }
+    setBusy(true);
+    try {
+      const res = await api.deleteMember(file.id);
+      toast.success(tl(res.detail), { duration: 6000 });
+      setFile(null);
+      reload();
+    } catch (err) { toast.error(errorMessage(err, tl('Could not delete the member'))); } finally { setBusy(false); }
+  };
+
   const bulk = async (action, fields = {}) => {
     setBusy(true);
     try {
@@ -197,6 +210,7 @@ export default function AdminMembers() {
             {file.is_active
               ? <button type="button" className={btn.danger} disabled={busy} onClick={() => window.confirm(tl("Deactivate {0}? They can't log in until reactivated.", { 0: file.full_name })) && run(file.id, 'deactivate', {}, 'Deactivated')}>{tl("Deactivate")}</button>
               : <button type="button" className={btn.primary} disabled={busy} onClick={() => run(file.id, 'reactivate', {}, 'Reactivated')}>{tl("Reactivate")}</button>}
+            <button type="button" className={btn.danger} disabled={busy} onClick={removeMember}>{tl("Delete member")}</button>
           </div>
         )}
       >

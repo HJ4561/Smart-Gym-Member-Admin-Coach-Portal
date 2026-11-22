@@ -45,6 +45,11 @@ export const adminService = {
     return data;
   },
 
+  /** Never paid: deleted completely; paid: closed and personal data wiped, payments kept. → {outcome, detail} */
+  async deleteMember(id) {
+    const { data } = await api.delete(`/admin/members/${id}/`);
+    return data;
+  },
   /** action: extend | freeze | unfreeze | message | reset_password | deactivate | reactivate (+ its fields) */
   async memberAction(id, action, fields = {}) {
     const { data } = await api.post(`/admin/members/${id}/action/`, { action, ...fields });
