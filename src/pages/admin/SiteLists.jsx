@@ -22,6 +22,9 @@ export default function SiteLists() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);          // item, or {} for a new one
   const [busy, setBusy] = useState(false);
+  const [q, setQ] = useState('');
+  const [shownState, setShownState] = useState('');      // '' | visible | hidden
+  const [choice, setChoice] = useState('');
 
   const schema = useMemo(() => schemas.find((s) => s.name === active), [schemas, active]);
   // Deep links from other admin pages: ?list=facilities&edit=<id> | &new=1
@@ -100,6 +103,16 @@ export default function SiteLists() {
   };
 
   const choiceField = schema?.fields.find((fd) => fd.type === 'choice' && fd.required);
+  const choices = choiceField ? [...new Set(items.map((i) => i.data?.[choiceField.name]).filter(Boolean))] : [];
+  const needle = q.trim().toLowerCase();
+  const filtering = Boolean(needle || shownState || choice);
+  // Search the item's text in both languages (titles, summaries, any text field).
+  const text = (item) => Object.values(item.data || {}).map((v) => (v && typeof v === 'object' ? `${v.en || ''} ${v.ar || ''}` : String(v ?? '')))
+    .join(' ').toLowerCase();
+  const shown = items.filter((item) => (!needle || text(item).includes(needle))
+    && (!shownState || (shownState === 'visible') === item.is_active)
+    && (!choice || item.data?.[choiceField?.name] === choice));
+  const pick = (name) => { setActive(name); setQ(''); setShownState(''); setChoice(''); };
 
   return (
     <div className="p-8 bg-background min-h-screen">
@@ -122,7 +135,7 @@ export default function SiteLists() {
             type="button"
             role="tab"
             aria-selected={active === s.name}
-            onClick={() => setActive(s.name)}
+            onClick={() => pick(s.name)}
             className={`flex items-center gap-2 px-3 py-1.5 rounded text-[12px] font-bold ${
               active === s.name ? 'bg-primary-container text-on-primary-container' : 'text-on-surface-variant hover:text-on-surface'
             }`}
@@ -133,10 +146,36 @@ export default function SiteLists() {
         ))}
       </div>
 
+      {!loading && items.length > 0 && (
+        <div className="flex flex-col md:flex-row md:items-center gap-2 mb-4">
+          <input className={`${inputCls} md:w-72`} value={q} onChange={(e) => setQ(e.target.value)}
+            placeholder={tl('Search titles and text…')} aria-label={tl('Search this list')} />
+          <select className={`${inputCls} md:w-44`} value={shownState} onChange={(e) => setShownState(e.target.value)} aria-label={tl('On website')}>
+            <option value="">{tl('Visible and hidden')}</option>
+            <option value="visible">{tl('Visible')}</option>
+            <option value="hidden">{tl('Hidden')}</option>
+          </select>
+          {choiceField && choices.length > 1 && (
+            <select className={`${inputCls} md:w-48 capitalize`} value={choice} onChange={(e) => setChoice(e.target.value)}
+              aria-label={choiceField.label}>
+              <option value="">{tl('All: {0}', { 0: choiceField.label.replace(/ \(.*\)/, '') })}</option>
+              {choices.map((c) => <option key={c} value={c}>{c}</option>)}
+            </select>
+          )}
+          {filtering && (
+            <span className="text-[11px] text-on-surface-variant">
+              {tl('{0} of {1} shown — clear the search to change the order.', { 0: shown.length, 1: items.length })}
+            </span>
+          )}
+        </div>
+      )}
+
       {loading ? (
         <Empty>{tl("Loading…")}</Empty>
       ) : !items.length ? (
         <Empty>{tl("Nothing here yet.")}</Empty>
+      ) : !shown.length ? (
+        <Empty>{tl("Nothing matches.")}</Empty>
       ) : (
         <div className="bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg overflow-x-auto">
           <table className="w-full">
@@ -151,13 +190,13 @@ export default function SiteLists() {
               </tr>
             </thead>
             <tbody>
-              {items.map((item, i) => (
+              {shown.map((item) => { const i = items.indexOf(item); return (
                 <tr key={item.id} className={`border-b border-[#1a1a1e] last:border-0 hover:bg-[#131316] transition-colors ${item.is_active ? '' : 'opacity-60'}`}>
                   <td className="px-4 py-3 whitespace-nowrap">
-                    <button type="button" aria-label={tl("Move up")} className="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-[#1a1a1e] disabled:opacity-20 disabled:hover:bg-transparent" disabled={busy || i === 0} onClick={() => move(i, -1)}>
+                    <button type="button" aria-label={tl("Move up")} className="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-[#1a1a1e] disabled:opacity-20 disabled:hover:bg-transparent" disabled={busy || filtering || i === 0} onClick={() => move(i, -1)}>
                       <span className="material-symbols-outlined text-[18px]">arrow_upward</span>
                     </button>
-                    <button type="button" aria-label={tl("Move down")} className="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-[#1a1a1e] disabled:opacity-20 disabled:hover:bg-transparent" disabled={busy || i === items.length - 1} onClick={() => move(i, 1)}>
+                    <button type="button" aria-label={tl("Move down")} className="p-1 rounded text-on-surface-variant hover:text-on-surface hover:bg-[#1a1a1e] disabled:opacity-20 disabled:hover:bg-transparent" disabled={busy || filtering || i === items.length - 1} onClick={() => move(i, 1)}>
                       <span className="material-symbols-outlined text-[18px]">arrow_downward</span>
                     </button>
                   </td>
@@ -202,7 +241,7 @@ export default function SiteLists() {
                     </button>
                   </td>
                 </tr>
-              ))}
+              ); })}
             </tbody>
           </table>
         </div>

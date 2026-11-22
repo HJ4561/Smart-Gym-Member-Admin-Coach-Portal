@@ -2796,5 +2796,10 @@
  "What members wrote about courses and coaches. New reviews are approved on the Approvals page; delete one here to take it down.": "ما كتبه الأعضاء عن الدورات والمدربين. تتم الموافقة على التقييمات الجديدة في صفحة الموافقات، واحذف أي تقييم هنا لإزالته.",
  "Search course, coach, member or words…": "ابحث بالدورة أو المدرب أو العضو أو الكلمات…",
  "Course": "دورة",
- "No comment — stars only.": "بلا تعليق — نجوم فقط."
+ "No comment — stars only.": "بلا تعليق — نجوم فقط.",
+ "Search titles and text…": "ابحث في العناوين والنصوص…",
+ "Search this list": "البحث في هذه القائمة",
+ "Visible and hidden": "الظاهر والمخفي",
+ "{0} of {1} shown — clear the search to change the order.": "يظهر {0} من {1} — امسح البحث لتغيير الترتيب.",
+ "Nothing matches.": "لا توجد نتائج مطابقة."
 }
