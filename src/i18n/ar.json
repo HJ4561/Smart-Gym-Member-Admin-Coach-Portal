@@ -2789,5 +2789,12 @@
  "Search reviews": "البحث في التقييمات",
  "No reviews match.": "لا توجد تقييمات مطابقة.",
  "Search class or coach…": "ابحث بالحصة أو المدرب…",
- "Search name or specialty…": "ابحث بالاسم أو التخصص…"
+ "Search name or specialty…": "ابحث بالاسم أو التخصص…",
+ "Delete this {0}★ review by {1}? It comes off the page and out of the rating straight away.": "حذف هذا التقييم ({0}★) من {1}؟ سيُزال من الصفحة ومن التقييم فورًا.",
+ "Review deleted": "تم حذف التقييم",
+ "Could not delete the review": "تعذّر حذف التقييم",
+ "What members wrote about courses and coaches. New reviews are approved on the Approvals page; delete one here to take it down.": "ما كتبه الأعضاء عن الدورات والمدربين. تتم الموافقة على التقييمات الجديدة في صفحة الموافقات، واحذف أي تقييم هنا لإزالته.",
+ "Search course, coach, member or words…": "ابحث بالدورة أو المدرب أو العضو أو الكلمات…",
+ "Course": "دورة",
+ "No comment — stars only.": "بلا تعليق — نجوم فقط."
 }

@@ -40,6 +40,7 @@ import AdminZatca from './pages/admin/AdminZatca';
 import MissingArabic from './pages/admin/MissingArabic';
 import AdminNotifications from './pages/admin/AdminNotifications';
 import AdminApprovals from './pages/admin/AdminApprovals';
+import AdminReviews from './pages/admin/AdminReviews';
 import StaffActivity from './pages/admin/StaffActivity';
 import AdminTrainers from './pages/admin/AdminTrainers';
 import AdminFacilities from './pages/admin/AdminFacilities';
@@ -282,6 +283,7 @@ function App() {
         <Route path="missing-arabic" element={<MissingArabic />} />
         <Route path="notifications" element={<AdminNotifications />} />
         <Route path="approvals" element={<AdminApprovals />} />
+        <Route path="reviews" element={<AdminReviews />} />
         <Route path="staff-activity" element={<StaffActivity />} />
         <Route path="reports" element={<AdminReports />} />
         <Route path="analytics" element={<AdminAnalytics />} />

@@ -496,6 +496,15 @@ export const adminService = {
     return data;
   },
 
+  // ---- Reviews (members' course and coach reviews)
+  async reviews(params = {}) {
+    const { data } = await api.get('/admin/reviews/', { params });
+    return data;
+  },
+  async deleteReview(type, id) {
+    await api.delete(`/admin/reviews/${type}/${id}/`);
+  },
+
   // ---- Front desk
   async deskToday() {
     const { data } = await api.get('/admin/desk/today/');
