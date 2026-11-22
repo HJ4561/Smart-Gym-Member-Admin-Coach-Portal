@@ -9,6 +9,7 @@ import { opsService as api } from '../../services/opsService';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
+import { matches } from '../../hooks/useListState';
 import { tl } from '../../i18n';
 
 const TONES = [
@@ -22,6 +23,8 @@ export default function AdminFacilities() {
   const [drafts, setDrafts] = useState({});        // id → { monthly_price, capacity }
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(null);
+  const [q, setQ] = useState('');
+  const [state, setState] = useState('');      // '' | bookable | hidden
 
   useEffect(() => {
     let alive = true;
@@ -79,11 +82,22 @@ export default function AdminFacilities() {
         ))}
       </div>
 
+      <div className="flex flex-col md:flex-row gap-2 mb-4">
+        <input className={`${inputCls} md:w-64`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl('Search facilities…')} aria-label={tl('Search facilities')} />
+        <select className={`${inputCls} md:w-48`} value={state} onChange={(e) => setState(e.target.value)} aria-label={tl('Show')}>
+          <option value="">{tl('All facilities')}</option>
+          <option value="bookable">{tl('Bookable add-ons')}</option>
+          <option value="not_bookable">{tl('Not bookable')}</option>
+          <option value="hidden">{tl('Hidden')}</option>
+        </select>
+      </div>
+
       {loading ? <Empty>{tl("Loading…")}</Empty> : !data.results.length ? (
         <Empty>{tl("No facilities yet — add your first one with “+ Add facility”.")}</Empty>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {data.results.map((r) => {
+          {data.results.filter((r) => matches(r, q, ['name', 'name_ar', 'category', 'location'])
+            && (!state || (state === 'bookable' ? r.is_bookable : state === 'not_bookable' ? !r.is_bookable : !r.is_active))).map((r) => {
             const draft = drafts[r.id] || {};
             const dirty = String(draft.monthly_price) !== String(r.monthly_price) || String(draft.capacity) !== String(r.capacity);
             return (

@@ -2,7 +2,7 @@
 // Members: who has an active, expiring, expired or frozen membership, the member
 // file (payments, visits, facilities), and the actions the front desk needs.
 import { useCallback, useEffect, useState } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
+import { Link, useLocation, useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { adminService as api } from '../../services/adminService';
 import { zatcaService } from '../../services/zatcaService';
@@ -15,6 +15,8 @@ import { tl, locale } from '../../i18n';
 import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
 import HighlightBar from '../../components/admin/HighlightBar';
 import { LOCKER_CREDIT_ENABLED } from '../../config/features';
+import { useAuth } from '../../context/AuthContext';
+import { canEdit } from '../../utils/roleHome';
 
 const FILTERS = [
   ['', tl("All"), 'total'], ['active', tl("Active"), 'active'], ['expiring', tl("Expiring (14 days)"), 'expiring'],
@@ -27,6 +29,7 @@ const BADGE = {
 };
 
 export default function AdminMembers() {
+  const edit = canEdit(useAuth().user);   // the front desk views members; only admins change them
   const [params] = useSearchParams();   // ?status= from alerts and insights
   const highlight = useHighlight();     // ?highlight= ids: the list shows just those members
   const [status, setStatus] = useState(() => (FILTERS.some(([id]) => id && id === params.get('status')) ? params.get('status') : ''));
@@ -96,7 +99,9 @@ export default function AdminMembers() {
 
   return (
     <div className="p-8 bg-background min-h-screen">
-      <PageHeader title={tl("Members")} subtitle={tl("Search by name, email, phone or Iqama. Open a member to extend, freeze, message or reset their password.")} />
+      <PageHeader title={tl("Members")} subtitle={tl("Search by name, email, phone or Iqama. Open a member to extend, freeze, message or reset their password.")}>
+        {edit && <Link to="/admin/walk-in" className={btn.primary}>{tl("+ Add member")}</Link>}
+      </PageHeader>
 
       <div className="flex gap-1 mb-4 flex-wrap" role="tablist">
         {FILTERS.map(([id, label, key]) => (
@@ -110,7 +115,7 @@ export default function AdminMembers() {
       <div className="flex gap-2 mb-4 flex-wrap items-center">
         <input className={`${inputCls} max-w-sm`} placeholder={tl("Search name, email, phone, Iqama…")} value={search} aria-label={tl("Search members")}
           onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
-        {selected.length > 0 && (
+        {edit && selected.length > 0 && (
           <div className="flex gap-2 items-center">
             <span className="text-[12px] text-on-surface-variant">{selected.length} selected</span>
             <button type="button" className={btn.ghost} disabled={busy} onClick={() => setDialog({ kind: 'message', ids: selected })}>{tl("Message")}</button>
@@ -128,11 +133,11 @@ export default function AdminMembers() {
           <table className="w-full text-left text-[13px]">
             <thead>
               <tr className="text-[10px] uppercase tracking-widest text-on-surface-variant border-b border-[#1a1a1e]">
-                <th className="p-3 w-8">
+                {edit && <th className="p-3 w-8">
                   <input type="checkbox" aria-label={tl("Select page")} checked={allOnPage}
                     onChange={() => setSelected(allOnPage ? selected.filter((id) => !data.results.some((m) => m.id === id))
                       : [...new Set([...selected, ...data.results.map((m) => m.id)])])} />
-                </th>
+                </th>}
                 <th className="p-3">{tl("Member")}</th><th className="p-3">{tl("Iqama")}</th><th className="p-3">{tl("Plan")}</th>
                 <th className="p-3">{tl("Expires")}</th><th className="p-3">{tl("Status")}</th>
               </tr>
@@ -142,9 +147,9 @@ export default function AdminMembers() {
                 <tr key={m.id} data-highlight={highlight.has(m.id)}
                   className={`border-b border-[#1a1a1e] last:border-0 hover:bg-[#131316] cursor-pointer ${m.is_active ? '' : 'opacity-60'} ${highlight.has(m.id) ? HIGHLIGHT_ROW : ''}`}
                   onClick={() => openFile(m.id)}>
-                  <td className="p-3" onClick={(e) => e.stopPropagation()}>
+                  {edit && <td className="p-3" onClick={(e) => e.stopPropagation()}>
                     <input type="checkbox" aria-label={tl("Select {0}", { 0: m.full_name })} checked={selected.includes(m.id)} onChange={() => toggle(m.id)} />
-                  </td>
+                  </td>}
                   <td className="p-3"><div className="text-on-surface font-bold">{m.full_name}</div><div className="text-[11px] text-on-surface-variant">{m.email}{m.phone && ` · ${m.phone}`}</div></td>
                   <td className="p-3 font-mono text-on-surface-variant">{m.iqama_number || '—'}</td>
                   <td className="p-3 text-on-surface">{m.plan || '—'}</td>
@@ -172,7 +177,7 @@ export default function AdminMembers() {
       {/* Member file */}
       <Drawer open={!!file} title={file?.full_name} subtitle={file ? `${file.email}${file.phone ? ` · ${file.phone}` : ''}` : ''}
         onClose={() => setFile(null)}
-        footer={file && (
+        footer={file && edit && (
           <div className="flex gap-2 flex-wrap">
             {file.membership && <button type="button" className={btn.primary} onClick={() => setDialog({ kind: 'extend', id: file.id })}>{tl("Extend")}</button>}
             {file.membership && (file.membership_status === 'frozen'
@@ -207,6 +212,7 @@ export default function AdminMembers() {
 }
 
 function MemberFile({ file }) {
+  const gate = useLocation().pathname.startsWith('/desk') ? '/desk/gate' : '/admin/member-lookup';
   const m = file.membership;
   return (
     <div className="flex flex-col gap-5 text-[13px]">
@@ -235,7 +241,7 @@ function MemberFile({ file }) {
           <div key={i}>{new Date(v.check_in).toLocaleString(locale)} {v.check_out ? `→ ${new Date(v.check_out).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}` : tl("· in the gym")} · {v.zone}</div>
         )) : <span className="text-on-surface-variant">{tl("None")}</span>}
       </Section>
-      {file.iqama_number && <Link to={`/admin/member-lookup?iqama=${file.iqama_number}`} className="text-primary text-[12px] hover:underline">{tl("Open in Member Lookup (check in) →")}</Link>}
+      {file.iqama_number && <Link to={`${gate}?iqama=${file.iqama_number}`} className="text-primary text-[12px] hover:underline">{tl("Open in Member Lookup (check in) →")}</Link>}
     </div>
   );
 }

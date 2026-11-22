@@ -78,7 +78,10 @@ export default function Nutritionists() {
   });
 
   // ---- Derived ----
-  const list = Array.isArray(nutritionists) ? nutritionists : [];
+  const [q, setQ] = useState('');
+  const needle = q.trim().toLowerCase();
+  const list = (Array.isArray(nutritionists) ? nutritionists : []).filter((n) => !needle
+    || `${n.user?.full_name || ''} ${n.title || ''} ${n.title_ar || ''} ${(n.specialties || []).join(' ')}`.toLowerCase().includes(needle));
   const consumed = summary?.consumed || {};
   const targets = summary?.targets || {};
 
@@ -227,10 +230,13 @@ export default function Nutritionists() {
                   ))}
                 </div>
               </>
-            ) : list.length === 0 ? (
+            ) : !needle && list.length === 0 ? (
               <EmptyState />
             ) : (
               <>
+                <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl('Search name or specialty…')}
+                  aria-label={tl('Search nutritionists')}
+                  className="w-full md:w-80 bg-surface-container-low text-on-surface px-3 py-2 rounded-lg border border-surface-container-high text-[14px] focus:outline-none focus:border-primary" />
                 {featured && (
                   <FeaturedNutritionist
                     nutritionist={featured}

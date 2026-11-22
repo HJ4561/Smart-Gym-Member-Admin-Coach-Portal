@@ -8,16 +8,19 @@ import { useApi } from '../../hooks/useApi';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn } from '../../components/site/siteStyles';
 import { locale, tl } from '../../i18n';
+import { inputCls } from '../../components/site/siteStyles';
+import { matches } from '../../hooks/useListState';
 
 const FILTERS = [['all', tl('All')], ['unread', tl('Unread')]];
 
 export default function AdminNotifications() {
   const navigate = useNavigate();
   const [filter, setFilter] = useState('all');
+  const [q, setQ] = useState('');
   const { data, loading, refetch } = useApi(
     () => notificationsService.list(filter === 'unread' ? { unread: 'true' } : {}), [filter],
     { poll: 10_000, refreshOn: [NOTIFICATIONS_CHANGED] });
-  const list = Array.isArray(data) ? data : data?.results || [];
+  const list = (Array.isArray(data) ? data : data?.results || []).filter((n) => matches(n, q, ['title', 'message', 'category']));
   const changed = () => refetch();     // the service tells the header bell too
   const open = async (n) => {
     if (!n.is_read) { try { await notificationsService.markRead(n.id); changed(); } catch { /* ignore */ } }
@@ -32,6 +35,8 @@ export default function AdminNotifications() {
           onClick={async () => { await notificationsService.markAllRead(); changed(); }}>{tl('Mark all read')}</button>
       </PageHeader>
 
+      <input className={`${inputCls} mb-3 md:w-80`} value={q} onChange={(e) => setQ(e.target.value)}
+        placeholder={tl('Search notifications…')} aria-label={tl('Search notifications')} />
       <div className="flex gap-2 mb-4" role="tablist">
         {FILTERS.map(([id, label]) => (
           <button key={id} type="button" role="tab" aria-selected={filter === id} onClick={() => setFilter(id)}

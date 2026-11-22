@@ -59,13 +59,16 @@ export default function Notifications() {
   const unreadCount = unreadData?.unread_count || 0;
 
   /* -------- Filtered list -------- */
+  const [q, setQ] = useState('');
   const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    const found = needle ? list.filter((n) => `${n.title} ${n.message}`.toLowerCase().includes(needle)) : list;
     if (activeCategory === 'unread') {
-      return list.filter((n) => !n.is_read);
+      return found.filter((n) => !n.is_read);
     }
-    if (activeCategory === 'all') return list;
-    return list.filter((n) => n.category === activeCategory);
-  }, [list, activeCategory]);
+    if (activeCategory === 'all') return found;
+    return found.filter((n) => n.category === activeCategory);
+  }, [list, activeCategory, q]);
 
   /* -------- Actions -------- */
   const handleMarkAllRead = async () => {
@@ -198,6 +201,10 @@ export default function Notifications() {
           }
         />
       </motion.div>
+
+      <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl('Search notifications…')}
+        aria-label={tl('Search notifications')}
+        className="w-full md:w-80 bg-surface-container-low text-on-surface px-3 py-2 rounded-lg border border-surface-container-high text-[14px] focus:outline-none focus:border-primary" />
 
       {/* Category tabs */}
       <motion.div

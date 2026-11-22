@@ -116,6 +116,10 @@ export default function MySessions() {
                   <div className="col-span-2 sm:col-span-1">
                     <dt className="text-[10px] uppercase tracking-wider text-on-surface-variant">{tl('When')}</dt>
                     <dd className="text-on-surface font-bold">{formatGymDateTime(s.scheduled_at)}</dd>
+                    {s.rescheduled_from && (
+                      <dd className="text-[11px] text-amber-500">{tl('Moved from {0}', { 0: formatGymDateTime(s.rescheduled_from) })}
+                        {s.change_note && ` — ${s.change_note}`}</dd>
+                    )}
                   </div>
                   <div>
                     <dt className="text-[10px] uppercase tracking-wider text-on-surface-variant">{tl('Length')}</dt>

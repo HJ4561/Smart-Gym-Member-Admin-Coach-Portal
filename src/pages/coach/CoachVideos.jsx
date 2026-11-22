@@ -1,11 +1,13 @@
 // src/pages/coach/CoachVideos.jsx — Machine Guide videos by this coach.
 // Basic = free for every member. Advanced / Premium = included in some membership plans,
 // or bought one by one by members (the coach sets the price).
+// A coach's new video, and changes to a live one, wait for an admin; hiding a video is immediate.
 import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 import { coachService } from '../../services/coachService';
-import { BiInput, Drawer, Empty, PageHeader } from '../../components/site/SiteUi';
+import { BiInput, Drawer, Empty, ImageUploader, PageHeader } from '../../components/site/SiteUi';
+import VideoPlayer from '../../components/common/VideoPlayer';
 import { btn, inputCls } from '../../components/site/siteStyles';
 import { Field } from '../../components/courses/CourseEditor';
 import { formatSAR } from '../../utils/money';
@@ -23,13 +25,21 @@ const LABEL = Object.fromEntries(TIERS.map(([k, l]) => [k, l]));
 const NEW = { exercise_id: '', tier: 'basic', title: '', title_ar: '', video_url: '', duration_minutes: 5, price: '', description: '',
   description_ar: '', is_active: true };
 
+const APPROVAL = {
+  pending: [tl('Waiting for approval'), 'bg-amber-500/15 text-amber-300'],
+  rejected: [tl('Not approved — edit to send again'), 'bg-rose-500/15 text-rose-300'],
+};
+
 export default function CoachVideos() {
   const [tier, setTier] = useState('');
+  const [status, setStatus] = useState('');
+  const [q, setQ] = useState('');
   const [editing, setEditing] = useState(null);
   const { data, loading, refetch } = useApi(() => coachService.videos(), [], { poll: LIVE_MS });
   const { data: machines } = useApi(() => coachService.machines(), [], { poll: LIVE_MS });
   const all = useMemo(() => (Array.isArray(data) ? data : []), [data]);
-  const list = all.filter((v) => !tier || v.tier === tier);
+  const list = all.filter((v) => (!tier || v.tier === tier) && (!status || v.approval_status === status)
+    && (!q || `${v.title} ${v.exercise}`.toLowerCase().includes(q.toLowerCase())));
   const totals = useMemo(() => ({
     sold: all.reduce((a, v) => a + v.purchases, 0),
     revenue: all.reduce((a, v) => a + Number(v.revenue), 0),
@@ -49,16 +59,29 @@ export default function CoachVideos() {
         <Tile icon="payments" label={tl('Video sales')} value={formatSAR(totals.revenue)} tone="text-emerald-400" />
       </div>
 
-      <Tabs value={tier} onChange={setTier} options={[['', tl('All')], ...TIERS.map(([k, l]) => [k, l])]} />
+      <div className="flex flex-col lg:flex-row lg:items-center gap-3">
+        <Tabs value={tier} onChange={setTier} options={[['', tl('All')], ...TIERS.map(([k, l]) => [k, l])]} />
+        <select className={`${inputCls} lg:w-52`} value={status} onChange={(e) => setStatus(e.target.value)} aria-label={tl('Approval')}>
+          <option value="">{tl('Any approval state')}</option>
+          <option value="approved">{tl('Live')}</option>
+          <option value="pending">{tl('Waiting for approval')}</option>
+          <option value="rejected">{tl('Not approved')}</option>
+        </select>
+        <div className="flex-1" />
+        <input className={`${inputCls} lg:w-64`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl('Search title or machine…')} aria-label={tl('Search videos')} />
+      </div>
 
       {loading && !data ? <Skeleton /> : list.length === 0 ? (
-        <Empty>{tier ? tl('No videos in this tier yet.') : tl('No videos yet — pick a machine and add your first how-to.')}</Empty>
+        <Empty>{tier || status || q ? tl('No videos match.') : tl('No videos yet — pick a machine and add your first how-to.')}</Empty>
       ) : (
         <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
           {list.map((v) => (
-            <li key={v.id}>
+            <li key={v.id} className={`${card} p-3 flex flex-col gap-2 ${v.is_active ? '' : 'opacity-60'}`}>
+              <VideoPlayer url={v.video_url} thumbnail={v.thumbnail_url} />
+              {APPROVAL[v.approval_status] && <Chip tone={APPROVAL[v.approval_status][1]}>{APPROVAL[v.approval_status][0]}</Chip>}
+              {v.pending_change && <Chip tone="bg-amber-500/15 text-amber-300">{tl('Change waiting')}</Chip>}
               <button type="button" onClick={() => setEditing({ ...v, price: v.tier === 'basic' ? '' : v.price })}
-                className={`${card} w-full text-left p-4 flex flex-col gap-2 hover:border-primary-container/60 ${v.is_active ? '' : 'opacity-60'}`}>
+                className="w-full text-left flex flex-col gap-2 hover:opacity-90">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="text-on-surface font-bold break-words">{v.title}</div>
@@ -79,7 +102,8 @@ export default function CoachVideos() {
       )}
 
       {editing && <VideoEditor video={editing} machines={machines || []} onClose={() => setEditing(null)} onSaved={refetch}
-        api={{ add: coachService.addVideo, update: coachService.updateVideo, remove: coachService.deleteVideo }} />}
+        api={{ add: coachService.addVideo, update: coachService.updateVideo, remove: coachService.deleteVideo,
+          thumbnail: coachService.uploadVideoThumbnail }} />}
     </Page>
   );
 }
@@ -155,9 +179,10 @@ export function VideoEditor({ video, machines = [], fixedMachine, api, onClose, 
       description_ar: f.description_ar || '', ...patch,
     };
     try {
-      if (f.id) await api.update(f.id, body);
-      else await api.add(fixedMachine ? body : { ...body, exercise_id: f.exercise_id }, fixedMachine);
-      toast.success(f.id ? tl('Video saved') : tl('Video added — members can see it now'));
+      const res = f.id ? await api.update(f.id, body)
+        : await api.add(fixedMachine ? body : { ...body, exercise_id: f.exercise_id }, fixedMachine);
+      toast.success(res?.detail ? tl(res.detail) : f.id ? tl('Video saved') : tl('Video added — members can see it now'),
+        { duration: res?.detail ? 6000 : 3000 });
       onSaved();
       onClose();
     } catch (err) {
@@ -209,6 +234,25 @@ export function VideoEditor({ video, machines = [], fixedMachine, api, onClose, 
                 ))}
               </ul>
             </>
+          )}
+        </div>
+      )}
+      {f.pending_change && (
+        <p className="text-[12px] text-amber-300">{tl('A change is waiting for an admin. Members see the current version until then; saving again adds to it.')}</p>
+      )}
+      {(f.video_url || '').startsWith('https://') && (
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_180px] gap-3 items-start">
+          <VideoPlayer url={f.video_url} thumbnail={f.thumbnail_url} title={f.title} subtitle={tl('Preview — what members see')} />
+          {f.id && api.thumbnail && (
+            <ImageUploader label={tl('Thumbnail')} aspect="aspect-video" url={f.own_thumbnail} customized={!!f.own_thumbnail}
+              onUpload={async (file) => {
+                try {
+                  const res = await api.thumbnail(f.id, file);
+                  toast.success(res?.detail ? tl(res.detail) : tl('Thumbnail updated'));
+                  setF((p) => ({ ...p, ...res }));
+                  onSaved();
+                } catch (err) { toast.error(errorMessage(err, tl('Upload failed'))); throw err; }
+              }} />
           )}
         </div>
       )}

@@ -12,6 +12,8 @@ import { btn, inputCls } from '../../components/site/siteStyles';
 import { tl, locale } from '../../i18n';
 import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
 import HighlightBar from '../../components/admin/HighlightBar';
+import { useAuth } from '../../context/AuthContext';
+import { canEdit } from '../../utils/roleHome';
 
 const TABS = [
   { id: '', label: tl("All") },
@@ -42,6 +44,7 @@ const OPEN = ['paid', 'preparing', 'ready', 'dispatched'];
 const sar = (v) => `SAR ${Number(v || 0).toFixed(2)}`;
 
 export default function ShopOrders() {
+  const admin = canEdit(useAuth().user);   // the shop manager runs orders; refunds stay with admins
   const [params] = useSearchParams();             // ?q=ORD-… from the header search, ?tab=review from alerts
   const highlight = useHighlight();
   const [tab, setTab] = useState(TABS.some((t) => t.id && t.id === params.get('tab')) ? params.get('tab') : '');
@@ -65,7 +68,7 @@ export default function ShopOrders() {
       try {
         const [orders, rv] = await Promise.all([
           tab === 'review' ? Promise.resolve(null) : api.orders({ status: tab, q }),
-          api.paymentsReview(),
+          admin ? api.paymentsReview() : Promise.resolve([]),   // settling payments is an admin job
         ]);
         if (!alive) return;
         if (orders) setData(orders);
@@ -73,7 +76,7 @@ export default function ShopOrders() {
       } catch (err) { if (!background) toast.error(errorMessage(err)); } finally { if (alive) setLoading(false); }
     })();
     return () => { alive = false; };
-  }, [tab, q, version]);
+  }, [tab, q, version, admin]);
 
   const counts = data.counts || {};
   const tabCount = (id) => (id === 'review' ? review.length
@@ -130,7 +133,7 @@ export default function ShopOrders() {
       />
 
       <div className="flex gap-1 mb-4 flex-wrap" role="tablist">
-        {TABS.map((t) => (
+        {TABS.filter((t) => admin || t.id !== 'review').map((t) => (
           <button key={t.label} type="button" role="tab" aria-selected={tab === t.id} onClick={() => setTab(t.id)}
             className={`px-4 py-1.5 rounded text-[11px] font-bold uppercase tracking-wider ${tab === t.id ? 'bg-primary-container text-on-primary-container' : 'bg-[#131316] text-on-surface-variant hover:text-on-surface'}`}>
             {t.label} <span className="opacity-60">({tabCount(t.id)})</span>
@@ -161,7 +164,7 @@ export default function ShopOrders() {
                 </div>
                 <div className="flex items-center gap-3 shrink-0">
                   <span className="text-on-surface font-bold">{sar(i.amount)}</span>
-                  <button type="button" className={btn.danger} disabled={busy} onClick={() => refundIntent(i)}>{tl("Refund")}</button>
+                  {admin && <button type="button" className={btn.danger} disabled={busy} onClick={() => refundIntent(i)}>{tl("Refund")}</button>}
                 </div>
               </div>
             ))}
@@ -216,7 +219,7 @@ export default function ShopOrders() {
                 {NEXT_LABEL[s]}
               </button>
             ))}
-            {open.refundable && <button type="button" className={btn.danger} disabled={busy} onClick={() => refund(open)}>{tl("Refund")}</button>}
+            {admin && open.refundable && <button type="button" className={btn.danger} disabled={busy} onClick={() => refund(open)}>{tl("Refund")}</button>}
           </div>
         )}
       >

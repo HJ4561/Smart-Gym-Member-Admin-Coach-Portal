@@ -39,6 +39,8 @@ import AdminFinance from './pages/admin/AdminFinance';
 import AdminZatca from './pages/admin/AdminZatca';
 import MissingArabic from './pages/admin/MissingArabic';
 import AdminNotifications from './pages/admin/AdminNotifications';
+import AdminApprovals from './pages/admin/AdminApprovals';
+import StaffActivity from './pages/admin/StaffActivity';
 import AdminTrainers from './pages/admin/AdminTrainers';
 import AdminFacilities from './pages/admin/AdminFacilities';
 import AdminClasses from './pages/admin/AdminClasses';
@@ -65,10 +67,20 @@ import CoachSessions from './pages/coach/CoachSessions';
 import CoachHours from './pages/coach/CoachHours';
 import CoachCourses from './pages/coach/CoachCourses';
 import CoachStudents from './pages/coach/CoachStudents';
+import CoachStudent from './pages/coach/CoachStudent';
 import CoachClasses from './pages/coach/CoachClasses';
 import CoachVideos from './pages/coach/CoachVideos';
 import { CoachEarnings, CoachNotifications, CoachProfile, CoachReviews } from './pages/coach/CoachMore';
-import { homeFor, isCoach, isStaff } from './utils/roleHome';
+import { homeFor, isCoach, isDesk, isNutritionist, isShop, isStaff, isTeam } from './utils/roleHome';
+
+// Team portals (front desk; shop and nutrition follow the same pattern)
+import DeskLayout from './layouts/DeskLayout';
+import DeskHome from './pages/desk/DeskHome';
+import DeskWalkIn from './pages/desk/DeskWalkIn';
+import { TeamAccount, TeamNotifications } from './pages/team/TeamPages';
+import PortalLayout from './layouts/PortalLayout';
+import ShopHome from './pages/shop/ShopHome';
+import { NutritionClient, NutritionClients, NutritionHome, NutritionProfile } from './pages/nutrition/NutritionPages';
 
 // Shared
 import Login from './pages/Login';
@@ -132,8 +144,8 @@ function ProtectedRoute({ children }) {
       ? <ChangePassword forced />
       : <Navigate to={CHANGE_PASSWORD_PATH} replace />;
   }
-  // Admins and managers use the console and coaches the coach portal, never the member pages.
-  if (isStaff(user) || isCoach(user)) return <Navigate to={homeFor(user)} replace />;
+  // Everyone who works at the gym has their own portal, never the member pages.
+  if (isTeam(user)) return <Navigate to={homeFor(user)} replace />;
 
   return children;
 }
@@ -178,6 +190,43 @@ function CoachProtectedRoute({ children }) {
 
 
 /* ============================================
+   TEAM PORTALS (front desk, shop, nutrition)
+   ============================================ */
+function TeamProtectedRoute({ allowed, children }) {
+  const { user, isAuthenticated, loading, mustChangePassword } = useAuth();
+
+  if (loading) return <AuthLoader />;
+  if (!isAuthenticated) return <Navigate to="/staff/login" replace />;
+  if (mustChangePassword) return <Navigate to={CHANGE_PASSWORD_PATH} replace />;
+  if (!allowed(user)) return <Navigate to={homeFor(user)} replace />;
+  return children;
+}
+
+const SHOP_NAV = [
+  { path: '/shop', label: tl('Today'), icon: 'today', end: true },
+  { path: '/shop/orders', label: tl('Orders'), icon: 'receipt_long' },
+  { path: '/shop/products', label: tl('Products'), icon: 'inventory_2' },
+  { path: '/shop/categories', label: tl('Categories'), icon: 'category' },
+  { path: '/shop/promos', label: tl('Promo codes'), icon: 'sell' },
+  { path: '/shop/notifications', label: tl('Notifications'), icon: 'notifications' },
+  { path: '/shop/account', label: tl('Profile & security'), icon: 'manage_accounts' },
+];
+
+const NUTRITION_NAV = [
+  { path: '/nutrition', label: tl('Today'), icon: 'today', end: true },
+  { path: '/nutrition/clients', label: tl('Clients'), icon: 'groups' },
+  { path: '/nutrition/notifications', label: tl('Notifications'), icon: 'notifications' },
+  { path: '/nutrition/profile', label: tl('Profile & security'), icon: 'manage_accounts' },
+];
+
+/** A front-desk page the admin may not have given this receptionist: back to the desk home. */
+function DeskModule({ module, children }) {
+  const { user } = useAuth();
+  return (user?.modules || []).includes(module) ? children : <Navigate to="/desk" replace />;
+}
+
+
+/* ============================================
    MEMBER LAYOUT
    ============================================ */
 function MemberLayout({ children }) {
@@ -203,6 +252,7 @@ function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/admin/login" element={<AdminLogin />} />
       <Route path="/coach/login" element={<AdminLogin variant="coach" />} />
+      <Route path="/staff/login" element={<AdminLogin variant="staff" />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/admin/forgot-password" element={<ForgotPassword staff />} />
@@ -231,11 +281,14 @@ function App() {
         <Route path="zatca" element={<AdminZatca />} />
         <Route path="missing-arabic" element={<MissingArabic />} />
         <Route path="notifications" element={<AdminNotifications />} />
+        <Route path="approvals" element={<AdminApprovals />} />
+        <Route path="staff-activity" element={<StaffActivity />} />
         <Route path="reports" element={<AdminReports />} />
         <Route path="analytics" element={<AdminAnalytics />} />
         <Route path="cms" element={<Navigate to="/admin/site-lists?list=articles" replace />} />
         <Route path="registrations" element={<AdminRegistrations />} />
         <Route path="member-lookup" element={<MemberLookup />} />
+        <Route path="walk-in" element={<DeskWalkIn />} />
         <Route path="settings" element={<AdminSettings />} />
         <Route path="site-content" element={<SiteContent />} />
         <Route path="site-lists" element={<SiteLists />} />
@@ -266,6 +319,7 @@ function App() {
         <Route path="courses" element={<CoachCourses />} />
         <Route path="courses/:courseId" element={<CoachCourses />} />
         <Route path="students" element={<CoachStudents />} />
+        <Route path="students/:memberId" element={<CoachStudent />} />
         <Route path="classes" element={<CoachClasses />} />
         <Route path="videos" element={<CoachVideos />} />
         <Route path="reviews" element={<CoachReviews />} />
@@ -274,6 +328,43 @@ function App() {
         <Route path="profile" element={<CoachProfile />} />
         <Route path="change-password" element={<ChangePassword />} />
         <Route path="*" element={<Navigate to="/coach" replace />} />
+      </Route>
+
+      {/* ============ FRONT DESK — receptionists (only their modules) ============ */}
+      <Route path="/desk/*" element={<TeamProtectedRoute allowed={isDesk}><DeskLayout /></TeamProtectedRoute>}>
+        <Route index element={<DeskHome />} />
+        <Route path="gate" element={<DeskModule module="gate"><MemberLookup /></DeskModule>} />
+        <Route path="registrations" element={<DeskModule module="registrations"><AdminRegistrations /></DeskModule>} />
+        <Route path="walk-in" element={<DeskModule module="walk_in"><DeskWalkIn /></DeskModule>} />
+        <Route path="members" element={<DeskModule module="members"><AdminMembers /></DeskModule>} />
+        <Route path="classes" element={<DeskModule module="classes"><AdminClasses /></DeskModule>} />
+        <Route path="inbox" element={<DeskModule module="inbox"><SiteInbox /></DeskModule>} />
+        <Route path="notifications" element={<TeamNotifications base="/desk" />} />
+        <Route path="account" element={<TeamAccount />} />
+        <Route path="*" element={<Navigate to="/desk" replace />} />
+      </Route>
+
+      {/* ============ SHOP — the shop manager ============ */}
+      <Route path="/shop/*" element={<TeamProtectedRoute allowed={isShop}><PortalLayout base="/shop" title={tl('Shop Portal')} icon="storefront" nav={SHOP_NAV} /></TeamProtectedRoute>}>
+        <Route index element={<ShopHome />} />
+        <Route path="orders" element={<ShopOrders />} />
+        <Route path="products" element={<ShopCatalog key="products" initialTab="products" />} />
+        <Route path="categories" element={<ShopCatalog key="categories" initialTab="categories" />} />
+        <Route path="promos" element={<ShopCatalog key="promos" initialTab="promos" />} />
+        <Route path="notifications" element={<TeamNotifications base="/shop" />} />
+        <Route path="account" element={<TeamAccount />} />
+        <Route path="*" element={<Navigate to="/shop" replace />} />
+      </Route>
+
+      {/* ============ NUTRITION — nutritionists ============ */}
+      <Route path="/nutrition/*" element={<TeamProtectedRoute allowed={isNutritionist}><PortalLayout base="/nutrition" title={tl('Nutrition Portal')} icon="nutrition" nav={NUTRITION_NAV} /></TeamProtectedRoute>}>
+        <Route index element={<NutritionHome />} />
+        <Route path="clients" element={<NutritionClients />} />
+        <Route path="clients/:memberId" element={<NutritionClient />} />
+        <Route path="profile" element={<NutritionProfile />} />
+        <Route path="account" element={<NutritionProfile />} />
+        <Route path="notifications" element={<TeamNotifications base="/nutrition" />} />
+        <Route path="*" element={<Navigate to="/nutrition" replace />} />
       </Route>
 
       {/* ============ MEMBER — authenticated users ============ */}

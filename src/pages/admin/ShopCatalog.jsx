@@ -1,8 +1,10 @@
 // src/pages/admin/ShopCatalog.jsx
 // The member shop's catalogue: products (price, stock, photo, on sale or hidden), categories
 // and promo codes. Orders are handled on Shop Orders.
+// Also the shop manager's catalogue (/shop/…): their new items and changes wait for an admin, so rows
+// show what's waiting; stock counts change straight away.
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 import { adminService } from '../../services/adminService';
@@ -13,11 +15,30 @@ import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { tl, locale } from '../../i18n';
 import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
 import HighlightBar from '../../components/admin/HighlightBar';
+import { useAuth } from '../../context/AuthContext';
+import { canEdit } from '../../utils/roleHome';
+import { useDebounced } from '../../hooks/useListState';
 
-const FILTERS = [['', tl("All")], ['active', tl("On sale")], ['low', tl("Low stock")], ['out', tl("Out of stock")], ['hidden', tl("Hidden")]];
+const FILTERS = [['', tl("All")], ['active', tl("On sale")], ['low', tl("Low stock")], ['out', tl("Out of stock")], ['hidden', tl("Hidden")],
+  ['waiting', tl("Waiting for approval")]];
 
-export default function ShopCatalog() {
-  const [tab, setTab] = useState('products');
+/** What's waiting for an admin on this row: a new item, a change, a removal — or a rejected one. */
+function ApprovalBadge({ row }) {
+  const pending = row.pending || [];
+  const chip = (tone, text) => <span className={`ml-1 px-2 py-0.5 rounded text-[9px] font-bold uppercase ${tone}`}>{text}</span>;
+  if (row.approval_status === 'pending') return chip('bg-amber-500/15 text-amber-300', tl('Waiting for approval'));
+  if (row.approval_status === 'rejected') return chip('bg-rose-500/15 text-rose-300', tl('Not approved — edit to send again'));
+  if (pending.some((p) => p.kind === 'delete')) return chip('bg-rose-500/15 text-rose-300', tl('Removal waiting'));
+  if (pending.some((p) => p.kind === 'update')) return chip('bg-amber-500/15 text-amber-300', tl('Change waiting'));
+  return null;
+}
+
+/** The server's note when something went to the approval queue, else our own message. */
+const said = (res, fallback) => (res?.detail ? tl(res.detail) : fallback);
+
+export default function ShopCatalog({ initialTab = 'products' }) {
+  const [tab, setTab] = useState(initialTab);
+  const inShop = useLocation().pathname.startsWith('/shop');
   const { data: stats, refetch: refetchStats } = useApi(() => adminService.shopStats(), []);
   const { data: cats, refetch: refetchCats } = useApi(() => adminService.shopCategories(), []);
   const categories = Array.isArray(cats) ? cats : [];
@@ -29,8 +50,11 @@ export default function ShopCatalog() {
 
   return (
     <div className="p-6 md:p-8 flex flex-col gap-6">
-      <PageHeader title={tl("Shop")} subtitle={tl("What members can buy in the portal. Paid orders take stock off automatically.")}>
-        <Link to="/admin/shop-orders" className={btn.ghost}>{tl("Shop orders")}</Link>
+      <PageHeader title={inShop ? tl("Catalogue") : tl("Shop")}
+        subtitle={inShop
+          ? tl("New products, price changes and promo codes go to an admin first; members keep seeing the current version until it’s approved. Stock counts change straight away.")
+          : tl("What members can buy in the portal. Paid orders take stock off automatically.")}>
+        <Link to={inShop ? '/shop/orders' : '/admin/shop-orders'} className={btn.ghost}>{tl("Shop orders")}</Link>
       </PageHeader>
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
@@ -76,10 +100,13 @@ function Field({ label, error, hint, children, className = '' }) {
 function Products({ categories, onChanged }) {
   const [q, setQ] = useState('');
   const [status, setStatus] = useState('');
+  const [category, setCategory] = useState('');
   const [editing, setEditing] = useState(null);
   const highlight = useHighlight();
+  const search = useDebounced(q);
   const { data, loading, refetch } = useApi(
-    () => adminService.shopProducts({ q: q || undefined, status: status || undefined }), [q, status]);
+    () => adminService.shopProducts({ q: search || undefined, status: status || undefined, category: category || undefined }),
+    [search, status, category]);
   const list = Array.isArray(data) ? data : [];
   const saved = () => { refetch(); onChanged(); };
   const blank = { name: '', name_ar: '', sku: '', description: '', description_ar: '', category_id: categories[0]?.id || '', price: '', original_price: '',
@@ -100,6 +127,10 @@ function Products({ categories, onChanged }) {
           ))}
         </div>
         <div className="flex-1" />
+        <select className={`${inputCls} md:w-48`} value={category} onChange={(e) => setCategory(e.target.value)} aria-label={tl("Category")}>
+          <option value="">{tl("All categories")}</option>
+          {categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
         <input className={`${inputCls} md:w-64`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl("Search name or SKU…")} aria-label={tl("Search products")} />
         <button type="button" className={btn.primary} disabled={!categories.length} onClick={() => setEditing(blank)}
           title={categories.length ? undefined : tl("Add a category first")}>{tl("+ Add product")}</button>
@@ -112,7 +143,7 @@ function Products({ categories, onChanged }) {
       {loading ? (
         <div className="h-48 bg-[#0e0e0f] rounded-lg animate-pulse" />
       ) : list.length === 0 ? (
-        <Empty>{q || status ? tl("No products match.") : tl("No products yet.")}</Empty>
+        <Empty>{q || status || category ? tl("No products match.") : tl("No products yet.")}</Empty>
       ) : (
         <div className="bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg overflow-x-auto">
           <table className="w-full text-[13px]">
@@ -147,6 +178,7 @@ function Products({ categories, onChanged }) {
                     <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${p.is_active ? 'bg-emerald-500/15 text-emerald-400' : 'bg-[#1a1a1e] text-on-surface-variant'}`}>
                       {p.is_active ? tl("On sale") : tl("Hidden")}</span>
                     {p.is_featured && <span className="ml-1 px-2 py-0.5 rounded text-[9px] font-bold uppercase bg-amber-500/15 text-amber-300">{tl("Featured")}</span>}
+                    <ApprovalBadge row={p} />
                   </td>
                 </tr>
               ))}
@@ -161,6 +193,7 @@ function Products({ categories, onChanged }) {
 }
 
 function ProductEditor({ product, categories, onClose, onSaved }) {
+  const admin = canEdit(useAuth().user);
   const [f, setF] = useState(() => ({ ...product, telemetry: (product.telemetry || []).join('\n'),
     telemetry_ar: (product.telemetry_ar || []).join('\n'),
     original_price: product.original_price ?? '' }));
@@ -198,7 +231,7 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
     body.sku = skuNum;   // empty → the next free number in the category
     try {
       const row = await adminService.saveProduct(f.id, body);
-      toast.success(f.id ? 'Product saved' : tl("{0} added — add a photo now", { 0: row.name }));
+      toast.success(said(row, f.id ? tl('Product saved') : tl("{0} added — add a photo now", { 0: row.name })), { duration: row.detail ? 6000 : 3000 });
       onSaved();
       if (f.id) onClose();
       else {
@@ -217,8 +250,7 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
   const remove = async () => {
     if (!window.confirm(tl("Delete {0}?", { 0: f.name }))) return;
     try {
-      await adminService.deleteProduct(f.id);
-      toast.success(tl("Product deleted"));
+      toast.success(said(await adminService.deleteProduct(f.id), tl("Product deleted")));
       onSaved();
       onClose();
     } catch (err) {
@@ -230,7 +262,7 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
     try {
       const row = await adminService.uploadProductImage(f.id, file);
       setF((p) => ({ ...p, image_url: row.image_url }));
-      toast.success(tl("Photo updated"));
+      toast.success(said(row, tl("Photo updated")));
       onSaved();
     } catch (err) {
       toast.error(errorMessage(err, tl("Upload failed")));
@@ -239,13 +271,18 @@ function ProductEditor({ product, categories, onClose, onSaved }) {
   };
 
   return (
-    <Drawer open title={f.id ? f.name : tl("Add product")} onClose={onClose} subtitle={f.id ? tl("SKU {0}", { 0: f.sku }) : tl("Shown to members as soon as it’s saved and on sale.")}
+    <Drawer open title={f.id ? f.name : tl("Add product")} onClose={onClose}
+      subtitle={f.id ? tl("SKU {0}", { 0: f.sku })
+        : admin ? tl("Shown to members as soon as it’s saved and on sale.") : tl("Shown to members once an admin approves it.")}
       footer={<>
         {f.id && <button type="button" className={btn.danger} onClick={remove}>{tl("Delete")}</button>}
         <div className="flex-1" />
         <button type="button" className={btn.ghost} onClick={onClose}>{tl("Close")}</button>
         <button type="button" className={btn.primary} disabled={busy} onClick={save}>{busy ? tl("Saving…") : tl("Save")}</button>
       </>}>
+      {(f.pending || []).some((p) => p.kind === 'update') && (
+        <p className="text-[12px] text-amber-300">{tl("A change is waiting for an admin. Members see the current version until then; saving again adds to it.")}</p>
+      )}
       {f.id ? (
         <div className="max-w-[240px]"><ImageUploader label={tl("Photo")} aspect="aspect-square" url={f.image_url} customized={!!f.image_url} onUpload={upload} /></div>
       ) : <p className="text-[12px] text-on-surface-variant">{tl("You can add a photo after the first save.")}</p>}
@@ -309,10 +346,10 @@ function Categories({ categories, onChanged }) {
     }
     setBusy(true);
     try {
-      await adminService.saveCategory(null, { name: name.trim(), name_ar: nameAr.trim() });
+      const res = await adminService.saveCategory(null, { name: name.trim(), name_ar: nameAr.trim() });
       setName('');
       setNameAr('');
-      toast.success(tl("Category added"));
+      toast.success(res.approval_status === 'pending' ? tl("Category sent — it shows once an admin approves it") : tl("Category added"));
       onChanged();
     } catch (err) {
       toast.error(errorMessage(err, tl("Could not add the category")));
@@ -322,8 +359,8 @@ function Categories({ categories, onChanged }) {
   };
   const update = async (c, body, msg) => {
     try {
-      await adminService.saveCategory(c.id, body);
-      if (msg) toast.success(msg);
+      const res = await adminService.saveCategory(c.id, body);
+      if (res?.detail || msg) toast.success(said(res, msg));
       onChanged();
     } catch (err) {
       toast.error(errorMessage(err, tl("Could not save")));
@@ -338,8 +375,7 @@ function Categories({ categories, onChanged }) {
   const remove = async (c) => {
     if (!window.confirm(tl("Delete {0}?", { 0: c.name }))) return;
     try {
-      await adminService.deleteCategory(c.id);
-      toast.success(tl("Category deleted"));
+      toast.success(said(await adminService.deleteCategory(c.id), tl("Category deleted")));
       onChanged();
     } catch (err) {
       toast.error(errorMessage(err, tl("Could not delete")));
@@ -375,6 +411,7 @@ function Categories({ categories, onChanged }) {
             <span className={`font-bold ${c.is_active ? 'text-on-surface' : 'text-on-surface-variant line-through'}`}>{c.name}</span>
             {c.name_ar && <span className="text-on-surface-variant" dir="rtl" lang="ar"> · {c.name_ar}</span>}
             <span className="text-[11px] text-on-surface-variant"> · {c.products} product{c.products === 1 ? '' : 's'}</span>
+            <ApprovalBadge row={c} />
           </div>
           <button type="button" className={btn.ghost} disabled={i === 0} onClick={() => move(i, -1)} aria-label={tl("Move up")}>↑</button>
           <button type="button" className={btn.ghost} disabled={i === categories.length - 1} onClick={() => move(i, 1)} aria-label={tl("Move down")}>↓</button>
@@ -394,13 +431,16 @@ function Categories({ categories, onChanged }) {
 // PROMO CODES
 // ============================================================
 function Promos() {
-  const { data, loading, refetch } = useApi(() => adminService.shopPromos(), []);
+  const [q, setQ] = useState('');
+  const search = useDebounced(q);
+  const { data, loading, refetch } = useApi(() => adminService.shopPromos({ q: search || undefined }), [search]);
   const [editing, setEditing] = useState(null);
   const list = Array.isArray(data) ? data : [];
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex justify-end">
+      <div className="flex gap-2 justify-end">
+        <input className={`${inputCls} md:w-64`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl("Search codes…")} aria-label={tl("Search promo codes")} />
         <button type="button" className={btn.primary} onClick={() => setEditing({ code: '', description: '', discount_percent: 10, max_uses: '', valid_from: '', valid_until: '', is_active: true })}>
           {tl("+ New promo code")}</button>
       </div>
@@ -423,7 +463,7 @@ function Promos() {
                   <td className="px-4 py-3 text-on-surface-variant whitespace-nowrap">
                     {p.valid_from ? new Date(p.valid_from).toLocaleDateString(locale) : tl("Now")} → {p.valid_until ? new Date(p.valid_until).toLocaleDateString(locale) : tl("No end")}</td>
                   <td className="px-4 py-3"><span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${p.is_valid ? 'bg-emerald-500/15 text-emerald-400' : 'bg-[#1a1a1e] text-on-surface-variant'}`}>
-                    {p.is_valid ? tl("Working") : tl("Not working")}</span></td>
+                    {p.is_valid ? tl("Working") : tl("Not working")}</span><ApprovalBadge row={p} /></td>
                 </tr>
               ))}
             </tbody>
@@ -446,9 +486,9 @@ function PromoEditor({ promo, onClose, onSaved }) {
     setBusy(true);
     setErrors({});
     try {
-      await adminService.savePromo(f.id, { code: f.code, description: f.description, discount_percent: f.discount_percent,
+      const res = await adminService.savePromo(f.id, { code: f.code, description: f.description, discount_percent: f.discount_percent,
         max_uses: f.max_uses === '' ? null : f.max_uses, valid_from: f.valid_from || null, valid_until: f.valid_until || null, is_active: f.is_active });
-      toast.success(tl("Promo code saved"));
+      toast.success(said(res, res.approval_status === 'pending' ? tl("Sent — it works once an admin approves it") : tl("Promo code saved")));
       onSaved();
       onClose();
     } catch (err) {
@@ -461,8 +501,7 @@ function PromoEditor({ promo, onClose, onSaved }) {
   const remove = async () => {
     if (!window.confirm(tl("Delete {0}?", { 0: f.code }))) return;
     try {
-      await adminService.deletePromo(f.id);
-      toast.success(tl("Deleted"));
+      toast.success(said(await adminService.deletePromo(f.id), tl("Deleted")));
       onSaved();
       onClose();
     } catch (err) {

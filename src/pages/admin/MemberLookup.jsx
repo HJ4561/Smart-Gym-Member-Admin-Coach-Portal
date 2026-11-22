@@ -26,6 +26,7 @@ export default function MemberLookup() {
   const [busy, setBusy] = useState(false);
   const [now, setNow] = useState(() => Date.now());
   const [scanning, setScanning] = useState(false);
+  const [idCheck, setIdCheck] = useState({ iqama: false, photo: false });   // first visit: both ticked at the desk
 
   // Tick every second while a session is running
   useEffect(() => {
@@ -43,6 +44,7 @@ export default function MemberLookup() {
     setLoading(true);
     setResult(null);
     setError('');
+    setIdCheck({ iqama: false, photo: false });
     try {
       const res = q.startsWith(PASS_PREFIX)
         ? await adminService.lookupMemberByPass(q)
@@ -51,14 +53,14 @@ export default function MemberLookup() {
       if (!res.found) {
         setError(
           res.reason === 'registration_pending'
-            ? 'This Iqama has a registration waiting for approval.'
-            : 'Member not found.'
+            ? tl('This Iqama has a registration waiting for approval.')
+            : tl('Member not found.')
         );
       }
     } catch (err) {
       const body = err?.response?.data;
-      setError(body?.reason === 'not_found' ? 'Member not found.'
-        : body?.reason === 'registration_pending' ? 'This Iqama has a registration waiting for approval.'
+      setError(body?.reason === 'not_found' ? tl('Member not found.')
+        : body?.reason === 'registration_pending' ? tl('This Iqama has a registration waiting for approval.')
           : errorMessage(err, tl("Lookup failed")));
     } finally {
       setLoading(false);
@@ -79,12 +81,15 @@ export default function MemberLookup() {
     if (!result?.member) return;
     setBusy(true);
     try {
-      // Desk check-in: no face comparison happens here (the gate script does that).
-      const ci = await adminService.checkInMember(result.member.id, {});
-      toast.success(tl("Session started"));
-      setResult({ ...result, active_check_in: ci });
+      // Desk check-in: no face comparison happens here (the gate script does that). On a first visit the
+      // desk has just checked the Iqama card and face, and says so.
+      const first = result.membership?.needs_first_visit_check;
+      const ci = await adminService.checkInMember(result.member.id, first ? { id_checked: true } : {});
+      toast.success(first ? tl('ID checked — welcome to their first session') : tl("Session started"));
+      setResult({ ...result, active_check_in: ci,
+        membership: first ? { ...result.membership, needs_first_visit_check: false } : result.membership });
     } catch (err) {
-      toast.error(err.message || 'Check-in failed');
+      toast.error(errorMessage(err, tl('Check-in failed')));
     } finally {
       setBusy(false);
     }
@@ -98,7 +103,7 @@ export default function MemberLookup() {
       toast.success(tl("Session ended — {0} min", { 0: ci.duration_minutes }));
       setResult({ ...result, active_check_in: null });
     } catch (err) {
-      toast.error(err.message || 'Check-out failed');
+      toast.error(errorMessage(err, tl('Check-out failed')));
     } finally {
       setBusy(false);
     }
@@ -290,12 +295,27 @@ export default function MemberLookup() {
                 </>
               ) : (
                 <>
+                  {result.membership?.needs_first_visit_check && (
+                    <div className="mb-5 p-4 rounded border border-amber-500/30 bg-amber-500/10 flex flex-col gap-2">
+                      <div className="flex items-center gap-2 text-amber-300 text-[12px] font-bold uppercase tracking-wider">
+                        <span className="material-symbols-outlined text-[18px]" aria-hidden="true">badge</span>{tl('First visit — check their ID')}
+                      </div>
+                      <label className="flex items-center gap-2 text-[13px] text-on-surface">
+                        <input type="checkbox" checked={idCheck.iqama} onChange={(e) => setIdCheck((c) => ({ ...c, iqama: e.target.checked }))} />
+                        {tl('Iqama card seen — the number matches {0}', { 0: result.membership?.iqama_number || '—' })}
+                      </label>
+                      <label className="flex items-center gap-2 text-[13px] text-on-surface">
+                        <input type="checkbox" checked={idCheck.photo} onChange={(e) => setIdCheck((c) => ({ ...c, photo: e.target.checked }))} />
+                        {tl('Their face matches the signup photo')}
+                      </label>
+                    </div>
+                  )}
                   <div className="text-[13px] text-on-surface-variant mb-4">
                     {tl("No active session. Click below to start the timer.")}
                   </div>
                   <button
                     onClick={startTimer}
-                    disabled={busy || !result.is_valid}
+                    disabled={busy || !result.is_valid || (result.membership?.needs_first_visit_check && !(idCheck.iqama && idCheck.photo))}
                     className="px-6 py-3 rounded bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 text-white text-[12px] font-bold uppercase tracking-wider"
                   >
                     {tl("▶ Start Timer")}

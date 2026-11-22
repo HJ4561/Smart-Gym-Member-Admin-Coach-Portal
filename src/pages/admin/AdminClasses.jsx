@@ -12,6 +12,9 @@ import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { tl, locale } from '../../i18n';
 import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
 import HighlightBar from '../../components/admin/HighlightBar';
+import { matches } from '../../hooks/useListState';
+import { useAuth } from '../../context/AuthContext';
+import { canEdit } from '../../utils/roleHome';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const CATEGORIES = [['strength', tl("Strength")], ['hiit', tl("HIIT")], ['combat', tl("Combat")], ['mobility', tl("Mobility")],
@@ -22,13 +25,21 @@ const NEW = { name: '', name_ar: '', category: 'strength', level: 'all_levels', 
   price_per_session: '0', full_price: '', starts_on: '', ends_on: '' };
 
 export default function AdminClasses() {
+  const edit = canEdit(useAuth().user);   // the front desk sees the timetable and rosters; admins change them
   const [showPaused, setShowPaused] = useState(false);
   const [editing, setEditing] = useState(null);
+  const [q, setQ] = useState('');
+  const [category, setCategory] = useState('');
+  const [coach, setCoach] = useState('');
   const highlight = useHighlight();
   const { data, loading, refetch } = useApi(() => classesService.adminList(showPaused ? { include_paused: 1 } : {}), [showPaused], { poll: 60_000 });
   const { data: stats, refetch: refetchStats } = useApi(() => classesService.stats(), []);
-  const { data: trainers } = useApi(() => adminService.trainersAdmin(), []);
-  const list = Array.isArray(data) ? data : [];
+  const { data: trainers } = useApi(() => (edit ? adminService.trainersAdmin() : Promise.resolve([])), [edit]);
+  const all = Array.isArray(data) ? data : [];
+  const list = all.filter((c) => matches(c, q, ['name', 'name_ar', 'trainer', 'location', 'category_label'])
+    && (!category || c.category === category) && (!coach || String(c.trainer_id) === coach));
+  const coaches = [...new Map(all.filter((c) => c.trainer_id).map((c) => [c.trainer_id, c.trainer])).entries()];
+  const categories = [...new Map(all.map((c) => [c.category, c.category_label])).entries()];
   const saved = () => { refetch(); refetchStats(); };
 
   const times = [...new Set(list.map((c) => c.start_time))].sort();
@@ -46,8 +57,20 @@ export default function AdminClasses() {
         <label className="flex items-center gap-2 text-[12px] text-on-surface-variant">
           <input type="checkbox" checked={showPaused} onChange={(e) => setShowPaused(e.target.checked)} />{' '}{tl("Show paused")}
         </label>
-        <button type="button" className={btn.primary} onClick={() => setEditing(NEW)}>{tl("+ Add class")}</button>
+        {edit && <button type="button" className={btn.primary} onClick={() => setEditing(NEW)}>{tl("+ Add class")}</button>}
       </PageHeader>
+
+      <div className="flex flex-col md:flex-row gap-2">
+        <input className={`${inputCls} md:w-64`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl('Search class, coach or room…')} aria-label={tl('Search classes')} />
+        <select className={`${inputCls} md:w-48`} value={category} onChange={(e) => setCategory(e.target.value)} aria-label={tl('Category')}>
+          <option value="">{tl('All categories')}</option>
+          {categories.map(([v, l]) => <option key={v} value={v}>{tl(l)}</option>)}
+        </select>
+        <select className={`${inputCls} md:w-48`} value={coach} onChange={(e) => setCoach(e.target.value)} aria-label={tl('Coach')}>
+          <option value="">{tl('All coaches')}</option>
+          {coaches.map(([id, name]) => <option key={id} value={String(id)}>{name}</option>)}
+        </select>
+      </div>
 
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
         {tiles.map(([label, value]) => (
@@ -65,7 +88,7 @@ export default function AdminClasses() {
       ) : list.length === 0 ? (
         <div className="text-center py-16 bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg text-on-surface-variant text-[13px] flex flex-col items-center gap-3">
           {tl("No classes on the timetable yet.")}
-          <button type="button" className={btn.primary} onClick={() => setEditing(NEW)}>{tl("Add the first class")}</button>
+          {edit && <button type="button" className={btn.primary} onClick={() => setEditing(NEW)}>{tl("Add the first class")}</button>}
         </div>
       ) : (
         <div className="bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg overflow-x-auto">
@@ -111,7 +134,7 @@ export default function AdminClasses() {
         </div>
       )}
 
-      {editing && <ClassEditor cls={editing} trainers={Array.isArray(trainers) ? trainers : []}
+      {editing && <ClassEditor cls={editing} trainers={Array.isArray(trainers) ? trainers : []} readOnly={!edit}
         onClose={() => setEditing(null)} onSaved={saved} />}
     </div>
   );
@@ -127,7 +150,7 @@ function Field({ label, error, children, className = '' }) {
   );
 }
 
-function ClassEditor({ cls, trainers, onClose, onSaved }) {
+function ClassEditor({ cls, trainers, readOnly, onClose, onSaved }) {
   const isNew = !cls.id;
   const [f, setF] = useState({ ...cls, trainer_id: cls.trainer_id ?? '', full_price: cls.full_price ?? '',
     starts_on: cls.starts_on || '', ends_on: cls.ends_on || '' });
@@ -191,12 +214,13 @@ function ClassEditor({ cls, trainers, onClose, onSaved }) {
   return (
     <Drawer open title={isNew ? tl("Add class") : cls.name} onClose={onClose}
       subtitle={isNew ? tl("Repeats every week at the same time.") : tl("{0}s {1}–{2} · {3}/{4} booked", { 0: cls.day, 1: cls.start_time, 2: cls.end_time, 3: cls.booked, 4: cls.capacity })}
-      footer={<>
+      footer={readOnly ? <button type="button" className={btn.ghost} onClick={onClose}>{tl("Close")}</button> : <>
         {!isNew && <button type="button" className={btn.danger} onClick={remove}>{tl("Remove")}</button>}
         <div className="flex-1" />
         <button type="button" className={btn.ghost} onClick={onClose}>{tl("Cancel")}</button>
         <button type="button" className={btn.primary} disabled={busy} onClick={save}>{busy ? tl("Saving…") : tl("Save")}</button>
       </>}>
+      <fieldset disabled={readOnly} className="flex flex-col gap-4 min-w-0">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         <BiInput label={tl("Name")} form={f} field="name" errors={errors} required maxLength={120} placeholder={tl("Morning HIIT")}
           className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
@@ -214,6 +238,7 @@ function ClassEditor({ cls, trainers, onClose, onSaved }) {
         <Field label={tl("Trainer")} error={errors.trainer_id}>
           <select className={inputCls} value={f.trainer_id} onChange={set('trainer_id')}>
             <option value="">{tl("No trainer")}</option>
+            {readOnly && cls.trainer_id && <option value={cls.trainer_id}>{cls.trainer}</option>}
             {trainers.map((t) => <option key={t.id} value={t.id}>{t.user_name}</option>)}
           </select></Field>
         <BiInput label={tl("Room")} form={f} field="location" errors={errors} maxLength={100} placeholder={tl("Studio 1")}
@@ -241,6 +266,7 @@ function ClassEditor({ cls, trainers, onClose, onSaved }) {
         <input type="checkbox" className="mt-1" checked={!!f.is_active} onChange={set('is_active')} />
         <span>{tl("On the timetable")}<span className="block text-[11px] text-on-surface-variant">{tl("Untick to pause it: members keep their spots but can’t see or book it until you turn it back on.")}</span></span>
       </label>
+      </fieldset>
 
       {!isNew && (
         <div className="flex flex-col gap-2">
@@ -255,7 +281,7 @@ function ClassEditor({ cls, trainers, onClose, onSaved }) {
               </div>
               <span className={`px-2 py-0.5 rounded text-[9px] font-bold uppercase ${p.status === 'booked' ? 'bg-emerald-500/15 text-emerald-400' : 'bg-amber-500/15 text-amber-400'}`}>
                 {p.status === 'booked' ? tl("Booked") : tl("Waitlist")}</span>
-              <button type="button" className={btn.ghost} onClick={() => kick(p)}>{tl("Remove")}</button>
+              {!readOnly && <button type="button" className={btn.ghost} onClick={() => kick(p)}>{tl("Remove")}</button>}
             </div>
           ))}
           {singles.length > 0 && (

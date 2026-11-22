@@ -1,7 +1,7 @@
 // src/pages/admin/AdminStaff.jsx
-// The team roster: roles, departments, shift hours, status. Admins and managers sign in to this
-// portal and coaches (trainers) to the coach portal — they're emailed a temporary password and
-// set up 2-step verification at first sign-in; other roles are listed for scheduling.
+// The team roster: roles, departments, shift hours, status. Every role signs in to its own portal
+// (admin console, coach, nutritionist, front desk, shop) — they're emailed a temporary password or
+// get a starting password from the admin. Receptionists see only the front-desk modules ticked here.
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import toast from 'react-hot-toast';
@@ -11,19 +11,28 @@ import { adminService } from '../../services/adminService';
 import { Drawer, Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
-import { tl, locale } from '../../i18n';
+import { isAr, tl, locale } from '../../i18n';
 import SaudiPhoneInput from '../../components/SaudiPhoneInput';
 
-const ROLES = [['admin', tl("Admin")], ['manager', tl("Manager")], ['trainer', tl("Trainer")], ['nutritionist', tl("Nutritionist")], ['receptionist', tl("Receptionist")]];
-const DEPARTMENTS = [['executive', tl("Executive")], ['operations', tl("Operations")], ['coaching', tl("Coaching")], ['clinical', tl("Clinical")], ['front_desk', tl("Front desk")], ['facility', tl("Facility")]];
+const ROLES = [['admin', tl("Admin")], ['manager', tl("Manager")], ['trainer', tl("Trainer")], ['nutritionist', tl("Nutritionist")], ['receptionist', tl("Receptionist")], ['shop_manager', tl("Shop manager")]];
+const DEPARTMENTS = [['executive', tl("Executive")], ['operations', tl("Operations")], ['coaching', tl("Coaching")], ['clinical', tl("Clinical")], ['front_desk', tl("Front desk")], ['retail', tl("Shop")], ['facility', tl("Facility")]];
+// Where each role signs in, and what it may do there.
+const PORTAL = {
+  admin: ['/admin/login', tl("Signs in to this admin portal — full access.")],
+  manager: ['/admin/login', tl("Signs in to this admin portal — everything except admins and sign-in security.")],
+  trainer: ['/coach/login', tl("Signs in to the coach portal. Courses and videos need your approval.")],
+  nutritionist: ['/staff/login', tl("Signs in to the nutritionist portal. Profile changes need your approval.")],
+  receptionist: ['/staff/login', tl("Signs in to the front desk portal — only the modules you tick below.")],
+  shop_manager: ['/staff/login', tl("Signs in to the shop portal. Orders directly; products, prices and promo codes need your approval.")],
+};
 const STATUSES = [['active', tl("Active")], ['off_shift', tl("Off shift")], ['on_leave', tl("On leave")], ['suspended', tl("Suspended")]];
-const DEFAULT_DEPT = { admin: 'executive', manager: 'operations', trainer: 'coaching', nutritionist: 'clinical', receptionist: 'front_desk' };
+const DEFAULT_DEPT = { admin: 'executive', manager: 'operations', trainer: 'coaching', nutritionist: 'clinical', receptionist: 'front_desk', shop_manager: 'retail' };
 const STATUS_TONE = {
   active: 'bg-emerald-500/15 text-emerald-400', off_shift: 'bg-neutral-500/20 text-on-surface-variant',
   on_leave: 'bg-amber-500/15 text-amber-400', suspended: 'bg-rose-500/15 text-rose-400',
 };
 const NEW = { email: '', first_name: '', last_name: '', phone: '', role: 'receptionist', department: 'front_desk',
-  status: 'active', shift_start: '', shift_end: '', joined_at: '', notes: '' };
+  status: 'active', shift_start: '', shift_end: '', joined_at: '', notes: '', modules: [] };
 
 export default function AdminStaff() {
   const { user } = useAuth();
@@ -175,6 +184,9 @@ function StaffEditor({ person, me, isAdmin, onClose, onSaved }) {
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e.target.value }));
   const roles = isAdmin ? ROLES : ROLES.filter(([r]) => !['admin', 'manager'].includes(r));
+  const { data: moduleList } = useApi(() => adminService.staffModules(), []);
+  const toggleModule = (m) => setF((p) => ({ ...p, modules: (p.modules || []).includes(m)
+    ? p.modules.filter((x) => x !== m) : [...(p.modules || []), m] }));
 
   const save = async () => {
     setBusy(true);
@@ -183,13 +195,14 @@ function StaffEditor({ person, me, isAdmin, onClose, onSaved }) {
       first_name: f.first_name, last_name: f.last_name, phone: f.phone, role: f.role,
       status: f.status, shift_start: f.shift_start || null, shift_end: f.shift_end || null,
       joined_at: f.joined_at || null, notes: f.notes,
+      ...(f.role === 'receptionist' ? { modules: f.modules || [] } : {}),
       ...(f.password ? { password: f.password } : {}),
     };
     try {
       const row = isNew ? await adminService.createStaff({ ...body, email: f.email }) : await adminService.updateStaff(person.id, body);
       if (row.warning) toast.error(row.warning, { duration: 8000 });
       else if (f.password) toast.success(tl("Saved — {0} can sign in at {1} with the password you set (they’ll change it on first sign-in).",
-        { 0: row.user_email, 1: row.role === 'trainer' ? '/coach/login' : '/admin/login' }), { duration: 7000 });
+        { 0: row.user_email, 1: (PORTAL[row.role] || PORTAL.admin)[0] }), { duration: 7000 });
       else if (row.can_sign_in && (isNew || !person.can_sign_in)) toast.success(tl("Saved — sign-in details emailed to {0}", { 0: row.user_email }));
       else toast.success(isNew ? tl("{0} added", { 0: row.user_name }) : 'Saved');
       onSaved();
@@ -241,12 +254,11 @@ function StaffEditor({ person, me, isAdmin, onClose, onSaved }) {
     }
   };
 
-  const portalRole = ['admin', 'manager'].includes(f.role);
-  const signInRole = portalRole || f.role === 'trainer';     // admin console or coach portal
+  const signInRole = Boolean(PORTAL[f.role]);     // every staff role has its own portal
 
   return (
     <Drawer open title={isNew ? tl("Add staff") : person.user_name} onClose={onClose}
-      subtitle={isNew ? tl("Admins and managers get an email to sign in here; coaches get one for the coach portal.") : person.user_email}
+      subtitle={isNew ? tl("Everyone gets an email to sign in to their own portal (or set a starting password below).") : person.user_email}
       footer={locked ? <button type="button" className={btn.ghost} onClick={onClose}>{tl("Close")}</button> : <>
         {!isNew && signInRole && person.status !== 'suspended' && (
           <button type="button" className={btn.ghost} disabled={busy} onClick={sendSignIn}>
@@ -275,8 +287,7 @@ function StaffEditor({ person, me, isAdmin, onClose, onSaved }) {
         <Field label={tl("Last name")} error={errors.last_name}><input className={inputCls} value={f.last_name} onChange={set('last_name')} /></Field>
         <Field label={tl("Phone")} error={errors.phone}><SaudiPhoneInput value={f.phone} onChange={(phone) => setF((p) => ({ ...p, phone }))} /></Field>
         <Field label={tl("Role")} error={errors.role}
-          hint={portalRole ? tl("Can sign in to this admin portal.") : f.role === 'trainer' ? tl("Signs in to the coach portal (/coach).")
-            : tl("Listed for scheduling — no sign-in.")}>
+          hint={PORTAL[f.role]?.[1]}>
           <select className={inputCls} value={f.role} disabled={isMe}
             onChange={(e) => setF((p) => ({ ...p, role: e.target.value, department: DEFAULT_DEPT[e.target.value] }))}>
             {(roles.some(([r]) => r === f.role) ? roles : ROLES).map(([v, l]) => <option key={v} value={v}>{l}</option>)}
@@ -305,6 +316,19 @@ function StaffEditor({ person, me, isAdmin, onClose, onSaved }) {
         <Field label={tl("Notes (staff only)")} error={errors.notes} className="md:col-span-2">
           <textarea className={inputCls} rows={3} value={f.notes} onChange={set('notes')} />
         </Field>
+        {f.role === 'receptionist' && (
+          <fieldset className="md:col-span-2 flex flex-col gap-2 border border-[#1a1a1e] rounded p-3">
+            <legend className="text-[10px] uppercase tracking-widest text-on-surface-variant font-bold px-1">{tl("Front desk modules")}</legend>
+            <p className="text-[12px] text-on-surface-variant">{tl("They see only the modules you tick. Signup approvals here don’t need your approval.")}</p>
+            {(moduleList || []).map((m) => (
+              <label key={m.value} className="flex items-start gap-2 text-[13px] text-on-surface">
+                <input type="checkbox" className="mt-1" checked={(f.modules || []).includes(m.value)} onChange={() => toggleModule(m.value)} />
+                {isAr ? m.label_ar : tl(m.label)}
+              </label>
+            ))}
+            {errors.modules && <span className="text-[11px] text-rose-400">{tl(errors.modules)}</span>}
+          </fieldset>
+        )}
       </fieldset>
       {!isNew && f.role === 'trainer' && (
         <Link to="/admin/trainers" className="text-[12px] text-primary underline w-fit">

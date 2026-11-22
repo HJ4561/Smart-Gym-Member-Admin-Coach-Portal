@@ -78,6 +78,8 @@ const navGroups = [
     items: [
       { path: '/admin', label: tl('Dashboard'), icon: 'dashboard', end: true },
       { path: '/admin/notifications', label: tl('Notifications'), icon: 'notifications' },
+      { path: '/admin/approvals', label: tl('Approvals'), icon: 'fact_check' },
+      { path: '/admin/staff-activity', label: tl('Staff activity'), icon: 'manage_history' },
       { path: '/admin/analytics', label: tl('Insights'), icon: 'insights' },
     ],
   },

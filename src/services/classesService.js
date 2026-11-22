@@ -17,6 +17,11 @@ export const classesService = {
   },
 
   // Admin
+  /** The coach's messages and approved videos for a class the member is booked into. */
+  async posts(id) {
+    const { data } = await api.get(`/classes/${id}/posts/`);
+    return data;
+  },
   async schedule() {
     const { data } = await api.get('/classes/schedule/');
     return data;

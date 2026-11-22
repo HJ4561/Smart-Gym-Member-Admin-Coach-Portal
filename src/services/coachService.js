@@ -21,6 +21,8 @@ export const coachService = {
   saveHours: (body) => put('/coach/hours/', body),
   sessions: (scope = 'upcoming') => get('/coach/sessions/', { scope }),
   setSessionStatus: (id, status) => post(`/coach/sessions/${id}/status/`, { status }),
+  /** {delay_minutes} or {scheduled_at}, plus duration_minutes, focus_area, notes, reason — the member is told. */
+  changeSession: (id, body) => post(`/coach/sessions/${id}/change/`, body),
 
   courses: () => get('/coach/courses/'),
   course: (id) => get(`/coach/courses/${id}/`),
@@ -31,12 +33,18 @@ export const coachService = {
   uploadCourseCover: (id, file) => upload(`/coach/courses/${id}/cover/`, file),
 
   students: () => get('/coach/students/'),
-  classes: () => get('/coach/classes/'),
+  student: (id) => get(`/coach/students/${id}/`),
+  classes: (scope = 'upcoming') => get('/coach/classes/', { scope }),
+  classPosts: (id) => get(`/coach/classes/${id}/posts/`),
+  /** form: FormData {kind: message|video, title, body, video_url, for_date, image?} */
+  addClassPost: async (id, form) => (await api.post(`/coach/classes/${id}/posts/`, form, { headers: { 'Content-Type': 'multipart/form-data' } })).data,
+  deleteClassPost: async (id, postId) => { await api.delete(`/coach/classes/${id}/posts/${postId}/`); },
   reviews: () => get('/coach/reviews/'),
   earnings: () => get('/coach/earnings/'),
 
   machines: (q) => get('/coach/machines/', q ? { q } : undefined),
-  videos: () => get('/coach/videos/'),
+  videos: (params) => get('/coach/videos/', params),
+  uploadVideoThumbnail: (id, file) => upload(`/coach/videos/${id}/thumbnail/`, file),
   addVideo: (body) => post('/coach/videos/', body),
   updateVideo: (id, body) => patch(`/coach/videos/${id}/`, body),
   deleteVideo: async (id) => { await api.delete(`/coach/videos/${id}/`); },

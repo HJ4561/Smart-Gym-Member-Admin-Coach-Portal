@@ -10,6 +10,8 @@ import { Drawer, Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import { formatGymDateTime } from '../../utils/gymTime';
 import { tl } from '../../i18n';
+import SessionChange from '../../components/sessions/SessionChange';
+import { matches } from '../../hooks/useListState';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];   // 0 = Monday
 
@@ -26,6 +28,9 @@ export default function TrainerHours() {
   const [scope, setScope] = useState('upcoming');
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);     // { id, name, hourly_rate, is_accepting_clients, offers_1on1, windows }
+  const [changing, setChanging] = useState(null);   // a session being moved / delayed / edited
+  const [q, setQ] = useState('');
+  const [state, setState] = useState('');            // session status filter
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
@@ -106,10 +111,21 @@ export default function TrainerHours() {
         ))}
       </div>
 
+      <div className="flex flex-col md:flex-row gap-2 mb-4">
+        <input className={`${inputCls} md:w-72`} value={q} onChange={(e) => setQ(e.target.value)}
+          placeholder={tab === 'hours' ? tl('Search coaches…') : tl('Search coach, member or focus…')} aria-label={tl('Search')} />
+        {tab === 'sessions' && (
+          <select className={`${inputCls} md:w-48`} value={state} onChange={(e) => setState(e.target.value)} aria-label={tl('Status')}>
+            <option value="">{tl('Any status')}</option>
+            {['scheduled', 'completed', 'no_show', 'cancelled'].map((v) => <option key={v} value={v}>{tl(v)}</option>)}
+          </select>
+        )}
+      </div>
+
       {loading ? <Empty>{tl("Loading…")}</Empty> : tab === 'hours' ? (
         !trainers.length ? <Empty>{tl("No trainers yet.")}</Empty> : (
           <div className="flex flex-col gap-2">
-            {trainers.map((t) => (
+            {trainers.filter((t) => matches(t, q, ['name', 'user_name', 'email', 'title'])).map((t) => (
               <div key={t.id} className="bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-on-surface font-bold">{t.name} <span className="text-on-surface-variant font-normal text-[12px]">· {t.title}</span></div>
@@ -144,7 +160,8 @@ export default function TrainerHours() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sessions.map((s) => (
+                  {sessions.filter((s) => (!state || s.status === state)
+                    && matches(s, q, [(x) => x.trainer?.name, (x) => x.member?.name, (x) => x.member?.email, 'focus_area', 'notes'])).map((s) => (
                     <tr key={s.id} className="border-b border-[#1a1a1e] last:border-0">
                       <td className="p-3 text-on-surface">{formatGymDateTime(s.scheduled_at)}</td>
                       <td className="p-3 text-on-surface">{s.trainer.name}</td>
@@ -156,6 +173,7 @@ export default function TrainerHours() {
                           <div className="flex gap-1 justify-end flex-wrap">
                             <button type="button" className={btn.primary} onClick={() => setStatus(s, 'completed')}>{tl("Completed")}</button>
                             <button type="button" className={btn.ghost} onClick={() => setStatus(s, 'no_show')}>{tl("No-show")}</button>
+                            <button type="button" className={btn.ghost} onClick={() => setChanging(s)}>{tl("Delay / move / edit")}</button>
                             <button type="button" className={btn.danger} onClick={() => setStatus(s, 'cancelled')}>{tl("Cancel")}</button>
                           </div>
                         )}
@@ -169,6 +187,8 @@ export default function TrainerHours() {
         </>
       )}
 
+      {changing && <SessionChange s={changing} change={(body) => api.changeSession(changing.id, body)}
+        onClose={() => setChanging(null)} onSaved={() => { setChanging(null); setVersion((v) => v + 1); }} />}
       <Drawer
         open={!!editing}
         title={editing ? tl("{0} — booking hours", { 0: editing.name }) : ''}

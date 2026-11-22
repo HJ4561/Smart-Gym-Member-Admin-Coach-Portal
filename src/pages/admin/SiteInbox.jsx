@@ -6,8 +6,11 @@ import { useAutoRefresh } from '../../hooks/useAutoRefresh';
 import { siteContentService as api } from '../../services/siteContentService';
 import { errorMessage } from '../../utils/apiError';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
-import { btn } from '../../components/site/siteStyles';
+import { btn, inputCls } from '../../components/site/siteStyles';
+import { matches } from '../../hooks/useListState';
 import { tl, locale } from '../../i18n';
+import { useAuth } from '../../context/AuthContext';
+import { canEdit } from '../../utils/roleHome';
 
 const FILTERS = [
   { id: '', label: tl("All"), icon: 'inbox', empty: tl("No messages yet. They appear here when someone uses the contact form.") },
@@ -25,7 +28,9 @@ function when(iso) {
 }
 
 export default function SiteInbox() {
+  const edit = canEdit(useAuth().user);   // the front desk reads and marks messages; only admins delete
   const [status, setStatus] = useState('');   // "All" first
+  const [q, setQ] = useState('');
   const [data, setData] = useState({ counts: {}, results: [] });
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(null);
@@ -82,6 +87,8 @@ export default function SiteInbox() {
     <div className="p-8 bg-background min-h-screen">
       <PageHeader title={tl("Website Inbox")} subtitle={tl("Messages from the public website's contact form. Opening a message marks it as read.")} />
 
+      <input className={`${inputCls} mb-3 md:w-80`} value={q} onChange={(e) => setQ(e.target.value)}
+        placeholder={tl('Search name, email, topic or message…')} aria-label={tl('Search messages')} />
       <div className="flex gap-1 mb-5 flex-wrap w-fit p-1 rounded-lg bg-[#0e0e0f] border border-[#1a1a1e]" role="tablist">
         {FILTERS.map((f) => {
           const n = f.id ? data.counts[f.id] || 0 : total;
@@ -111,7 +118,7 @@ export default function SiteInbox() {
         </div>
       ) : (
         <div className="bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg divide-y divide-[#1a1a1e] overflow-hidden">
-          {data.results.map((m) => (
+          {data.results.filter((m) => matches(m, q, ['name', 'email', 'phone', 'topic', 'subtopic', 'message'])).map((m) => (
             <div key={m.id} className={open === m.id ? 'bg-[#131316]' : ''}>
               <button type="button" onClick={() => openMsg(m)} className="w-full text-start px-4 py-3 flex items-center gap-3 hover:bg-[#131316] transition-colors" aria-expanded={open === m.id}>
                 <span className={`relative w-9 h-9 rounded-full grid place-items-center shrink-0 text-[13px] font-bold ${m.status === 'new' ? 'bg-primary-container text-on-primary-container' : 'bg-[#1a1a1e] text-on-surface-variant'}`}>
@@ -142,9 +149,9 @@ export default function SiteInbox() {
                     </a>
                     {m.status !== 'new' && <button type="button" className={btn.ghost} onClick={() => setMsgStatus(m, 'new')}>{tl("Mark as new")}</button>}
                     {m.status !== 'archived' && <button type="button" className={btn.ghost} onClick={() => setMsgStatus(m, 'archived')}>{tl("Archive")}</button>}
-                    <button type="button" className="inline-flex items-center gap-1 px-3 py-2 rounded text-[11px] font-bold uppercase tracking-wider text-on-surface-variant hover:text-rose-400 hover:bg-rose-500/10" onClick={() => remove(m)}>
+                    {edit && <button type="button" className="inline-flex items-center gap-1 px-3 py-2 rounded text-[11px] font-bold uppercase tracking-wider text-on-surface-variant hover:text-rose-400 hover:bg-rose-500/10" onClick={() => remove(m)}>
                       <span className="material-symbols-outlined text-[15px]">delete</span>{tl("Delete")}
-                    </button>
+                    </button>}
                   </div>
                 </div>
               )}

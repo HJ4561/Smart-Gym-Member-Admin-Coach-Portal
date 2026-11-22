@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 import { classesService } from '../../services/classesService';
 import PayDialog from '../../components/payments/PayDialog';
+import CoachPosts from '../../components/classes/CoachPosts';
 import { errorMessage } from '../../utils/apiError';
 import { formatSAR } from '../../utils/money';
 import { getLocalized, tl, locale } from '../../i18n';
@@ -25,7 +26,12 @@ export default function Classes() {
   const days = data?.days || [];
   const classes = data?.classes || [];
   const mine = classes.filter((c) => c.my_status || c.my_access?.full || c.my_access?.sessions?.length);
-  const shown = classes.filter((c) => c.day_of_week === day);
+  const [q, setQ] = useState('');
+  const [level, setLevel] = useState('');
+  const needle = q.trim().toLowerCase();
+  const fits = (c) => (!needle || `${c.name} ${c.name_ar || ''} ${c.trainer || ''} ${c.category_label || ''}`.toLowerCase().includes(needle))
+    && (!level || c.level === level);
+  const shown = classes.filter((c) => c.day_of_week === day && fits(c));
 
   const act = async (c) => {
     setBusyId(c.id);
@@ -83,9 +89,22 @@ export default function Classes() {
         </section>
       )}
 
+      {mine.length > 0 && <CoachPosts classes={mine} />}
+
+      <div className="flex flex-col sm:flex-row gap-2">
+        <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl('Search class or coach…')} aria-label={tl('Search classes')}
+          className="w-full sm:w-72 bg-surface-container-low text-on-surface px-3 py-2 rounded-lg border border-surface-container-high text-[14px] focus:outline-none focus:border-primary" />
+        <select value={level} onChange={(e) => setLevel(e.target.value)} aria-label={tl('Level')}
+          className="w-full sm:w-48 bg-surface-container-low text-on-surface px-3 py-2 rounded-lg border border-surface-container-high text-[14px]">
+          <option value="">{tl('All levels')}</option>
+          <option value="beginner">{tl('Beginner')}</option><option value="intermediate">{tl('Intermediate')}</option>
+          <option value="advanced">{tl('Advanced')}</option><option value="all_levels">{tl('All Levels')}</option>
+        </select>
+      </div>
+
       <div className="flex gap-1 overflow-x-auto pb-1" role="tablist" aria-label={tl("Day")}>
         {days.map((d, i) => {
-          const n = classes.filter((c) => c.day_of_week === i).length;
+          const n = classes.filter((c) => c.day_of_week === i && fits(c)).length;
           return (
             <button key={d} type="button" role="tab" aria-selected={day === i} onClick={() => setDay(i)}
               className={`px-4 py-2 rounded-lg text-[12px] font-bold uppercase tracking-wider whitespace-nowrap ${

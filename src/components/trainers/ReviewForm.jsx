@@ -7,7 +7,8 @@ import { tl } from '../../i18n';
 
 const MAX = 1000;
 
-export default function ReviewForm({ trainer, onSaved }) {
+/** A member's star rating + comment. `trainer` is whatever is reviewed (a coach, or a course with `send`). */
+export default function ReviewForm({ trainer, onSaved, send, heading, placeholder }) {
   const mine = trainer.my_review;
   const [rating, setRating] = useState(mine?.rating || 0);
   const [hover, setHover] = useState(0);
@@ -35,8 +36,9 @@ export default function ReviewForm({ trainer, onSaved }) {
     if (Object.keys(found).length) return;
     setBusy(true);
     try {
-      await catalogService.reviewTrainer(trainer.id, { rating, comment: comment.trim() });
-      toast.success(mine ? tl('Your review was updated') : tl('Thanks — your review is live'));
+      const body = { rating, comment: comment.trim() };
+      await (send ? send(body) : catalogService.reviewTrainer(trainer.id, body));
+      toast.success(tl('Thanks! Your review will show once the gym approves it.'), { duration: 6000 });
       onSaved?.();
     } catch (err) {
       setErrors(fieldErrors(err));
@@ -56,8 +58,14 @@ export default function ReviewForm({ trainer, onSaved }) {
       aria-labelledby="review-form-title"
     >
       <h3 id="review-form-title" className="text-on-surface font-bold">
-        {mine ? tl('Your review') : tl('Rate your coach')}
+        {mine ? tl('Your review') : heading || tl('Rate your coach')}
       </h3>
+      {mine?.status === 'pending' && (
+        <p className="text-[12px] text-amber-400">{tl('Waiting for the gym to approve it — only you can see it for now.')}</p>
+      )}
+      {mine?.status === 'rejected' && (
+        <p className="text-[12px] text-error">{tl('The gym didn’t approve this review. You can edit it and send it again.')}</p>
+      )}
 
       <fieldset className="border-0 p-0 m-0">
         <legend className="sr-only">{tl('Rating')}</legend>
@@ -115,7 +123,7 @@ export default function ReviewForm({ trainer, onSaved }) {
             setComment(e.target.value);
             setErrors((x) => ({ ...x, comment: '' }));
           }}
-          placeholder={tl('What was training with them like? (optional)')}
+          placeholder={placeholder || tl('What was training with them like? (optional)')}
           aria-invalid={!!errors.comment}
           aria-describedby="review-comment-help"
           className={`w-full bg-surface-container-low text-on-surface px-3 py-2 rounded-lg border text-[14px] focus:outline-none ${

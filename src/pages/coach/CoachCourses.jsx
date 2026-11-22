@@ -6,7 +6,7 @@ import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 import { coachService } from '../../services/coachService';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
-import { btn } from '../../components/site/siteStyles';
+import { btn, inputCls } from '../../components/site/siteStyles';
 import CourseEditor from '../../components/courses/CourseEditor';
 import { NEW_COURSE, STATUS_TONE, categoryLabel } from '../../components/courses/courseOptions';
 import { formatSAR } from '../../utils/money';
@@ -29,7 +29,9 @@ export default function CoachCourses() {
   const [status, setStatus] = useState('');
   const [editing, setEditing] = useState(null);
   const { data, loading, refetch } = useApi(() => coachService.courses(), [], { poll: LIVE_MS });
-  const list = (data?.courses || []).filter((c) => !status || c.status === status);
+  const [q, setQ] = useState('');
+  const list = (data?.courses || []).filter((c) => (!status || c.status === status)
+    && (!q || `${c.title} ${c.category || ''}`.toLowerCase().includes(q.toLowerCase())));
 
   // /coach/courses/:id (from a notification) opens that course until it's closed.
   const { data: linked } = useApi(() => (courseId ? coachService.course(courseId) : Promise.resolve(null)), [courseId],
@@ -47,7 +49,11 @@ export default function CoachCourses() {
         subtitle={tl('Write a programme day by day, then send it for review. The gym checks it and publishes it to members.')}>
         <button type="button" className={btn.primary} onClick={() => setEditing(NEW_COURSE)}>{tl('+ New course')}</button>
       </PageHeader>
-      <Tabs value={status} onChange={setStatus} options={FILTERS} />
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+        <Tabs value={status} onChange={setStatus} options={FILTERS} />
+        <div className="flex-1" />
+        <input className={`${inputCls} sm:w-64`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl('Search courses…')} aria-label={tl('Search courses')} />
+      </div>
 
       {loading && !data ? <Skeleton rows={3} h="h-28" /> : list.length === 0 ? (
         <Empty>{status ? tl('No courses here.') : tl('No courses yet — create your first programme.')}</Empty>

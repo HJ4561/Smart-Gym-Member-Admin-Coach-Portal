@@ -1,5 +1,6 @@
 // src/pages/coach/CoachStudents.jsx — members in the coach's courses (with progress) and 1-on-1 clients.
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import { coachService } from '../../services/coachService';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
@@ -17,7 +18,7 @@ export default function CoachStudents() {
 
   return (
     <Page>
-      <PageHeader title={tl('Students')} subtitle={tl('Who is following your courses, how far they are, and your 1-on-1 clients.')} />
+      <PageHeader title={tl('Students')} subtitle={tl('Who is following your courses, how far they are, and your 1-on-1 clients. Open a name for their progress and insights.')} />
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <Tabs value={tab} onChange={setTab} options={[
           ['courses', tl('In my courses ({0})', { 0: data?.enrolments?.length ?? 0 })],
@@ -33,7 +34,7 @@ export default function CoachStudents() {
             {enrolments.map((e) => (
               <li key={e.id} className={`${card} p-4 flex flex-col md:flex-row md:items-center gap-3`}>
                 <div className="flex-1 min-w-0">
-                  <div className="text-on-surface font-bold truncate">{e.name}</div>
+                  <Link to={`/coach/students/${e.member_id}`} className="text-on-surface font-bold truncate hover:underline block">{e.name}</Link>
                   <div className="text-[12px] text-on-surface-variant truncate">{e.course} · {tl('since {0}', { 0: new Date(e.enrolled_at).toLocaleDateString(locale) })}</div>
                 </div>
                 <div className="md:w-72 flex flex-col gap-1">
@@ -54,7 +55,7 @@ export default function CoachStudents() {
         <ul className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-2">
           {clients.map((c) => (
             <li key={c.member_id} className={`${card} p-4`}>
-              <div className="text-on-surface font-bold truncate">{c.name}</div>
+              <Link to={`/coach/students/${c.member_id}`} className="text-on-surface font-bold truncate hover:underline block">{c.name}</Link>
               <div className="text-[12px] text-on-surface-variant truncate">{c.email}</div>
               <div className="text-[12px] text-on-surface mt-2">{tl('{0} sessions · {1} completed', { 0: c.sessions, 1: c.completed })}</div>
             </li>

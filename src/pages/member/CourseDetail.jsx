@@ -8,6 +8,7 @@ import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
 import { catalogService } from '../../services/catalogService';
 import PayDialog from '../../components/payments/PayDialog';
+import ReviewForm from '../../components/trainers/ReviewForm';
 import { categoryLabel } from '../../components/courses/courseOptions';
 import { formatSAR } from '../../utils/money';
 import { errorMessage } from '../../utils/apiError';
@@ -147,6 +148,24 @@ export default function CourseDetail() {
                 </li>
               ))}
             </ol>
+          </div>
+        ))}
+      </section>
+
+      <section className="rounded-xl bg-surface-container border border-surface-container-high p-5 flex flex-col gap-4" aria-labelledby="reviews-title">
+        <h2 id="reviews-title" className="text-on-surface font-bold uppercase tracking-wider text-[13px]">{tl('Reviews')}</h2>
+        <ReviewForm trainer={c} onSaved={refetch} heading={tl('Rate this course')}
+          placeholder={tl('What did you think of the course? (optional)')}
+          send={(body) => catalogService.reviewCourse(c.id, body)} />
+        {(c.reviews || []).length === 0 ? (
+          <p className="text-[13px] text-on-surface-variant">{tl('No reviews yet.')}</p>
+        ) : c.reviews.map((r) => (
+          <div key={r.id} className="border-t border-surface-container-high pt-3 first:border-0 first:pt-0">
+            <div className="flex items-center gap-2 text-[13px]">
+              <span className="text-amber-400" aria-label={tl('{0} stars', { 0: r.rating })}>{'★'.repeat(r.rating)}{'☆'.repeat(5 - r.rating)}</span>
+              <span className="text-on-surface font-bold">{r.member_name}</span>
+            </div>
+            {r.comment && <p className="text-[13px] text-on-surface-variant mt-1">{r.comment}</p>}
           </div>
         ))}
       </section>

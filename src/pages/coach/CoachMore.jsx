@@ -18,6 +18,10 @@ import { card, Page, Section, Skeleton, Tile, LIVE_MS } from './ui';
 // ------------------------------------------------------------------ reviews
 export function CoachReviews() {
   const { data, loading } = useApi(() => coachService.reviews(), [], { poll: LIVE_MS });
+  const [stars, setStars] = useState('');
+  const [q, setQ] = useState('');
+  const shown = (data?.reviews || []).filter((r) => (!stars || r.rating === Number(stars))
+    && (!q || `${r.comment} ${r.member}`.toLowerCase().includes(q.toLowerCase())));
   return (
     <Page>
       <PageHeader title={tl('Reviews')} subtitle={tl('What members say after training with you.')} />
@@ -27,9 +31,18 @@ export function CoachReviews() {
             <Tile icon="star" label={tl('Average')} value={data?.total ? data.rating.toFixed(1) : '—'} tone="text-amber-300" />
             <Tile icon="reviews" label={tl('Reviews')} value={data?.total ?? 0} />
           </div>
-          {!data?.reviews?.length ? <Empty>{tl('No reviews yet.')}</Empty> : (
+          {data?.reviews?.length > 0 && (
+            <div className="flex flex-col sm:flex-row gap-2">
+              <select className={`${inputCls} sm:w-40`} value={stars} onChange={(e) => setStars(e.target.value)} aria-label={tl('Stars')}>
+                <option value="">{tl('All ratings')}</option>
+                {[5, 4, 3, 2, 1].map((n) => <option key={n} value={n}>{tl('{0} stars', { 0: n })}</option>)}
+              </select>
+              <input className={`${inputCls} sm:w-64`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl('Search reviews…')} aria-label={tl('Search reviews')} />
+            </div>
+          )}
+          {!data?.reviews?.length ? <Empty>{tl('No reviews yet.')}</Empty> : !shown.length ? <Empty>{tl('No reviews match.')}</Empty> : (
             <ul className="flex flex-col gap-2">
-              {data.reviews.map((r) => (
+              {shown.map((r) => (
                 <li key={r.id} className={`${card} p-4`}>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-amber-300" aria-label={tl('{0} out of 5 stars', { 0: r.rating })}>{'★'.repeat(r.rating)}<span className="text-[#2a2a2e]">{'★'.repeat(5 - r.rating)}</span></span>

@@ -53,6 +53,11 @@ export const opsService = {
     const { data } = await api.get('/admin/trainer-sessions/', { params });
     return data;
   },
+  /** Move / delay / edit a scheduled 1-on-1 — the member is told. */
+  async changeSession(id, body) {
+    const { data } = await api.post(`/admin/trainer-sessions/${id}/change/`, body);
+    return data;
+  },
   async setSessionStatus(id, status) {
     const { data } = await api.post(`/admin/trainer-sessions/${id}/status/`, { status });
     return data;

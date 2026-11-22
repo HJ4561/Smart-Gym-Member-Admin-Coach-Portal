@@ -151,6 +151,13 @@ function Field({ label, error, hint, children, className = '' }) {
   );
 }
 
+// An older machine can hold a value that's no longer a choice ("machine", "quads"): show it, so
+// the dropdown matches what's saved and the admin can pick a current one.
+function withCurrent(choices = [], value) {
+  if (!value || choices.some((c) => c.value === value)) return choices;
+  return [{ value, label: tl('{0} (old — choose a new one)', { 0: value }) }, ...choices];
+}
+
 function MachineEditor({ machine, options, onClose, onSaved }) {
   const isNew = !machine.id;
   const [f, setF] = useState(() => ({ ...machine, technique_cues: (machine.technique_cues || []).join('\n'),
@@ -207,11 +214,11 @@ function MachineEditor({ machine, options, onClose, onSaved }) {
           className="md:col-span-2" onChange={(k, v) => setF((p) => ({ ...p, [k]: v }))} />
         <Field label={tl("Category")} error={errors.category}>
           <select className={inputCls} value={f.category} onChange={set('category')}>
-            {(options?.categories || []).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            {withCurrent(options?.categories, f.category).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select></Field>
         <Field label={tl("Main muscle group")} error={errors.primary_muscle}>
           <select className={inputCls} value={f.primary_muscle} onChange={set('primary_muscle')}>
-            {(options?.muscles || []).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
+            {withCurrent(options?.muscles, f.primary_muscle).map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
           </select></Field>
         <Field label={tl("Equipment")} error={errors.equipment_type}><input className={inputCls} value={f.equipment_type} onChange={set('equipment_type')} placeholder={tl("Plate-loaded, 45° sled")} /></Field>
         <Field label={tl("Floor number / asset ID")} error={errors.machine_id}><input className={inputCls} value={f.machine_id} onChange={set('machine_id')} placeholder={tl("ST-07")} /></Field>

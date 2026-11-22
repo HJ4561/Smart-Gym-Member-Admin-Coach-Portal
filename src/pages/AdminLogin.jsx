@@ -7,9 +7,10 @@ import { tl } from '../i18n';
 import LangToggle from '../i18n/LangToggle';
 import { emailError, onlyErrors } from '../utils/validate';
 import { TwoFactorStep } from '../components/auth/TwoFactor';
-import { homeFor, isCoach, isStaff } from '../utils/roleHome';
+import { homeFor, isCoach, isStaff, isTeam } from '../utils/roleHome';
 
-// Sign-in for the admin console (variant "admin") and the coach portal (variant "coach").
+// Sign-in for the admin console (variant "admin"), the coach portal ("coach") and the other team portals
+// ("staff": front desk, shop, nutrition). Whoever signs in lands in their own portal.
 const VARIANTS = {
   admin: { icon: 'admin_panel_settings', title: tl("Admin Console"), tag: tl("Staff sign-in"),
     emailLabel: tl("Administrator Email"), emailHint: tl("admin@smartgym.internal"), forgot: '/admin/forgot-password',
@@ -17,6 +18,10 @@ const VARIANTS = {
   coach: { icon: 'sports', title: tl("Coach Portal"), tag: tl("Coach sign-in"),
     emailLabel: tl("Coach Email"), emailHint: tl("coach@smartgym.com"), forgot: '/forgot-password',
     allowed: isCoach, refused: tl("This account isn’t a coach account. Members sign in on the member login page.") },
+  staff: { icon: 'badge', title: tl("Team Portal"), tag: tl("Front desk, shop and nutrition"),
+    emailLabel: tl("Work email"), emailHint: tl("name@smartgym.com"), forgot: '/forgot-password',
+    allowed: (u) => isTeam(u) && !isStaff(u) && !isCoach(u),
+    refused: tl("This account isn’t a gym team account. Members sign in on the member login page.") },
 };
 
 export default function AdminLogin({ variant = 'admin' }) {
@@ -33,7 +38,7 @@ export default function AdminLogin({ variant = 'admin' }) {
   // Signed in: staff land in their own portal (an admin on the coach page goes to the console).
   const done = async (result) => {
     const user = result.user;
-    if (!isStaff(user) && !isCoach(user)) {
+    if (!isTeam(user)) {
       await logout();
       setStep(null);
       setErrors({ form: v.refused });
@@ -143,9 +148,11 @@ export default function AdminLogin({ variant = 'admin' }) {
 
         {/* Footer links */}
         <div className="mt-6 flex items-center justify-between font-label-md text-[10px] uppercase tracking-wider text-on-surface-variant">
-          {variant === 'coach'
-            ? <Link to="/admin/login" className="hover:text-on-surface">{tl("Admin Login")}</Link>
-            : <Link to="/coach/login" className="hover:text-on-surface">{tl("Coach Login")}</Link>}
+          <span className="flex gap-4">
+            {variant !== 'admin' && <Link to="/admin/login" className="hover:text-on-surface">{tl("Admin Login")}</Link>}
+            {variant !== 'coach' && <Link to="/coach/login" className="hover:text-on-surface">{tl("Coach Login")}</Link>}
+            {variant !== 'staff' && <Link to="/staff/login" className="hover:text-on-surface">{tl("Team Login")}</Link>}
+          </span>
           <Link to="/login" className="text-primary hover:underline">{tl("Member Login →")}</Link>
         </div>
       </motion.div>

@@ -164,6 +164,11 @@ export const adminService = {
     return data;
   },
 
+  async staffModules() {
+    const { data } = await api.get('/admin/staff/modules/');
+    return data;
+  },
+
   async createStaff(payload) {
     const { data } = await api.post('/admin/staff/', payload);
     return data;
@@ -297,8 +302,10 @@ export const adminService = {
     const { data } = await api.get('/admin/shop/products/next-sku/', { params: { category_id: categoryId, product_id: productId || undefined } });
     return data;
   },
+  /** Returns {detail} when the removal waits for an admin (shop manager), else nothing. */
   async deleteProduct(id) {
-    await api.delete(`/admin/shop/products/${id}/`);
+    const { data } = await api.delete(`/admin/shop/products/${id}/`);
+    return data || {};
   },
   async uploadProductImage(id, file) {
     const form = new FormData();
@@ -315,10 +322,11 @@ export const adminService = {
     return data;
   },
   async deleteCategory(id) {
-    await api.delete(`/admin/shop/categories/${id}/`);
+    const { data } = await api.delete(`/admin/shop/categories/${id}/`);
+    return data || {};
   },
-  async shopPromos() {
-    const { data } = await api.get('/admin/shop/promos/');
+  async shopPromos(params = {}) {
+    const { data } = await api.get('/admin/shop/promos/', { params });
     return data;
   },
   async savePromo(id, payload) {
@@ -326,7 +334,8 @@ export const adminService = {
     return data;
   },
   async deletePromo(id) {
-    await api.delete(`/admin/shop/promos/${id}/`);
+    const { data } = await api.delete(`/admin/shop/promos/${id}/`);
+    return data || {};
   },
 
   async createMachine(payload) {
@@ -473,15 +482,36 @@ export const adminService = {
     return data;
   },
 
-  async checkInMember(memberId, { facility, zone, faceVerified } = {}) {
+  /** id_checked: on a member's first visit, the desk has checked their Iqama card and face. */
+  async checkInMember(memberId, { facility, zone, faceVerified, id_checked: idChecked } = {}) {
     const { data } = await api.post(
       `/admin/registrations-api/members/${memberId}/check-in/`,
       {
         facility: facility || 'Metro Station Core 01',
         zone: zone || '',
         face_verified: !!faceVerified,
+        ...(idChecked ? { id_checked: true } : {}),
       }
     );
+    return data;
+  },
+
+  // ---- Front desk
+  async deskToday() {
+    const { data } = await api.get('/admin/desk/today/');
+    return data;
+  },
+  async walkInQuote(body) {
+    const { data } = await api.post('/admin/desk/walk-in/quote/', body);
+    return data;
+  },
+  /** form: FormData with the signup fields, the photo, payment (cash | card_terminal) and payment_reference. */
+  async walkIn(form) {
+    const { data } = await api.post('/admin/desk/walk-in/', form, { headers: { 'Content-Type': 'multipart/form-data' } });
+    return data;
+  },
+  async verifyIdentity(memberId) {
+    const { data } = await api.post(`/admin/members/${memberId}/verify-identity/`, { iqama_checked: true, photo_checked: true });
     return data;
   },
 
