@@ -156,15 +156,21 @@ export function CoachProfile() {
   return (
     <Page>
       <PageHeader title={tl('Profile & security')} subtitle={tl('What members see when they choose a coach, and how you sign in.')} />
-      {!data ? <Skeleton rows={2} h="h-40" /> : <ProfileForm me={data} onSaved={refetch} />}
+      {!data ? <Skeleton rows={2} h="h-40" /> : <ProfileForm key={JSON.stringify(data.pending_change)} me={data} onSaved={refetch} />}
       <SecuritySettings />
     </Page>
   );
 }
 
+/** The form shows a change still waiting for an admin, so the coach can keep working on it. */
+const withPending = (me) => {
+  const m = { ...me, ...(me.pending_change || {}) };
+  const list = (v, sep) => (Array.isArray(v) ? v.join(sep) : v || '');
+  return { ...m, specialties: list(m.specialties, ', '), specialties_ar: list(m.specialties_ar, '، ') };
+};
+
 function ProfileForm({ me, onSaved }) {
-  const [f, setF] = useState(() => ({ ...me, specialties: (me.specialties || []).join(', '),
-    specialties_ar: (me.specialties_ar || []).join('، ') }));
+  const [f, setF] = useState(() => withPending(me));
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const set = (k) => (e) => setF((p) => ({ ...p, [k]: e?.target ? e.target.value : e }));
@@ -177,8 +183,8 @@ function ProfileForm({ me, onSaved }) {
         credentials: f.credentials, credentials_ar: f.credentials_ar || '', bio: f.bio, bio_ar: f.bio_ar || '',
         specialties: f.specialties, specialties_ar: f.specialties_ar || '', years_experience: f.years_experience,
       });
-      setF({ ...row, specialties: row.specialties.join(', '), specialties_ar: (row.specialties_ar || []).join('، ') });
-      toast.success(tl('Profile saved'));
+      setF(withPending(row));
+      toast.success(row.detail ? tl(row.detail) : tl('Profile saved'), { duration: row.detail ? 6000 : 3000 });
       onSaved();
     } catch (err) {
       setErrors(fieldErrors(err));
@@ -190,8 +196,9 @@ function ProfileForm({ me, onSaved }) {
   const upload = async (file) => {
     try {
       const row = await coachService.uploadPhoto(file);
-      setF((p) => ({ ...p, photo_url: row.photo_url }));
-      toast.success(tl('Photo updated'));
+      setF(withPending(row));
+      toast.success(row.detail ? tl(row.detail) : tl('Photo updated'), { duration: 6000 });
+      onSaved();
     } catch (err) {
       toast.error(errorMessage(err, tl('Upload failed')));
       throw err;
@@ -200,6 +207,12 @@ function ProfileForm({ me, onSaved }) {
   return (
     <Section title={tl('Public profile')}
       action={<span className="text-[11px] text-on-surface-variant">{me.is_verified ? tl('✓ Verified by the gym') : tl('Not verified yet')}</span>}>
+      <p className="text-[12px] text-on-surface-variant">
+        {tl('Your name, title, credentials, specialties, bio and photo go live once an admin approves them. Your phone and booking switches change straight away.')}
+      </p>
+      {me.pending_change && (
+        <p className="text-[12px] text-amber-300">{tl('A change is waiting for an admin — the form shows it. Members see your current profile until it’s approved.')}</p>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-5">
         <ImageUploader label={tl('Photo')} aspect="aspect-square" url={f.photo_url} customized={!!f.photo_url} onUpload={upload} />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
