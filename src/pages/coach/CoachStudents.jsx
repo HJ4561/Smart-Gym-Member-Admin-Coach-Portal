@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { coachService } from '../../services/coachService';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
 import { inputCls } from '../../components/site/siteStyles';
@@ -11,10 +12,14 @@ import { card, Page, Skeleton, Tabs, LIVE_MS } from './ui';
 export default function CoachStudents() {
   const [tab, setTab] = useState('courses');
   const [q, setQ] = useState('');
-  const { data, loading } = useApi(() => coachService.students(), [], { poll: LIVE_MS });
-  const match = (r) => !q || `${r.name} ${r.email} ${r.course || ''}`.toLowerCase().includes(q.toLowerCase());
-  const enrolments = (data?.enrolments || []).filter(match);
-  const clients = (data?.clients || []).filter(match);
+  const [course, setCourse] = useState('');
+  const [state, setState] = useState('');
+  const search = useDebounced(q);
+  const { data, loading } = useApi(() => coachService.students({ q: search || undefined, course: course || undefined,
+    status: state || undefined }), [search, course, state], { poll: LIVE_MS });
+  const { data: mine } = useApi(() => coachService.courses(), []);
+  const enrolments = data?.enrolments || [];
+  const clients = data?.clients || [];
 
   return (
     <Page>
@@ -24,6 +29,19 @@ export default function CoachStudents() {
           ['courses', tl('In my courses ({0})', { 0: data?.enrolments?.length ?? 0 })],
           ['clients', tl('1-on-1 clients ({0})', { 0: data?.clients?.length ?? 0 })]]} />
         <div className="flex-1" />
+        {tab === 'courses' && (
+          <>
+            <select className={`${inputCls} sm:w-52`} value={course} onChange={(e) => setCourse(e.target.value)} aria-label={tl('Course')}>
+              <option value="">{tl('All courses')}</option>
+              {(mine?.courses || []).map((c) => <option key={c.id} value={c.id}>{c.title}</option>)}
+            </select>
+            <select className={`${inputCls} sm:w-40`} value={state} onChange={(e) => setState(e.target.value)} aria-label={tl('Status')}>
+              <option value="">{tl('Any status')}</option>
+              <option value="active">{tl('Active')}</option><option value="completed">{tl('Completed')}</option>
+              <option value="refunded">{tl('Refunded')}</option>
+            </select>
+          </>
+        )}
         <input className={`${inputCls} sm:w-64`} value={q} onChange={(e) => setQ(e.target.value)}
           placeholder={tl('Search name, email, course…')} aria-label={tl('Search students')} />
       </div>

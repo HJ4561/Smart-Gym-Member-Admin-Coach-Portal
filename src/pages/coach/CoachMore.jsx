@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate, useOutletContext } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { coachService } from '../../services/coachService';
 import { NOTIFICATIONS_CHANGED, notificationsService } from '../../services/notificationsService';
 import { BiInput, Empty, ImageUploader, PageHeader } from '../../components/site/SiteUi';
@@ -17,11 +18,13 @@ import { card, Page, Section, Skeleton, Tile, LIVE_MS } from './ui';
 
 // ------------------------------------------------------------------ reviews
 export function CoachReviews() {
-  const { data, loading } = useApi(() => coachService.reviews(), [], { poll: LIVE_MS });
   const [stars, setStars] = useState('');
   const [q, setQ] = useState('');
-  const shown = (data?.reviews || []).filter((r) => (!stars || r.rating === Number(stars))
-    && (!q || `${r.comment} ${r.member}`.toLowerCase().includes(q.toLowerCase())));
+  const search = useDebounced(q);
+  const { data, loading } = useApi(() => coachService.reviews({ rating: stars || undefined, q: search || undefined }),
+    [stars, search], { poll: LIVE_MS });
+  const { data: totals } = useApi(() => coachService.reviews(), [], { poll: LIVE_MS });
+  const shown = data?.reviews || [];
   return (
     <Page>
       <PageHeader title={tl('Reviews')} subtitle={tl('What members say after training with you.')} />
@@ -31,7 +34,7 @@ export function CoachReviews() {
             <Tile icon="star" label={tl('Average')} value={data?.total ? data.rating.toFixed(1) : '—'} tone="text-amber-300" />
             <Tile icon="reviews" label={tl('Reviews')} value={data?.total ?? 0} />
           </div>
-          {data?.reviews?.length > 0 && (
+          {totals?.reviews?.length > 0 && (
             <div className="flex flex-col sm:flex-row gap-2">
               <select className={`${inputCls} sm:w-40`} value={stars} onChange={(e) => setStars(e.target.value)} aria-label={tl('Stars')}>
                 <option value="">{tl('All ratings')}</option>
@@ -40,7 +43,7 @@ export function CoachReviews() {
               <input className={`${inputCls} sm:w-64`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl('Search reviews…')} aria-label={tl('Search reviews')} />
             </div>
           )}
-          {!data?.reviews?.length ? <Empty>{tl('No reviews yet.')}</Empty> : !shown.length ? <Empty>{tl('No reviews match.')}</Empty> : (
+          {!totals?.reviews?.length ? <Empty>{tl('No reviews yet.')}</Empty> : !shown.length ? <Empty>{tl('No reviews match.')}</Empty> : (
             <ul className="flex flex-col gap-2">
               {shown.map((r) => (
                 <li key={r.id} className={`${card} p-4`}>

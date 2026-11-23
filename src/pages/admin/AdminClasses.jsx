@@ -12,7 +12,7 @@ import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { tl, locale } from '../../i18n';
 import { HIGHLIGHT_ROW, useHighlight } from '../../hooks/useHighlight';
 import HighlightBar from '../../components/admin/HighlightBar';
-import { matches } from '../../hooks/useListState';
+import { useDebounced } from '../../hooks/useListState';
 import { useAuth } from '../../context/AuthContext';
 import { canEdit } from '../../utils/roleHome';
 
@@ -31,15 +31,20 @@ export default function AdminClasses() {
   const [q, setQ] = useState('');
   const [category, setCategory] = useState('');
   const [coach, setCoach] = useState('');
+  const [level, setLevel] = useState('');
+  const search = useDebounced(q);
   const highlight = useHighlight();
-  const { data, loading, refetch } = useApi(() => classesService.adminList(showPaused ? { include_paused: 1 } : {}), [showPaused], { poll: 60_000 });
+  const { data, loading, refetch } = useApi(() => classesService.adminList({
+    include_paused: showPaused ? 1 : undefined, q: search || undefined, category: category || undefined,
+    level: level || undefined, trainer: coach || undefined,
+  }), [showPaused, search, category, level, coach], { poll: 60_000 });
+  // Coach choices come from every class, not just the filtered ones.
+  const { data: everything } = useApi(() => classesService.adminList({ include_paused: 1 }), []);
   const { data: stats, refetch: refetchStats } = useApi(() => classesService.stats(), []);
   const { data: trainers } = useApi(() => (edit ? adminService.trainersAdmin() : Promise.resolve([])), [edit]);
-  const all = Array.isArray(data) ? data : [];
-  const list = all.filter((c) => matches(c, q, ['name', 'name_ar', 'trainer', 'location', 'category_label'])
-    && (!category || c.category === category) && (!coach || String(c.trainer_id) === coach));
-  const coaches = [...new Map(all.filter((c) => c.trainer_id).map((c) => [c.trainer_id, c.trainer])).entries()];
-  const categories = [...new Map(all.map((c) => [c.category, c.category_label])).entries()];
+  const list = Array.isArray(data) ? data : [];
+  const coaches = [...new Map((Array.isArray(everything) ? everything : []).filter((c) => c.trainer_id)
+    .map((c) => [c.trainer_id, c.trainer])).entries()];
   const saved = () => { refetch(); refetchStats(); };
 
   const times = [...new Set(list.map((c) => c.start_time))].sort();
@@ -64,7 +69,11 @@ export default function AdminClasses() {
         <input className={`${inputCls} md:w-64`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl('Search class, coach or room…')} aria-label={tl('Search classes')} />
         <select className={`${inputCls} md:w-48`} value={category} onChange={(e) => setCategory(e.target.value)} aria-label={tl('Category')}>
           <option value="">{tl('All categories')}</option>
-          {categories.map(([v, l]) => <option key={v} value={v}>{tl(l)}</option>)}
+          {CATEGORIES.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+        </select>
+        <select className={`${inputCls} md:w-44`} value={level} onChange={(e) => setLevel(e.target.value)} aria-label={tl('Level')}>
+          <option value="">{tl('All levels')}</option>
+          {LEVELS.map(([v, l]) => <option key={v} value={v}>{l}</option>)}
         </select>
         <select className={`${inputCls} md:w-48`} value={coach} onChange={(e) => setCoach(e.target.value)} aria-label={tl('Coach')}>
           <option value="">{tl('All coaches')}</option>

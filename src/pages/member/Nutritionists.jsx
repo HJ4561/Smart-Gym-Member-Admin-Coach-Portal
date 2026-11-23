@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { nutritionService } from '../../services/nutritionService';
 import { formatSAR } from '../../utils/money';
 import { getLocalized, tl } from '../../i18n';
@@ -35,6 +36,8 @@ const cardV = {
 // PAGE
 // ============================================================
 export default function Nutritionists() {
+  const [q, setQ] = useState('');
+  const qDebounced = useDebounced(q);
   const navigate = useNavigate();
   const openProfile = (n) => navigate(`/dashboard/nutritionists/${n.id}`);
   // ---- API data ----
@@ -43,7 +46,7 @@ export default function Nutritionists() {
     loading,
     error,
     refetch: refetchNutritionists,
-  } = useApi(() => nutritionService.nutritionists(), []);
+  } = useApi(() => nutritionService.nutritionists({ q: qDebounced.trim() || undefined }), [qDebounced]);
 
   const { data: summary, refetch: refetchSummary } = useApi(
     () => nutritionService.dailySummary(),
@@ -78,10 +81,8 @@ export default function Nutritionists() {
   });
 
   // ---- Derived ----
-  const [q, setQ] = useState('');
   const needle = q.trim().toLowerCase();
-  const list = (Array.isArray(nutritionists) ? nutritionists : []).filter((n) => !needle
-    || `${n.user?.full_name || ''} ${n.title || ''} ${n.title_ar || ''} ${(n.specialties || []).join(' ')}`.toLowerCase().includes(needle));
+  const list = Array.isArray(nutritionists) ? nutritionists : [];          // searched on the server
   const consumed = summary?.consumed || {};
   const targets = summary?.targets || {};
 

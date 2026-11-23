@@ -49,13 +49,16 @@ export default function AdminRegistrations() {
 
   const [statusFilter, setStatusFilter] = useState('all');
   const [search, setSearch] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const [rejecting, setRejecting] = useState(null);   // the registration being rejected
   const highlight = useHighlight();
   const load = async (background = false) => {
     if (!background) setLoading(true);
     try {
       const [listRes, statsRes] = await Promise.all([
-        adminService.registrations({ status: statusFilter, search }),
+        adminService.registrations({ status: statusFilter, search, filter_submitted_after: from || undefined,
+          filter_submitted_before: to || undefined }),
         adminService.registrationStats(),
       ]);
       setRegistrations(listRes.results || []);
@@ -73,7 +76,7 @@ export default function AdminRegistrations() {
     const t = setTimeout(load, 250);
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [statusFilter, search]);
+  }, [statusFilter, search, from, to]);
 
   const handleApprove = async (id) => {
     setBusyId(id);
@@ -222,6 +225,10 @@ export default function AdminRegistrations() {
           placeholder={tl("Search Iqama / name / email / phone")}
           className="bg-[#131316] border border-[#1a1a1e] rounded px-3 py-2 text-[13px] text-on-surface placeholder:text-on-surface-variant/50 focus:border-primary-container outline-none w-full md:w-72"
         />
+        <input type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label={tl("Signed up from")}
+          className="bg-[#131316] border border-[#1a1a1e] rounded px-3 py-2 text-[13px] text-on-surface outline-none" />
+        <input type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label={tl("Signed up until")}
+          className="bg-[#131316] border border-[#1a1a1e] rounded px-3 py-2 text-[13px] text-on-surface outline-none" />
 
         <button
           onClick={handleBulkApproveToday}

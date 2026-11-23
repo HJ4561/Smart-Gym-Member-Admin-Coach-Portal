@@ -3,8 +3,9 @@ import api from './api';
 
 export const opsService = {
   // Facility add-on prices
-  async facilityPricing() {
-    const { data } = await api.get('/admin/facility-pricing/');
+  /** params: q, show (bookable | not_bookable | hidden | visible) */
+  async facilityPricing(params = {}) {
+    const { data } = await api.get('/admin/facility-pricing/', { params });
     return data;
   },
   async updateFacilityPricing(itemId, payload) {
@@ -41,8 +42,9 @@ export const opsService = {
   },
 
   // Trainer hours + sessions
-  async trainerHours() {
-    const { data } = await api.get('/admin/trainer-hours/');
+  /** params: q, accepting */
+  async trainerHours(params = {}) {
+    const { data } = await api.get('/admin/trainer-hours/', { params });
     return data;
   },
   async saveTrainerHours(trainerId, payload) {

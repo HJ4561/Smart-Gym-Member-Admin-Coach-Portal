@@ -39,11 +39,12 @@ function Post({ p, onDelete }) {
 export default function CoachClasses() {
   const [scope, setScope] = useState('upcoming');
   const [q, setQ] = useState('');
-  const search = useDebounced(q).toLowerCase();
-  const { data, loading, refetch } = useApi(() => coachService.classes(scope), [scope], { poll: LIVE_MS });
+  const search = useDebounced(q);
+  const { data, loading, refetch } = useApi(() => coachService.classes(scope, { q: search || undefined }), [scope, search],
+    { poll: LIVE_MS });
   const [open, setOpen] = useState(null);
   const [compose, setCompose] = useState(null);       // {cls, date?}
-  const list = (Array.isArray(data) ? data : []).filter(({ class: c }) => !search || c.name.toLowerCase().includes(search));
+  const list = Array.isArray(data) ? data : [];
 
   const remove = async (cls, p) => {
     if (!window.confirm(tl('Delete “{0}”? Members won’t see it any more.', { 0: p.title }))) return;

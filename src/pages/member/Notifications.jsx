@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { NOTIFICATIONS_CHANGED, notificationsService } from '../../services/notificationsService';
 import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { tl, locale } from '../../i18n';
 
 /* ============================================================
@@ -40,11 +41,13 @@ const categoryTabs = [
 export default function Notifications() {
   const navigate = useNavigate();
   const [activeCategory, setActiveCategory] = useState('all');
+  const [q, setQ] = useState('');
+  const qSearch = useDebounced(q);
 
   // New notifications arrive on their own; reads in the bell (or another tab) show here at once.
   const live = { poll: 10_000, refreshOn: [NOTIFICATIONS_CHANGED] };
   const { data: notifications, loading, refetch } = useApi(
-    () => notificationsService.list(),
+    () => notificationsService.list({ q: qSearch.trim() || undefined }),
     [],
     live
   );
@@ -59,16 +62,14 @@ export default function Notifications() {
   const unreadCount = unreadData?.unread_count || 0;
 
   /* -------- Filtered list -------- */
-  const [q, setQ] = useState('');
   const filtered = useMemo(() => {
-    const needle = q.trim().toLowerCase();
-    const found = needle ? list.filter((n) => `${n.title} ${n.message}`.toLowerCase().includes(needle)) : list;
+    const found = list;          // searched on the server
     if (activeCategory === 'unread') {
       return found.filter((n) => !n.is_read);
     }
     if (activeCategory === 'all') return found;
     return found.filter((n) => n.category === activeCategory);
-  }, [list, activeCategory, q]);
+  }, [list, activeCategory]);
 
   /* -------- Actions -------- */
   const handleMarkAllRead = async () => {

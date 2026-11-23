@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { paymentsService } from '../../services/paymentsService';
 import { membersService } from '../../services/membersService';
 import PayDialog from '../../components/payments/PayDialog';
@@ -33,16 +34,16 @@ export default function Payments() {
   const [renewMonths, setRenewMonths] = useState(3);
 
   const { data: summary, refetch: refetchSummary } = useApi(() => paymentsService.summary(), []);
-  const { data: transactions, loading, refetch: refetchTx } = useApi(() => paymentsService.transactions(), []);
+  const q = useDebounced(search);
+  const { data: transactions, loading, refetch: refetchTx } = useApi(
+    () => paymentsService.transactions({ q: q.trim() || undefined }), [q]);
   const { data: methods } = useApi(() => paymentsService.paymentMethods(), [], { showError: false });
   const { data: membership, refetch: refetchMembership } = useApi(() => membersService.myMembership(), [], { showError: false });
   const { data: plans } = useApi(() => membersService.plans(), [], { showError: false });
   const { data: facilities, refetch: refetchFacilities } = useApi(() => membersService.facilities(), [], { showError: false });
 
   const list = transactions || [];
-  const filtered = search
-    ? list.filter((t) => `${t.description} ${t.transaction_id}`.toLowerCase().includes(search.toLowerCase()))
-    : list;
+  const filtered = list;          // searched on the server
 
   const credit = summary?.locker_credit;
   const balance = Number(credit?.balance ?? 0);

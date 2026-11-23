@@ -4,6 +4,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { catalogService } from '../../services/catalogService';
 import { formatSAR } from '../../utils/money';
 import { getLocalized, isAr, tl } from '../../i18n';
@@ -33,7 +34,12 @@ export default function Trainers() {
   const [show, setShow] = useState('all');            // all | open | verified
   const [specialty, setSpecialty] = useState('');
   const [sort, setSort] = useState('rating');
-  const { data, loading } = useApi(() => catalogService.trainers(), []);
+  const { data, loading } = useApi(() => catalogService.trainers(), []);          // every coach: stats, specialties
+  const q = useDebounced(search);
+  const { data: found, loading: finding } = useApi(() => catalogService.trainers({
+    q: q.trim() || undefined, verified: show === 'verified' ? 'true' : undefined, open: show === 'open' ? 'true' : undefined,
+    specialty: specialty || undefined, sort,
+  }), [q, show, specialty, sort]);
   const list = useMemo(() => (Array.isArray(data) ? data : data?.results || []), [data]);
 
   const specialties = useMemo(() => {
@@ -42,19 +48,7 @@ export default function Trainers() {
     return Object.entries(count).sort((a, b) => b[1] - a[1]).slice(0, 10).map(([s]) => s);
   }, [list]);
 
-  const shown = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const rows = list.filter((t) => (show !== 'verified' || t.is_verified)
-      && (show !== 'open' || (t.is_accepting_clients && t.offers_1on1))
-      && (!specialty || (getLocalized(t, 'specialties') || []).includes(specialty))
-      && (!q || `${t.user?.full_name} ${t.title} ${t.title_ar || ''} ${(t.specialties || []).join(' ')} ${(t.specialties_ar || []).join(' ')}`.toLowerCase().includes(q)));
-    const by = {
-      rating: (a, b) => (Number(b.rating) - Number(a.rating)) || (b.total_reviews - a.total_reviews),
-      price: (a, b) => Number(a.hourly_rate) - Number(b.hourly_rate),
-      experience: (a, b) => (b.years_experience || 0) - (a.years_experience || 0),
-    }[sort];
-    return [...rows].sort(by);
-  }, [list, search, show, specialty, sort]);
+  const shown = Array.isArray(found) ? found : [];
 
   const open = list.filter((t) => t.is_accepting_clients && t.offers_1on1);
   const prices = open.map((t) => Number(t.hourly_rate)).filter((n) => n > 0);
@@ -125,7 +119,7 @@ export default function Trainers() {
         )}
       </section>
 
-      {loading ? (
+      {loading || (finding && !found) ? (
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
           {[1, 2, 3].map((i) => <div key={i} className="h-64 rounded-xl bg-surface-container animate-pulse" />)}
         </div>

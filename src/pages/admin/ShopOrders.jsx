@@ -49,6 +49,9 @@ export default function ShopOrders() {
   const highlight = useHighlight();
   const [tab, setTab] = useState(TABS.some((t) => t.id && t.id === params.get('tab')) ? params.get('tab') : '');
   const [q, setQ] = useState(params.get('q') || '');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [delivery, setDelivery] = useState('');
   const [data, setData] = useState({ counts: {}, results: [] });
   const [review, setReview] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +70,8 @@ export default function ShopOrders() {
       if (!background) setLoading(true);
       try {
         const [orders, rv] = await Promise.all([
-          tab === 'review' ? Promise.resolve(null) : api.orders({ status: tab, q }),
+          tab === 'review' ? Promise.resolve(null) : api.orders({ status: tab, q, filter_placed_after: from || undefined,
+            filter_placed_before: to || undefined, filter_delivery: delivery || undefined }),
           admin ? api.paymentsReview() : Promise.resolve([]),   // settling payments is an admin job
         ]);
         if (!alive) return;
@@ -76,7 +80,7 @@ export default function ShopOrders() {
       } catch (err) { if (!background) toast.error(errorMessage(err)); } finally { if (alive) setLoading(false); }
     })();
     return () => { alive = false; };
-  }, [tab, q, version, admin]);
+  }, [tab, q, version, admin, from, to, delivery]);
 
   const counts = data.counts || {};
   const tabCount = (id) => (id === 'review' ? review.length
@@ -142,8 +146,17 @@ export default function ShopOrders() {
       </div>
 
       {tab !== 'review' && (
-        <input className={`${inputCls} max-w-sm mb-4`} placeholder={tl("Search order number or member…")} value={q}
-          onChange={(e) => setQ(e.target.value)} aria-label={tl("Search orders")} />
+        <div className="flex flex-col md:flex-row gap-2 mb-4">
+          <input className={`${inputCls} md:max-w-sm`} placeholder={tl("Search order number or member…")} value={q}
+            onChange={(e) => setQ(e.target.value)} aria-label={tl("Search orders")} />
+          <select className={`${inputCls} md:w-44`} value={delivery} onChange={(e) => setDelivery(e.target.value)} aria-label={tl("Delivery")}>
+            <option value="">{tl("Any delivery")}</option><option value="locker">{tl("Locker")}</option>
+            <option value="counter">{tl("Counter pickup")}</option>
+            <option value="delivery">{tl("Home delivery")}</option>
+          </select>
+          <input className={`${inputCls} md:w-44`} type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label={tl("From")} />
+          <input className={`${inputCls} md:w-44`} type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label={tl("To")} />
+        </div>
       )}
 
       {tab === 'review' && (

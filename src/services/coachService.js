@@ -19,12 +19,14 @@ export const coachService = {
 
   hours: () => get('/coach/hours/'),
   saveHours: (body) => put('/coach/hours/', body),
-  sessions: (scope = 'upcoming') => get('/coach/sessions/', { scope }),
+  /** params: status, q, from, to */
+  sessions: (scope = 'upcoming', params = {}) => get('/coach/sessions/', { scope, ...params }),
   setSessionStatus: (id, status) => post(`/coach/sessions/${id}/status/`, { status }),
   /** {delay_minutes} or {scheduled_at}, plus duration_minutes, focus_area, notes, reason — the member is told. */
   changeSession: (id, body) => post(`/coach/sessions/${id}/change/`, body),
 
-  courses: () => get('/coach/courses/'),
+  /** params: status, category, level, q */
+  courses: (params = {}) => get('/coach/courses/', params),
   course: (id) => get(`/coach/courses/${id}/`),
   createCourse: (body) => post('/coach/courses/', body),
   updateCourse: (id, body) => patch(`/coach/courses/${id}/`, body),
@@ -32,14 +34,17 @@ export const coachService = {
   submitCourse: (id) => post(`/coach/courses/${id}/submit/`),
   uploadCourseCover: (id, file) => upload(`/coach/courses/${id}/cover/`, file),
 
-  students: () => get('/coach/students/'),
+  /** params: q, course, status */
+  students: (params = {}) => get('/coach/students/', params),
   student: (id) => get(`/coach/students/${id}/`),
-  classes: (scope = 'upcoming') => get('/coach/classes/', { scope }),
+  /** params: q, category */
+  classes: (scope = 'upcoming', params = {}) => get('/coach/classes/', { scope, ...params }),
   classPosts: (id) => get(`/coach/classes/${id}/posts/`),
   /** form: FormData {kind: message|video, title, body, video_url, for_date, image?} */
   addClassPost: async (id, form) => (await api.post(`/coach/classes/${id}/posts/`, form, { headers: { 'Content-Type': 'multipart/form-data' } })).data,
   deleteClassPost: async (id, postId) => { await api.delete(`/coach/classes/${id}/posts/${postId}/`); },
-  reviews: () => get('/coach/reviews/'),
+  /** params: rating, q, from, to */
+  reviews: (params = {}) => get('/coach/reviews/', params),
   earnings: () => get('/coach/earnings/'),
 
   machines: (q) => get('/coach/machines/', q ? { q } : undefined),

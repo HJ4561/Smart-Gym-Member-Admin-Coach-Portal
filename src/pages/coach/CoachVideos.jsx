@@ -5,6 +5,7 @@
 import { useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { coachService } from '../../services/coachService';
 import { BiInput, Drawer, Empty, ImageUploader, PageHeader } from '../../components/site/SiteUi';
 import VideoPlayer from '../../components/common/VideoPlayer';
@@ -35,11 +36,15 @@ export default function CoachVideos() {
   const [status, setStatus] = useState('');
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState(null);
-  const { data, loading, refetch } = useApi(() => coachService.videos(), [], { poll: LIVE_MS });
+  const search = useDebounced(q);
+  const { data: everything, refetch: refetchAll } = useApi(() => coachService.videos(), [], { poll: LIVE_MS });
+  const { data, loading, refetch: refetchList } = useApi(() => coachService.videos({
+    tier: tier || undefined, status: status || undefined, q: search || undefined,
+  }), [tier, status, search], { poll: LIVE_MS });
+  const refetch = () => { refetchAll(); refetchList(); };
   const { data: machines } = useApi(() => coachService.machines(), [], { poll: LIVE_MS });
-  const all = useMemo(() => (Array.isArray(data) ? data : []), [data]);
-  const list = all.filter((v) => (!tier || v.tier === tier) && (!status || v.approval_status === status)
-    && (!q || `${v.title} ${v.exercise}`.toLowerCase().includes(q.toLowerCase())));
+  const all = useMemo(() => (Array.isArray(everything) ? everything : []), [everything]);
+  const list = Array.isArray(data) ? data : [];
   const totals = useMemo(() => ({
     sold: all.reduce((a, v) => a + v.purchases, 0),
     revenue: all.reduce((a, v) => a + Number(v.revenue), 0),

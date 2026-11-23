@@ -16,14 +16,18 @@ export default function AdminFinance() {
   const [range, setRange] = useState('30d');
   const [q, setQ] = useState('');
   const [type, setType] = useState('');
+  const [txStatus, setTxStatus] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const [selectedTxn, setSelectedTxn] = useState(null);
   const { data: overview, loading: loadingOv } = useApi(
     () => adminService.financeOverview(range),
     [range]
   );
   const { data: txData, loading: loadingTx } = useApi(
-    () => adminService.transactions({ page, q: q.trim(), type }),
-    [page, q, type]
+    () => adminService.transactions({ page, q: q.trim(), type, filter_status: txStatus || undefined,
+      filter_after: from || undefined, filter_before: to || undefined }),
+    [page, q, type, txStatus, from, to]
   );
 
   const { data: monthly, loading: loadingMonthly } = useApi(
@@ -144,6 +148,15 @@ export default function AdminFinance() {
               <option value="retail">{tl("Shop")}</option><option value="coaching">{tl("Trainers & courses")}</option>
               <option value="topup">{tl("Top-ups")}</option><option value="refund">{tl("Refunds")}</option>
             </select>
+            <select value={txStatus} onChange={(e) => { setTxStatus(e.target.value); setPage(1); }} aria-label={tl("Status")}
+              className="bg-surface-container-lowest text-on-surface text-[12px] px-3 py-2 rounded border border-surface-container-high">
+              <option value="">{tl("Any status")}</option><option value="settled">{tl("Settled")}</option>
+              <option value="pending">{tl("Pending")}</option><option value="failed">{tl("Failed")}</option>
+            </select>
+            <input type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} aria-label={tl("From")}
+              className="bg-surface-container-lowest text-on-surface text-[12px] px-3 py-2 rounded border border-surface-container-high" />
+            <input type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} aria-label={tl("To")}
+              className="bg-surface-container-lowest text-on-surface text-[12px] px-3 py-2 rounded border border-surface-container-high" />
           </div>
           <span className="font-label-md text-[10px] text-on-surface-variant uppercase">
             {total} transactions

@@ -53,8 +53,9 @@ export const siteContentService = {
     const { data } = await api.get(`${BASE}/collections/`);
     return data;
   },
-  async items(collection) {
-    const { data } = await api.get(`${BASE}/collections/${collection}/items/`);
+  /** params: q, active, <choice field>=value */
+  async items(collection, params = {}) {
+    const { data } = await api.get(`${BASE}/collections/${collection}/items/`, { params });
     return data;
   },
   async createItem(collection, payload) {

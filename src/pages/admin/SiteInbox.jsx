@@ -7,7 +7,7 @@ import { siteContentService as api } from '../../services/siteContentService';
 import { errorMessage } from '../../utils/apiError';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls } from '../../components/site/siteStyles';
-import { matches } from '../../hooks/useListState';
+import { useDebounced } from '../../hooks/useListState';
 import { tl, locale } from '../../i18n';
 import { useAuth } from '../../context/AuthContext';
 import { canEdit } from '../../utils/roleHome';
@@ -31,6 +31,9 @@ export default function SiteInbox() {
   const edit = canEdit(useAuth().user);   // the front desk reads and marks messages; only admins delete
   const [status, setStatus] = useState('');   // "All" first
   const [q, setQ] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const search = useDebounced(q);
   const [data, setData] = useState({ counts: {}, results: [] });
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(null);
@@ -46,12 +49,13 @@ export default function SiteInbox() {
     (async () => {
       if (!background) setLoading(true);
       try {
-        const res = await api.messages(status ? { status } : {});
+        const res = await api.messages({ status: status || undefined, q: search || undefined,
+          from: from || undefined, to: to || undefined });
         if (alive) setData(res);
       } catch (err) { if (!background) toast.error(errorMessage(err)); } finally { if (alive) setLoading(false); }
     })();
     return () => { alive = false; };
-  }, [status, version]);
+  }, [status, search, from, to, version]);
 
   const setMsgStatus = async (msg, next) => {
     try {
@@ -87,8 +91,12 @@ export default function SiteInbox() {
     <div className="p-8 bg-background min-h-screen">
       <PageHeader title={tl("Website Inbox")} subtitle={tl("Messages from the public website's contact form. Opening a message marks it as read.")} />
 
-      <input className={`${inputCls} mb-3 md:w-80`} value={q} onChange={(e) => setQ(e.target.value)}
-        placeholder={tl('Search name, email, topic or message…')} aria-label={tl('Search messages')} />
+      <div className="flex flex-col md:flex-row gap-2 mb-3">
+        <input className={`${inputCls} md:w-80`} value={q} onChange={(e) => setQ(e.target.value)}
+          placeholder={tl('Search name, email, topic or message…')} aria-label={tl('Search messages')} />
+        <input className={`${inputCls} md:w-44`} type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label={tl('From')} />
+        <input className={`${inputCls} md:w-44`} type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label={tl('To')} />
+      </div>
       <div className="flex gap-1 mb-5 flex-wrap w-fit p-1 rounded-lg bg-[#0e0e0f] border border-[#1a1a1e]" role="tablist">
         {FILTERS.map((f) => {
           const n = f.id ? data.counts[f.id] || 0 : total;
@@ -118,7 +126,7 @@ export default function SiteInbox() {
         </div>
       ) : (
         <div className="bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg divide-y divide-[#1a1a1e] overflow-hidden">
-          {data.results.filter((m) => matches(m, q, ['name', 'email', 'phone', 'topic', 'subtopic', 'message'])).map((m) => (
+          {data.results.map((m) => (
             <div key={m.id} className={open === m.id ? 'bg-[#131316]' : ''}>
               <button type="button" onClick={() => openMsg(m)} className="w-full text-start px-4 py-3 flex items-center gap-3 hover:bg-[#131316] transition-colors" aria-expanded={open === m.id}>
                 <span className={`relative w-9 h-9 rounded-full grid place-items-center shrink-0 text-[13px] font-bold ${m.status === 'new' ? 'bg-primary-container text-on-primary-container' : 'bg-[#1a1a1e] text-on-surface-variant'}`}>

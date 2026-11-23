@@ -2815,5 +2815,14 @@
  "New nutrition plan": "خطة تغذية جديدة",
  "Active at once, with no consultation fee. The member is told.": "تبدأ فورًا ودون رسوم استشارة. يُبلَّغ العضو.",
  "Search name, email, phone or Iqama…": "ابحث بالاسم أو البريد أو الجوال أو الإقامة…",
- "Delete {0}’s plan with {1}? Their meal log and scans stay.": "حذف خطة {0} مع {1}؟ يبقى سجل وجباته وفحوصاته."
+ "Delete {0}’s plan with {1}? Their meal log and scans stay.": "حذف خطة {0} مع {1}؟ يبقى سجل وجباته وفحوصاته.",
+ "Signed up from": "تاريخ التسجيل من",
+ "Signed up until": "تاريخ التسجيل حتى",
+ "Debit notes": "إشعارات مدينة",
+ "Delivery": "التسليم",
+ "Any delivery": "أي طريقة تسليم",
+ "Locker": "الخزانة",
+ "Counter pickup": "استلام من الكاونتر",
+ "Home delivery": "توصيل للمنزل",
+ "All courses": "كل الدورات"
 }

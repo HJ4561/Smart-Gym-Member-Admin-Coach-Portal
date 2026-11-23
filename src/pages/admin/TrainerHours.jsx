@@ -11,7 +11,7 @@ import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
 import { formatGymDateTime } from '../../utils/gymTime';
 import { tl } from '../../i18n';
 import SessionChange from '../../components/sessions/SessionChange';
-import { matches } from '../../hooks/useListState';
+import { useDebounced } from '../../hooks/useListState';
 
 const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];   // 0 = Monday
 
@@ -31,6 +31,9 @@ export default function TrainerHours() {
   const [changing, setChanging] = useState(null);   // a session being moved / delayed / edited
   const [q, setQ] = useState('');
   const [state, setState] = useState('');            // session status filter
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const search = useDebounced(q);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
 
@@ -45,14 +48,18 @@ export default function TrainerHours() {
     (async () => {
       if (!background) setLoading(true);
       try {
-        const [t, s] = await Promise.all([api.trainerHours(), api.trainerSessions({ scope })]);
+        const [t, s] = await Promise.all([
+          api.trainerHours({ q: tab === 'hours' ? search || undefined : undefined }),
+          api.trainerSessions({ scope, q: tab === 'sessions' ? search || undefined : undefined, status: state || undefined,
+            from: from || undefined, to: to || undefined }),
+        ]);
         if (!alive) return;
         setTrainers(t);
         setSessions(s);
       } catch (err) { if (!background) toast.error(errorMessage(err)); } finally { if (alive) setLoading(false); }
     })();
     return () => { alive = false; };
-  }, [scope, version]);
+  }, [scope, version, tab, search, state, from, to]);
 
   const edit = (t) => {
     setErrors({});
@@ -120,12 +127,18 @@ export default function TrainerHours() {
             {['scheduled', 'completed', 'no_show', 'cancelled'].map((v) => <option key={v} value={v}>{tl(v)}</option>)}
           </select>
         )}
+        {tab === 'sessions' && (
+          <>
+            <input className={`${inputCls} md:w-44`} type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label={tl('From')} />
+            <input className={`${inputCls} md:w-44`} type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label={tl('To')} />
+          </>
+        )}
       </div>
 
       {loading ? <Empty>{tl("Loading…")}</Empty> : tab === 'hours' ? (
         !trainers.length ? <Empty>{tl("No trainers yet.")}</Empty> : (
           <div className="flex flex-col gap-2">
-            {trainers.filter((t) => matches(t, q, ['name', 'user_name', 'email', 'title'])).map((t) => (
+            {trainers.map((t) => (
               <div key={t.id} className="bg-[#0e0e0f] border border-[#1a1a1e] rounded-lg p-4 flex flex-col md:flex-row md:items-center justify-between gap-3">
                 <div className="min-w-0">
                   <div className="text-on-surface font-bold">{t.name} <span className="text-on-surface-variant font-normal text-[12px]">· {t.title}</span></div>
@@ -160,8 +173,7 @@ export default function TrainerHours() {
                   </tr>
                 </thead>
                 <tbody>
-                  {sessions.filter((s) => (!state || s.status === state)
-                    && matches(s, q, [(x) => x.trainer?.name, (x) => x.member?.name, (x) => x.member?.email, 'focus_area', 'notes'])).map((s) => (
+                  {sessions.map((s) => (
                     <tr key={s.id} className="border-b border-[#1a1a1e] last:border-0">
                       <td className="p-3 text-on-surface">{formatGymDateTime(s.scheduled_at)}</td>
                       <td className="p-3 text-on-surface">{s.trainer.name}</td>

@@ -536,10 +536,14 @@ const FILTERS = [['', tl('All')], ['pending', tl('Waiting')], ['late', tl('Late'
 function Invoices({ isAdmin, onChanged }) {
   const [status, setStatus] = useState('');
   const [q, setQ] = useState('');
+  const [docType, setDocType] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
   const [page, setPage] = useState(1);
   const [open, setOpen] = useState(null);
-  const { data, loading, refetch } = useApi(() => api.documents({ status: status || undefined, q: q || undefined, page }),
-    [status, q, page], { poll: 30_000 });
+  const { data, loading, refetch } = useApi(() => api.documents({ status: status || undefined, q: q || undefined, page,
+    type: docType || undefined, from: from || undefined, to: to || undefined }),
+    [status, q, page, docType, from, to], { poll: 30_000 });
   const rows = data?.results || [];
   const show = async (id) => { try { setOpen(await api.document(id)); } catch (err) { toast.error(errorMessage(err)); } };
   const send = async () => {
@@ -572,6 +576,12 @@ function Invoices({ isAdmin, onChanged }) {
           </button>
         ))}
         <div className="flex-1" />
+        <select className={`${inputCls} md:w-40`} value={docType} onChange={(e) => { setDocType(e.target.value); setPage(1); }} aria-label={tl('Type')}>
+          <option value="">{tl('All types')}</option><option value="invoice">{tl('Invoices')}</option>
+          <option value="credit">{tl('Credit notes')}</option><option value="debit">{tl('Debit notes')}</option>
+        </select>
+        <input className={`${inputCls} md:w-40`} type="date" value={from} onChange={(e) => { setFrom(e.target.value); setPage(1); }} aria-label={tl('From')} />
+        <input className={`${inputCls} md:w-40`} type="date" value={to} onChange={(e) => { setTo(e.target.value); setPage(1); }} aria-label={tl('To')} />
         <input className={`${inputCls} md:w-64`} value={q} onChange={(e) => { setQ(e.target.value); setPage(1); }}
           placeholder={tl('Search number or customer…')} aria-label={tl('Search invoices')} />
       </div>

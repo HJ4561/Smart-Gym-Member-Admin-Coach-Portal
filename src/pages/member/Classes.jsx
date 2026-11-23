@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { classesService } from '../../services/classesService';
 import PayDialog from '../../components/payments/PayDialog';
 import CoachPosts from '../../components/classes/CoachPosts';
@@ -22,15 +23,19 @@ export default function Classes() {
   const [busyId, setBusyId] = useState(null);
   const [buy, setBuy] = useState(null);           // {cls, kind, date}
   const [pick, setPick] = useState(null);         // class whose session dates are open
-  const { data, loading, refetch } = useApi(() => classesService.list(), []);
+  const { data, loading, refetch: refetchAll } = useApi(() => classesService.list(), []);
   const days = data?.days || [];
   const classes = data?.classes || [];
   const mine = classes.filter((c) => c.my_status || c.my_access?.full || c.my_access?.sessions?.length);
   const [q, setQ] = useState('');
   const [level, setLevel] = useState('');
-  const needle = q.trim().toLowerCase();
-  const fits = (c) => (!needle || `${c.name} ${c.name_ar || ''} ${c.trainer || ''} ${c.category_label || ''}`.toLowerCase().includes(needle))
-    && (!level || c.level === level);
+  const search = useDebounced(q);
+  const { data: found, refetch: refetchFound } = useApi(() => (search.trim() || level
+    ? classesService.list({ q: search.trim() || undefined, level: level || undefined }) : Promise.resolve(null)),
+  [search, level]);
+  const refetch = () => { refetchAll(); refetchFound(); };
+  const matchIds = found?.classes ? new Set(found.classes.map((c) => c.id)) : null;
+  const fits = (c) => !matchIds || matchIds.has(c.id);
   const shown = classes.filter((c) => c.day_of_week === day && fits(c));
 
   const act = async (c) => {

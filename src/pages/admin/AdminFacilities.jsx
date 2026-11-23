@@ -9,7 +9,7 @@ import { opsService as api } from '../../services/opsService';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
-import { matches } from '../../hooks/useListState';
+import { useDebounced } from '../../hooks/useListState';
 import { tl } from '../../i18n';
 
 const TONES = [
@@ -24,21 +24,22 @@ export default function AdminFacilities() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(null);
   const [q, setQ] = useState('');
-  const [state, setState] = useState('');      // '' | bookable | hidden
+  const [state, setState] = useState('');      // '' | bookable | not_bookable | hidden
+  const search = useDebounced(q);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       setLoading(true);
       try {
-        const res = await api.facilityPricing();
+        const res = await api.facilityPricing({ q: search || undefined, show: state || undefined });
         if (!alive) return;
         setData(res);
         setDrafts(Object.fromEntries(res.results.map((r) => [r.id, { monthly_price: r.monthly_price, capacity: String(r.capacity) }])));
       } catch (err) { toast.error(errorMessage(err)); } finally { if (alive) setLoading(false); }
     })();
     return () => { alive = false; };
-  }, []);
+  }, [search, state]);
 
   const save = async (row, patch, message = 'Saved') => {
     setSaving(row.id);
@@ -96,8 +97,7 @@ export default function AdminFacilities() {
         <Empty>{tl("No facilities yet — add your first one with “+ Add facility”.")}</Empty>
       ) : (
         <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-          {data.results.filter((r) => matches(r, q, ['name', 'name_ar', 'category', 'location'])
-            && (!state || (state === 'bookable' ? r.is_bookable : state === 'not_bookable' ? !r.is_bookable : !r.is_active))).map((r) => {
+          {data.results.map((r) => {
             const draft = drafts[r.id] || {};
             const dirty = String(draft.monthly_price) !== String(r.monthly_price) || String(draft.capacity) !== String(r.capacity);
             return (

@@ -2,8 +2,9 @@ import api from './api';
 
 export const classesService = {
   // Member
-  async list() {
-    const { data } = await api.get('/classes/');
+  /** params: q, level, category, trainer */
+  async list(params = {}) {
+    const { data } = await api.get('/classes/', { params });
     return data;
   },
   async book(id) {

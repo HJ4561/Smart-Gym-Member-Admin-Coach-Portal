@@ -5,6 +5,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { siteContentService as api } from '../../services/siteContentService';
+import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { errorMessage, fieldErrors } from '../../utils/apiError';
 import { BilingualField, Drawer, Empty, ImageUploader, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls, labelCls } from '../../components/site/siteStyles';
@@ -104,14 +106,16 @@ export default function SiteLists() {
 
   const choiceField = schema?.fields.find((fd) => fd.type === 'choice' && fd.required);
   const choices = choiceField ? [...new Set(items.map((i) => i.data?.[choiceField.name]).filter(Boolean))] : [];
-  const needle = q.trim().toLowerCase();
-  const filtering = Boolean(needle || shownState || choice);
-  // Search the item's text in both languages (titles, summaries, any text field).
-  const text = (item) => Object.values(item.data || {}).map((v) => (v && typeof v === 'object' ? `${v.en || ''} ${v.ar || ''}` : String(v ?? '')))
-    .join(' ').toLowerCase();
-  const shown = items.filter((item) => (!needle || text(item).includes(needle))
-    && (!shownState || (shownState === 'visible') === item.is_active)
-    && (!choice || item.data?.[choiceField?.name] === choice));
+  const search = useDebounced(q);
+  const filtering = Boolean(q.trim() || shownState || choice);
+  // While filtering, the server answers which items match (it searches every text, both languages);
+  // the full list stays loaded for reordering.
+  const { data: found } = useApi(() => (active && (search.trim() || shownState || choice)
+    ? api.items(active, { q: search.trim() || undefined, active: shownState ? String(shownState === 'visible') : undefined,
+      ...(choice && choiceField ? { [choiceField.name]: choice } : {}) })
+    : Promise.resolve(null)), [active, search, shownState, choice, items], { showError: false });
+  const matchIds = found ? new Set(found.map((i) => i.id)) : null;
+  const shown = filtering && matchIds ? items.filter((i) => matchIds.has(i.id)) : items;
   const pick = (name) => { setActive(name); setQ(''); setShownState(''); setChoice(''); };
 
   return (

@@ -4,6 +4,7 @@ import { useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { shopService } from '../../services/shopService';
 import PayDialog from '../../components/payments/PayDialog';
 import { errorMessage } from '../../utils/apiError';
@@ -46,6 +47,10 @@ export default function Shop() {
     error: prodError,
     refetch: refetchProducts,
   } = useApi(() => shopService.products(), []);
+  const q = useDebounced(search);
+  const { data: found } = useApi(() => shopService.products({
+    search: q.trim() || undefined, category: activeCategory !== 'all' ? activeCategory : undefined,
+  }), [q, activeCategory]);
 
   const {
     data: cart,
@@ -64,20 +69,7 @@ export default function Shop() {
     useApi(() => shopService.myOrders(), [], { showError: false });
 
   // ---- Filter ----
-  const filtered = useMemo(() => {
-    let result = [...list];
-    if (activeCategory !== 'all') {
-      result = result.filter((p) => p.category?.key === activeCategory);
-    }
-    if (search.trim()) {
-      const s = search.trim().toLowerCase();
-      result = result.filter(
-        (p) =>
-          [p.name, p.name_ar, p.description, p.description_ar].some((v) => v?.toLowerCase().includes(s))
-      );
-    }
-    return result;
-  }, [list, activeCategory, search]);
+  const filtered = Array.isArray(found) ? found : list;
 
   // ---- Handlers ----
   const addToCart = async (product) => {

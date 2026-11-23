@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { coachService } from '../../services/coachService';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls } from '../../components/site/siteStyles';
@@ -16,11 +17,16 @@ import SessionChange from '../../components/sessions/SessionChange';
 
 export default function CoachSessions() {
   const [scope, setScope] = useState('upcoming');
-  const { data, loading, refetch } = useApi(() => coachService.sessions(scope), [scope], { poll: LIVE_MS });
   const [changing, setChanging] = useState(null);
   const [q, setQ] = useState('');
-  const list = (Array.isArray(data) ? data : []).filter((s) => !q
-    || `${s.member.name} ${s.member.email} ${s.focus_area} ${s.notes}`.toLowerCase().includes(q.toLowerCase()));
+  const [state, setState] = useState('');
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const search = useDebounced(q);
+  const { data, loading, refetch } = useApi(() => coachService.sessions(scope, {
+    q: search || undefined, status: state || undefined, from: from || undefined, to: to || undefined,
+  }), [scope, search, state, from, to], { poll: LIVE_MS });
+  const list = Array.isArray(data) ? data : [];
   const started = (s) => new Date(s.scheduled_at) <= new Date();
 
   const setStatus = async (s, status) => {
@@ -42,6 +48,12 @@ export default function CoachSessions() {
       <div className="flex flex-col sm:flex-row sm:items-center gap-3">
         <Tabs value={scope} onChange={setScope} options={[['upcoming', tl('Upcoming')], ['past', tl('Past')]]} />
         <div className="flex-1" />
+        <select className={`${inputCls} sm:w-40`} value={state} onChange={(e) => setState(e.target.value)} aria-label={tl('Status')}>
+          <option value="">{tl('Any status')}</option>
+          {['scheduled', 'completed', 'no_show', 'cancelled'].map((v) => <option key={v} value={v}>{SESSION_LABEL[v]}</option>)}
+        </select>
+        <input className={`${inputCls} sm:w-40`} type="date" value={from} onChange={(e) => setFrom(e.target.value)} aria-label={tl('From')} />
+        <input className={`${inputCls} sm:w-40`} type="date" value={to} onChange={(e) => setTo(e.target.value)} aria-label={tl('To')} />
         <input className={`${inputCls} sm:w-64`} value={q} onChange={(e) => setQ(e.target.value)} placeholder={tl('Search member or focus…')} aria-label={tl('Search sessions')} />
       </div>
       {loading && !data ? <Skeleton /> : list.length === 0 ? (

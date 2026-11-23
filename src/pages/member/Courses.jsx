@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { catalogService } from '../../services/catalogService';
 import { membersService } from '../../services/membersService';
 import CourseHeader from '../../components/courses/CourseHeader';
@@ -34,7 +35,12 @@ export default function Courses() {
   const [sortBy, setSortBy] = useState('Top Rated');
   const navigate = useNavigate();
 
-  const { data: courses, loading } = useApi(() => catalogService.courses(), []);
+  const { data: courses, loading } = useApi(() => catalogService.courses(), []);      // every course (featured pick)
+  const q = useDebounced(search);
+  const SORTS = { 'Price: Low to High': 'price', 'Price: High to Low': '-price', 'Top Rated': 'rating' };
+  const { data: found } = useApi(() => catalogService.courses({
+    q: q.trim() || undefined, level: level !== 'all' ? level : undefined, sort: SORTS[sortBy] || 'rating',
+  }), [q, level, sortBy]);
   const { data: enrollments, refetch: refetchEnrollments } = useApi(
     () => catalogService.enrollments(),
     []
@@ -52,37 +58,7 @@ export default function Courses() {
       .filter(Boolean)
   );
 
-  const filtered = useMemo(() => {
-    let result = [...list];
-
-    if (level !== 'all') {
-      result = result.filter((c) => c.level === level);
-    }
-
-    if (search) {
-      const s = search.toLowerCase();
-      result = result.filter(
-        (c) =>
-          [c.title, c.title_ar].some((v) => v?.toLowerCase().includes(s)) ||
-          c.category?.toLowerCase().includes(s)
-      );
-    }
-
-    switch (sortBy) {
-      case 'Price: Low to High':
-        result.sort((a, b) => Number(a.price ?? 0) - Number(b.price ?? 0));
-        break;
-      case 'Price: High to Low':
-        result.sort((a, b) => Number(b.price ?? 0) - Number(a.price ?? 0));
-        break;
-      case 'Top Rated':
-      default:
-        result.sort((a, b) => Number(b.rating ?? 0) - Number(a.rating ?? 0));
-        break;
-    }
-
-    return result;
-  }, [list, level, search, sortBy]);
+  const filtered = Array.isArray(found) ? found : [];
 
   const featured = list.find((c) => c.is_featured) || list[0];
 

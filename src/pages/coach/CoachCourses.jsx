@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useApi } from '../../hooks/useApi';
+import { useDebounced } from '../../hooks/useListState';
 import { coachService } from '../../services/coachService';
 import { Empty, PageHeader } from '../../components/site/SiteUi';
 import { btn, inputCls } from '../../components/site/siteStyles';
@@ -28,10 +29,11 @@ export default function CoachCourses() {
   const navigate = useNavigate();
   const [status, setStatus] = useState('');
   const [editing, setEditing] = useState(null);
-  const { data, loading, refetch } = useApi(() => coachService.courses(), [], { poll: LIVE_MS });
   const [q, setQ] = useState('');
-  const list = (data?.courses || []).filter((c) => (!status || c.status === status)
-    && (!q || `${c.title} ${c.category || ''}`.toLowerCase().includes(q.toLowerCase())));
+  const search = useDebounced(q);
+  const { data, loading, refetch } = useApi(() => coachService.courses({ status: status || undefined, q: search || undefined }),
+    [status, search], { poll: LIVE_MS });
+  const list = data?.courses || [];
 
   // /coach/courses/:id (from a notification) opens that course until it's closed.
   const { data: linked } = useApi(() => (courseId ? coachService.course(courseId) : Promise.resolve(null)), [courseId],
