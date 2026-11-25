@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLocalized, tl } from '../../i18n';
+import { embedUrl, isVideoFile } from '../../utils/video';
 
 export default function VideoStage({ course, currentModule }) {
   const [playing, setPlaying] = useState(false);
@@ -10,20 +11,33 @@ export default function VideoStage({ course, currentModule }) {
   const videoUrl = currentModule?.video_url || course?.promo_video_url;
   const posterImage = course?.cover_image_url;
 
-  // If there's a real video URL, embed it
-  if (videoUrl) {
+  // YouTube / Vimeo play in their embed player (their normal pages refuse to be framed),
+  // a video file in the browser's player; any other link opens in a new tab.
+  const embed = embedUrl(videoUrl);
+  if (embed) {
     return (
       <div className="relative w-full aspect-video bg-surface-container-lowest rounded-xl overflow-hidden shadow-xl">
         <iframe
-          src={videoUrl}
+          key={embed}
+          src={embed}
           title={currentModule?.title || course?.title}
           className="absolute inset-0 w-full h-full"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
           allowFullScreen
         />
       </div>
     );
   }
+  if (isVideoFile(videoUrl)) {
+    return (
+      <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-xl">
+        <video key={videoUrl} src={videoUrl} poster={posterImage || undefined} controls className="absolute inset-0 w-full h-full">
+          <track kind="captions" />
+        </video>
+      </div>
+    );
+  }
+  const openLink = videoUrl ? () => window.open(videoUrl, '_blank', 'noopener') : togglePlay;
 
   // Fallback: poster with play button
   return (
@@ -68,7 +82,8 @@ export default function VideoStage({ course, currentModule }) {
             exit={{ opacity: 0, scale: 0.75 }}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={togglePlay}
+            onClick={openLink}
+            aria-label={videoUrl ? tl('Open video') : tl('Play')}
             className="absolute inset-0 m-auto w-20 h-20 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center shadow-2xl focus:outline-none z-20"
             type="button"
           >

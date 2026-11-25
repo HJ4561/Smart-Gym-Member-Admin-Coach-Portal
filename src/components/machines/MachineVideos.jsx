@@ -10,6 +10,7 @@ import { workoutsService } from '../../services/workoutsService';
 import PayDialog from '../payments/PayDialog';
 import { formatSAR } from '../../utils/money';
 import { getLocalized, tl } from '../../i18n';
+import { embedUrl } from '../../utils/video';
 
 const TIER = {
   basic: { label: tl('Basic · free'), tone: 'bg-emerald-500/15 text-emerald-500' },
@@ -18,23 +19,6 @@ const TIER = {
 };
 const ACCESS = { free: tl('Free'), plan: tl('In your plan'), bought: tl('Unlocked') };
 
-/** YouTube / Vimeo links play in the page; anything else opens in a new tab. */
-function embedUrl(url) {
-  if (!url) return null;
-  try {
-    const u = new URL(url);
-    const host = u.hostname.replace(/^www\.|^m\./, '');
-    let id = null;
-    if (host === 'youtu.be') id = u.pathname.slice(1);
-    else if (host.endsWith('youtube.com')) id = u.searchParams.get('v') || u.pathname.split('/').filter(Boolean).pop();
-    if (id && /^[\w-]{6,}$/.test(id)) return `https://www.youtube-nocookie.com/embed/${id}`;
-    if (host === 'vimeo.com') {
-      const v = u.pathname.split('/').filter(Boolean)[0];
-      if (/^\d+$/.test(v || '')) return `https://player.vimeo.com/video/${v}`;
-    }
-  } catch { /* not a URL */ }
-  return null;
-}
 
 export default function MachineVideos({ exercise }) {
   const { data, loading, refetch } = useApi(() => workoutsService.exerciseVideos(exercise.id), [exercise.id], { showError: false });

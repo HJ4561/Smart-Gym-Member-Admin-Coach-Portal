@@ -3,19 +3,13 @@
 // YouTube and Vimeo links play in their own player, a direct file (.mp4, .webm) in the browser's.
 import { useState } from 'react';
 import { tl } from '../../i18n';
+import { embedUrl, isVideoFile } from '../../utils/video';
 
-function embedUrl(url) {
-  const yt = /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([A-Za-z0-9_-]{11})/.exec(url || '');
-  if (yt) return `https://www.youtube-nocookie.com/embed/${yt[1]}?autoplay=1&rel=0`;
-  const vimeo = /vimeo\.com\/(?:video\/)?(\d+)/.exec(url || '');
-  if (vimeo) return `https://player.vimeo.com/video/${vimeo[1]}?autoplay=1`;
-  return null;
-}
 
 export default function VideoPlayer({ url, thumbnail, title, subtitle, className = '' }) {
   const [playing, setPlaying] = useState(false);
-  const embed = embedUrl(url);
-  const file = !embed && /\.(mp4|webm|ogg|mov)(\?|$)/i.test(url || '');
+  const embed = embedUrl(url, { autoplay: true });
+  const file = !embed && isVideoFile(url);
 
   return (
     <figure className={`flex flex-col gap-2 min-w-0 ${className}`}>
